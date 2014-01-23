@@ -1,0 +1,144 @@
+@charset "UTF-8";
+
+body {
+    font: 11px 'Lucida Grande', sans-serif;
+}
+
+.steptools-content-container {
+    color: #eee;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.steptools-view {
+    width: 100%;
+    height: 100%;
+    background-color: #383838;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.steptools-control {
+    position: absolute;
+    padding-left: 8px;
+    height: 60px;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+}
+
+.steptools-control .btn-group {
+    float: left;
+    margin-right: 15px;
+    margin-top: 4px;
+}
+
+.steptools-control .btn {
+    width: 27px;
+    height: 25px;
+    padding: 2px 3px;
+    margin-right: 0;
+    display: inline-block;
+}
+
+.steptools-control .btn.active {
+    text-decoration: none;
+    background: #626262;
+    background: -o-linear-gradient(top, #c8c8c8 0%, #626262 100%);
+    background: -ms-linear-gradient(top, #c8c8c8 0%, #626262 100%);
+    background: -webkit-linear-gradient(top, #c8c8c8 0%, #626262 100%);
+    background: -moz-linear-gradient(top, #c8c8c8 0%, #626262 100%);
+    background: linear-gradient(top, #c8c8c8 0%, #626262 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c8c8c8', endColorstr='#626262',GradientType=0 );
+    border-color: #626262;
+    text-shadow: 0 0 1px #000;
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+.steptools-control .steptools-logo-container {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+.steptools-assembly {
+    float: left;
+    width: 30%;
+    height: 100%;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    cursor: pointer;
+}
+
+.steptools-tree {
+    font-size: 8px;
+    width: 250px;
+    position: absolute;
+    max-height: 100%;
+    overflow: scroll;
+    background-color: #222;
+    opacity: .6;
+    color: #fff;
+    border-right: 1px solid #333;
+
+    transition: opacity .2s;
+}
+
+.steptools-tree:hover {
+    opacity: 1;
+}
+
+.steptools-downloads {
+    font-size: 8px;
+    border-top: 1px solid #555;
+    border-left: 1px solid #555;
+    opacity: .6;
+    background-color: #222;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 270px;
+    max-height: 20em;
+
+    transition: opacity .2s;
+}
+
+.steptools-downloads:hover {
+    opacity: 1;
+}
+
+.steptools-downloads h3 {
+    font-size: 1em;
+    margin: 5px;
+}
+
+.steptools-downloads .steptools-downloads-count {
+    font-size: 1em;
+    float: right;
+}
+
+.steptools-downloads > ul {
+    list-style-type: none;
+    list-style-image: none;
+    margin-left: 5px;
+    -webkit-margin-before: 0;
+    -webkit-margin-after: 0;
+    -webkit-margin-start: 0;
+    -webkit-margin-end: 0;
+    -webkit-padding-start: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    height: 100%;
+}
+
+.steptools-compass > canvas {
+    z-index: 1;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
