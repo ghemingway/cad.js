@@ -1,5 +1,4 @@
 Test URLs:
 ==========
 
-http://localhost:8080/model/e137_hull_double_v_3panel_roof.stp?resource_url=/data/e137_hull_double_v_3panel_roof/index.xml
-http://localhost:8080/model/seed_3.stp?resource_url=/data/seed_3/index.xml
+http://localhost:8080/cad?resource_url=/data/modelname/index.xml
