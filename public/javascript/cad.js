@@ -23,106 +23,86 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._compassContainer = config.compassContainer;
         this._treeContainer = config.treeContainer;
         this._downloadsContainer = config.downloadsContainer;
-        this._loader = new DataLoader({ autorun: false });
+        this._loader = undefined;
         this._parts = [];
         this._viewer = undefined;
         this._tree = undefined;
         this._menu = undefined;
         this._isSetup = false;
-
-        // Events
-        this._loader.addEventListener("queueEmpty", function(event) {
-//        console.log("QueueEmpty");
-        });
     }
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
         this._viewer = new Viewer(this._viewContainer, this._compassContainer);
+        // Create the data loader
+        this._loader = new DataLoader(this, this._viewer.scene, { autorun: false });
         // Setup the tree
         //...
         // Setup the toolbar
         //...
+        // Events
+        this.bindEvents();
+
         // Signal ready
         this._isSetup = true;
         $(this).trigger("pageSetup");
     };
 
     CADjs.prototype.load = function(resourceURL) {
+        var self = this;
         // Initialize the assembly
-        this._loader.load(resourceURL, "part", function(err, part) {
+        this._loader.load(resourceURL, "assembly", function(err, part) {
             if (err) {
-
+                console.log("CADjs.load error - " + err);
             } else {
-            self._parts.push(part);
-            self.rootID = rootXML.getAttribute("root");
-            self.builder = new ShapeBuilder(rootXML, self.loader);
-            self.defaultColor = self.defaultColor ? self.defaultColor : self.builder.parseColor("7d7d7d");
-            // Load the root product
-            self.product = new Product(self.rootID, self.builder, self, true);
-            self.centerGeometry();
-            self.dispatchEvent({ type: "rootLoad" });
-            // Defer all downloading until the full root doc is parsed
-            self.loader.runLoadQueue();
+                // Add the part to the list
+                self._parts.push(part);
+                // Update the tree
+                self.renderTree();
+                // Get the rest of the files
+                self._loader.runLoadQueue(true);
             }
         });
-
-
-        this.assembly = new Assembly({
-            resourceUrl: resourceUrl,
-            canvasParent: this.viewContainer,
-            compassParent: this.compassContainer
-        });
-        this.bindEvents();
-        this.assembly.load();
     };
 
     CADjs.prototype.render = function () {
-        this.assembly.render();
+        this._parts[0].render();
     };
 
     CADjs.prototype.bindEvents = function () {
         var self = this;
-
-        // Tree View
-        var canvasDOM = document.getElementById(this.viewContainer);
-        this.assembly.addEventListener("rootLoad", function() {
-            self.renderTree();
-        });
+        var canvasDOM = document.getElementById(this._viewContainer);
 
         // Download manager interface
         var $downloads = $(this.downloadsContainer);
-        this.assembly.addEventListener("loadComplete", function() {
-            console.log("All loaded Loaded");
-        });
-        this.assembly.loader.addEventListener("addRequest", function(event) {
+        this._loader.addEventListener("addRequest", function(event) {
             var id = event.file.split(".")[0];
             $downloads.append("<li id='" + id + "'>" + event.file + "</li>");
-            var count = self.assembly.loader.queueLength(true);
+            var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
         });
-        this.assembly.loader.addEventListener("loadComplete", function(event) {
+        this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
             $("li#" + id).remove();
-            var count = self.assembly.loader.queueLength(true);
+            var count = self._loader.queueLength(true);
             $(".steptools-downloads-count").text(count);
         });
-        this.assembly.loader.addEventListener("queueEmpty", function() {
-            var count = self.assembly.loader.queueLength(true);
+        this._loader.addEventListener("queueEmpty", function() {
+            var count = self._loader.queueLength(true);
             $(".steptools-downloads-count").text(count);
         });
-        this.assembly.loader.addEventListener("loadProgress", function(event) {
+        this._loader.addEventListener("loadProgress", function(event) {
             var id = event.file.split(".")[0];
             var loaded = Math.round(event.loaded * 100) / 100;
             $("li#" + id).text(event.file + ": " + loaded + "%");
         });
 
-        var _change;
         // Need to turn mouse selection on and off to not interfere with click drag view control
-        this.assembly.geometryViewer.controls.addEventListener("change", function() {
+        var _change;
+        this._viewer.controls.addEventListener("change", function() {
             _change = true;
         });
-        this.assembly.geometryViewer.controls.addEventListener("start", function() {
+        this._viewer.controls.addEventListener("start", function() {
             _change = false;
         });
         canvasDOM.addEventListener("mouseup", function(event) {
@@ -134,8 +114,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         }, false);
 
         // Keybased events
-        window.addEventListener("keypress", function(event) {
-            //console.log(event.keyCode);
+        canvasDOM.addEventListener("keypress", function(event) {
+            console.log(event.keyCode);
             switch(event.keyCode) {
                 // Explode on 'x' key pressed
                 case 120:
@@ -147,7 +127,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     break;
                 // 'q' unselects all tree elements
                 case 113:
-                    self.assembly.hideAllBoundingBoxes();
+                    self._parts[0].hideAllBoundingBoxes();
+                    console.log("Got here");
                     self.tree.deselect_all();
                     break;
                 // 'o' to set opacity of selected to 0.5
@@ -165,10 +146,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     CADjs.prototype.onClick = function(event) {
         // Clear selections if meta key not pressed
         if (!event.metaKey) {
-            this.assembly.hideAllBoundingBoxes();
+            this._parts[0].hideAllBoundingBoxes();
             this.tree.deselect_all();
         }
-        var obj = this.assembly.select(event.clientX, event.clientY);
+        var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
         // Did we find an object
         if (obj) {
             obj = obj.getNamedParent();
@@ -179,8 +160,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onMove = function(event) {
-        this.assembly.clearHighlights();
-        var obj = this.assembly.select(event.clientX, event.clientY);
+        this._parts[0].clearHighlights();
+        var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
         // Did we find an object
         if (obj) {
             obj = obj.getNamedParent();
@@ -193,7 +174,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         var node = this.tree.get_selected(false);
         if (node) {
             for (var i = 0; i < node.length; i++) {
-                var obj = this.assembly.getByID(node[i]);
+                var obj = this._parts[0].getByID(node[i]);
                 if (obj) {
                     obj.explode(distance);
                 }
@@ -205,7 +186,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         var node = this.tree.get_selected(false);
         if (node) {
             for (var i = 0; i < node.length; i++) {
-                var obj = this.assembly.getByID(node[i]);
+                var obj = this._parts[0].getByID(node[i]);
                 if (obj) {
                     obj.setOpacity(opacity);
                 }
@@ -216,9 +197,9 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     CADjs.prototype.renderTree = function() {
         var self = this;
         var geometryOnly = false;
-        var treeData = this.assembly.getTree(geometryOnly);
+        var treeData = this._parts[0].getTree(geometryOnly);
         if (this.tree) this.tree.destroy();
-        this.tree = $.jstree.create(this.treeContainer, {
+        this.tree = $.jstree.create(this._treeContainer, {
             plugins : [ 'contextmenu' ],
             core: {
                 data: [ treeData ],
@@ -233,7 +214,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                         showAll: {
                             label: "Show All",
                             action: function() {
-                                self.assembly.showAll();
+                                self._parts[0].showAll();
                                 // TODO: Need to update tree to make all enabled
                                 //console.log(self.tree.disabled);
                             }
@@ -241,9 +222,9 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                         focusOn: {
                             label: "Focus On",
                             action: function() {
-                                var obj = self.assembly.getByID(menuItem.id);
+                                var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
-                                    self.assembly.focusOn(obj);
+                                    self._parts[0].focusOn(obj);
                                 }
                             }
                         }
@@ -252,7 +233,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                         menu["show"] = {
                             label: "Show",
                             action: function() {
-                                var obj = self.assembly.getByID(menuItem.id);
+                                var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
                                     obj.show();
                                     self.tree.enable_node(menuItem);
@@ -263,7 +244,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                         menu["hide"] = {
                             label: "Hide",
                             action: function() {
-                                var obj = self.assembly.getByID(menuItem.id);
+                                var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
                                     obj.hide();
                                     self.tree.disable_node(menuItem);
@@ -277,11 +258,11 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             }
         });
 
-        this.treeContainer.on("select_node.jstree deselect_node.jstree", function(event, data) {
-            self.assembly.hideAllBoundingBoxes();
-            //self.assembly.clearHighlights();
+        $(this._treeContainer).on("select_node.jstree deselect_node.jstree", function(event, data) {
+            self._parts[0].hideAllBoundingBoxes();
+            //self._parts[0].clearHighlights();
             for (var i = 0; i < data.selected.length; i++) {
-                var obj = self.assembly.getByID(data.selected[i]);
+                var obj = self._parts[0].getByID(data.selected[i]);
                 if (obj) {
                     obj.showBoundingBox();
                     //obj.highlight(0xff0000);

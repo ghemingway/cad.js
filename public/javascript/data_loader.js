@@ -7,25 +7,35 @@
 
 /********************************* Helper Functions ********************************/
 
-define(["THREE"], function(THREE) {
+define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assembly, Product, Shape, Shell) {
+    function DataLoader (parent, scene, config) {
+        this._parent = parent;
+        this._scene = scene;
+        this._queue = [];       // The queue of requests to load
+        this._loading = [];     // List of active loading jobs
+        this._maxWorkers = config.maxWorkers ? config.maxWorkers : 8;
+        this._freeWorkers = [];
 
-    /********************************* Base DataLoader Class ********************************/
-
-    function DataLoader (config) {
-        this._config = config;
-        this._loadQueue = [];  // The queue of requests to load
-        this._loading = [];     // Items currently getting loaded
-        this._jobs = config.jobs ? config.jobs : 12;
+        var self = this;
+        this._workers = [];     // List of workers
+        while (this._workers.length < this._maxWorkers) {
+            var worker = new Worker("/javascript/webworker-xml.js");
+            worker.addEventListener("message", function(event) {
+                self.workerMessage(worker, event);
+            });
+            this._workers.push(worker);
+            this._freeWorkers.push(worker);
+        }
     }
 
-    DataLoader.prototype.parseBoundingBox = function(str) {
-        var vals = this.parseFloatVec(str, 6);
+    DataLoader.parseBoundingBox = function(str) {
+        var vals = DataLoader.parseFloatVec(str, 6);
         return new THREE.Box3(new THREE.Vector3(vals[0], vals[1], vals[2]), new THREE.Vector3(vals[3], vals[4], vals[5]));
     };
 
-    DataLoader.prototype.parseXform = function(str, colOriented) {
+    DataLoader.parseXform = function(str, colOriented) {
         if (str == null) return null;
-        var arr = this.parseFloatVec(str);
+        var arr = DataLoader.parseFloatVec(str);
         if (arr.length !== 16) {
             throw new Error("Invalid Xform found");
         }
@@ -46,7 +56,7 @@ define(["THREE"], function(THREE) {
         }
     };
 
-    DataLoader.prototype.parseColor = function(hex) {
+    DataLoader.parseColor = function(hex) {
         var cval = parseInt(hex, 16);
         return (new THREE.Color()).setRGB(
             ((cval >>16) & 0xff) / 255,
@@ -55,7 +65,7 @@ define(["THREE"], function(THREE) {
         );
     };
 
-    DataLoader.prototype.parseUnit = function(str) {
+    DataLoader.parseUnit = function(str) {
         var unit = str.split(" ")[0];
         var factor = parseFloat(str.split(" ")[1]);
         if (unit !== "mm") {
@@ -64,17 +74,40 @@ define(["THREE"], function(THREE) {
         return factor;
     };
 
+    DataLoader.parseFloatVec = function(str, count) {
+        var vals = str.split(" ");
+        if (count != null && vals.length != count) {
+            throw new Error (
+                "parse_float_vec: unexpected number of elements expecting "+count
+                    + " have " + vals.length);
+        }
+        count = vals.length;
+        var ret = new Array(count);
+        for (var i=0; i<count; i++) {
+            var v = parseFloat(vals[i]);
+            if (!isFinite(v)) throw new Error ("number is not finite");
+            ret[i] = v;
+        }
+        return ret;
+    };
+
+    DataLoader.getArrayFromAttribute = function(el, name) {
+        // Get the XML attribute, from an element and split it an array if empty or missing, return empty array.
+        var val = el.getAttribute(name);
+        if (!val) return [];
+        return val.split(" ");
+    };
+
     /************** DataLoader Class Functions ****************************/
 
     DataLoader.prototype.load = function(url, validateType, callback) {
         // TODO: Make sure validateType is string and callback is function
-        this._autorun = true;
         this.addRequest({
             url: url,
             validateType: validateType,
             callback: callback
         });
-        this._autorun = this._config.autorun;
+        this.runLoadQueue();
     };
 
     // Set the base URL for future requests from the given URL
@@ -97,7 +130,6 @@ define(["THREE"], function(THREE) {
         else req.base = "";
     };
 
-
     DataLoader.prototype.resolveUrl = function(req, defaultURL) {
         if (!req.base) {
             this.setRequestBase(req);
@@ -105,165 +137,101 @@ define(["THREE"], function(THREE) {
         if (req.url.match(/\/$/)) {
             req.url += defaultURL;
         }
+        // Determine content type
+        var filetype = req.url.split('.').pop();
+        switch (filetype) {
+            case "xml": req.contentType = "application/xml"; break;
+            case "json": req.contentType = "application/json"; break;
+            default:
+                console.log("DataLoader.resolveUrl error - invalid content type: " + filetype);
+        }
         if (!req.url.base || req.url.match(/^\w+:/) || req.url.match(/^\//)) {
             return req.url;
         }
         return req.url.base + req.url;
     };
 
-    DataLoader.prototype.addLoadable = function(url, callback) {
-        this.addRequest(url, function(docRoot) {
-            callback(docRoot);
-        });
-    };
-
     DataLoader.prototype.addRequest = function(req) {
         this.resolveUrl(req, "index.xml");
-        console.log(req);
-//        var req = { url: url, target: func, sort: sort };
-//        this._loadQueue.push(req);
-//        var parts = req.url.split("/");
-//        this.dispatchEvent({ type: "addRequest", file: parts[parts.length - 1] });
-//        if (this._autorun) {
-//            this.runLoadQueue();
-//        }
+        this._queue.push(req);
+        var parts = req.url.split("/");
+        this.dispatchEvent({ type: "addRequest", file: parts[parts.length - 1] });
     };
 
     DataLoader.prototype.sortQueue = function() {
-        this.load_queue.sort(function(a,b) {
-            var va = DataLoader.getRank(a.sort);
-            var vb = DataLoader.getRank(b.sort);
-            if (va == vb) return 0;
-            // items w/o a sort function come first
-            if (va == null) return -1;
-            if (vb == null) return +1;
-            return vb - va;
-        });
+        console.log("DataLoader.sortQueue - not yet implemented");
     };
 
     DataLoader.prototype.queueLength = function(onlyLoad) {
         if (onlyLoad) {
-            return this.loading.length + this.load_queue.length;
+            return this._loading.length;
         } else {
-            return this.load_queue.length + this.loading.length + this.post_queue.length;
+            return this._queue.length + this._loading.length;
         }
     };
 
     DataLoader.prototype.runLoadQueue = function() {
-        // Maximum number of concurrent loads is happening OR No files to load
-        if (this.loading.length >= this.jobs) {
-            return;
-        }
-        else if (this.load_queue.length <= 0) {
-            this.dispatchEvent({ type: "queueEmpty" });
-            return;
-        }
-        this.initRequest(this.load_queue.shift());
-    };
-
-    DataLoader.prototype.initRequest = function(req) {
-        if (this.loading.length > this.jobs) {
-            throw new Error("DataLoader internal error");
-        }
-        this.loading.push(req);
-        var xr = new XMLHttpRequest();
-        var self = this;
-        xr.addEventListener("load", function() {
-            self.loadComplete(xr, req);
-        });
-        xr.addEventListener("loadend", function() {
-            self.requestComplete(req);
-        });
-        xr.addEventListener("progress", function(event) {
-            var parts = req.url.split("/");
-            var message = { type: "loadProgress", file: parts[parts.length - 1] };
-            if (event.lengthComputable) {
-                message.loaded = event.loaded / event.total * 100.0;
-            }
-            self.dispatchEvent(message);
-        });
-        xr.open("GET", req.url, true);
-        try {
-            xr.send();
-        } catch (ex) {
-            console.log ("DataLoader.initRequest - Error loading file: " + req.url);
-            this.requestComplete(req);
+        console.log("QLF: " + this._queue.length + ", " + this._loading.length + ", " + this._freeWorkers.length);
+        // Keep issuing loads until no workers left
+        while (this._queue.length > 0 && this._freeWorkers.length > 0) {
+            var worker = this._freeWorkers.shift();
+            var req = this._queue.shift();
+            this._loading[req.url] = req;
+            this.initRequest(worker, req);
         }
     };
 
-// Called when a download completes successfully.  This function pushes the
-// results on the post queue, and arranges for them to run.
-    DataLoader.prototype.loadComplete = function(xr, req) {
-        req.xml = xr.responseXML;
-        this.post_queue.push(req);
-        var parts = req.url.split('/');
-        this.dispatchEvent({ type: "loadComplete", file: parts[parts.length - 1] });
-        this.runPostQueue();
-    };
-
-// Called when an AJAX request is finished for any reason.  This will ensure
-// that the next item in the queue is loaded.
-    DataLoader.prototype.requestComplete = function(req) {
-        for (var i = 0; i < this.loading.length; i++) {
-            if (this.loading[i] == req) {
-                this.loading.splice(i, 1);
+    DataLoader.prototype.workerMessage = function(worker, event) {
+        // Put worker back into the queue - if it is the time
+        var req;
+        if (event.data.type === "rootLoad" || event.data.type === "shellLoad") {
+            // Remove the job from the loading queue
+            var index = this._loading.indexOf(event.data.url);
+            req = this._loading[event.data.url];
+            this._loading.splice(index, 1);
+            this._freeWorkers.push(worker);
+            this.runLoadQueue();
+        }
+        switch(event.data.type) {
+            case "rootLoad":
+                // Handle the assembly
+                switch (req.contentType) {
+                    case "application/xml":
+                        this.buildAssemblyXML(event.data.data, req);
+                        break;
+                    case "application/json":
+                        console.log("DataLoader.buildAssemblyJSON - Not Implemented");
+                        break;
+                }
                 break;
-            }
+            case "shellLoad":
+                var data = event.data.data;
+                req.shell.addGeometry(data.position, data.normals, data.colors);
+                break;
+            case "loadProgress":
+                // Send out the loadProgress message
+                this.dispatchEvent(event.data);
+                break;
+            case "loadEnd":
+                console.log('Worker said: ', event.data.url);
+                break;
         }
-        this.runLoadQueue();
     };
 
-// Schedule the first item on the post precessing queue.
-    DataLoader.prototype.runPostQueue = function() {
-        if (this.active) {
-            return;
-        }
-        var req = this.post_queue.shift();
-        this.active = req;
-        var self = this;
-        // Run the actual post function in a timeout.  This way, we will
-        // return to the UI immediately.  Some time later, the function will
-        // wake up, and then it will initialize the data.
-        window.setTimeout(function() {
-            self.updatePost(function() {
-                var target = req.target;
-                target(req.xml.documentElement);
-            });
-        }, 0);
+    DataLoader.prototype.initRequest = function(worker, req) {
+        // Send the request to the worker
+        var data = {
+            url: req.url,
+            type: req.validateType
+        };
+        if (data.type === "shell") data.shellSize = req.shellSize;
+        worker.postMessage(data);
     };
 
-// run a request's post-processing function.
-    DataLoader.prototype.updatePost = function(fn) {
-        if (!this.active) throw new Error ("Nothing active");
-        var self = this;
-        var next = fn();
-        if (next) {
-            // The request is not yet complete, so we schedule another call
-            // and bail out
-            window.setTimeout(function() {
-                self.updatePost(next)
-            }, 0);
-            return;
-        }
-        this.active = null;
-        if (this.post_queue.length > 0) this.runPostQueue();
-    };
-
-    THREE.EventDispatcher.prototype.apply(DataLoader.prototype);
-
-
-    /********************************* XML Data Loader Class ********************************/
-
-
-    function XMLDataLoader(rootXML) {
-        this.objs = {};
-        this.elementMap = this.buildElementMap(rootXML);
-    }
-
-    XMLDataLoader.prototype.buildElementMap = function(xmlEl) {
+    DataLoader.prototype.buildElementMapXML = function(xmlDoc) {
         var ids = {};
-        for (var i=0; i < xmlEl.childNodes.length; i++) {
-            var ch = xmlEl.childNodes[i];
+        for (var i=0; i < xmlDoc.childNodes.length; i++) {
+            var ch = xmlDoc.childNodes[i];
             if (ch.nodeType != Node.ELEMENT_NODE) continue;
             var id = ch.getAttribute("id");
             if (id) ids[id] = ch;
@@ -271,58 +239,104 @@ define(["THREE"], function(THREE) {
         return ids;
     };
 
-    XMLDataLoader.prototype.make = function(id, fallback, elName) {
-//    console.log("XMLDataLoader.make: " + id + ", Name: " + elName);
-        if (!id) {
-            throw new Error("null id");
+    DataLoader.prototype.buildAssemblyXML = function(xmlText, req) {
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(xmlText, "text/xml").documentElement;
+        // Get the assembly properties we need
+        var rootID = xmlDoc.getAttribute("root");
+        var defaultColor = DataLoader.parseColor("7d7d7d");
+        var assembly = new Assembly(rootID, defaultColor, this);
+        // Process the rest of the index xml
+        var map = this.buildElementMapXML(xmlDoc);
+        var rootProduct = this.buildProductXML(req, map, assembly, rootID, true);
+        assembly.setRootProduct(rootProduct);
+        // Add the assembly to the scene
+        this._scene.add(rootProduct.getObject3D());
+        // Call back with the new Assembly - nicely centered
+        assembly.centerGeometry();
+        req.callback(undefined, assembly);
+    };
+
+    DataLoader.prototype.buildProductXML = function(req, map, assembly, id, isRoot) {
+        var xmlElement = map[id];
+        var step = xmlElement.getAttribute ("step");
+        var name = xmlElement.getAttribute("name");
+        // Create the product
+        var product = new Product(id, assembly, name, step, isRoot);
+        // Load child shapes
+        var shapes = DataLoader.getArrayFromAttribute(xmlElement, "shape");
+        var i, identityTransform = (new THREE.Matrix4()).identity();
+        for (i = 0; i < shapes.length; i++) {
+            var shape = this.buildShapeXML(req, map, assembly, shapes[i], undefined, identityTransform, isRoot);
+//            if (isRoot) {
+                product.addShape(shape);
+//            }
         }
-        var ret = this.objs[id];
-        if (ret) {
-            return ret;
-        }
-        if (elName) {
-            var el = this.getElement(id);
-            if (el == null) {
-                console.log ("StepBuilder.make - Could not get shape element: " + id);
-                return null;
+        // Load child products
+        var childProducts = DataLoader.getArrayFromAttribute(xmlElement, "children");
+        for (i = 0; i < childProducts.length; i++) {
+            var child = this.buildProductXML(req, map, assembly, childProducts[i], false);
+            if (isRoot) {
+                product.addChild(child);
             }
-            if (el.tagName != elName) {
-                throw new Error ("StepBuilder.make - unexpected element name: " + el.tagName + " wanted: " + elName);
+        }
+        return product;
+    };
+
+    DataLoader.prototype.buildShapeXML = function(req, map, assembly, id, parent, transform, isRoot) {
+        var xmlElement = map[id];
+        var unit = xmlElement.getAttribute("unit");
+        // Create the shape
+        var shape = new Shape(id, assembly, parent, transform, unit, isRoot);
+        // Load child shells
+        if (isRoot) {
+            var shells = DataLoader.getArrayFromAttribute(xmlElement, "shell");
+            for (var i = 0; i < shells.length; i++) {
+                var shell = this.buildShellXML(req, map, shells[i], assembly, shape);
+                shape.addShell(shell);
             }
         }
-        this.objs[id] = fallback;
-        return null;
-    };
-
-    XMLDataLoader.prototype.getArrayFromAttribute = function(el, name) {
-        // Get the XML attribute, from an element and split it an array if empty or missing, return empty array.
-        var val = el.getAttribute(name);
-        if (!val) return [];
-        return val.split(" ");
-    };
-
-    XMLDataLoader.prototype.parseFloatVec = function(str, count) {
-        var vals = str.split(" ");
-        if (count != null && vals.length != count) {
-            throw new Error (
-                "parse_float_vec: unexpected number of elements expecting "+count
-                    + " have " + vals.length);
+        // Load child shapes
+        var childShapes = xmlElement.getElementsByTagName("child");
+        for (i = 0; i < childShapes.length; i++) {
+            var childEl = childShapes[i];
+            // Setup the child's transform
+            var localTransform = DataLoader.parseXform(childEl.getAttribute("xform"), true);
+            // Build the child
+            var child = this.buildShapeXML(req, map, assembly, childEl.getAttribute("ref"), shape, localTransform, isRoot);
+            if (isRoot) {
+                shape.addChild(child);
+            }
         }
-        count = vals.length;
-        var ret = new Array(count);
-        for (var i=0; i<count; i++) {
-            var v = parseFloat(vals[i]);
-            if (!isFinite(v)) throw new Error ("number is not finite");
-            ret[i] = v;
-        }
-        return ret;
+        return shape;
     };
 
-    /********************************* JSON Data Loader Class ********************************/
+    DataLoader.prototype.buildShellXML = function(req, map, id, assembly, parent) {
+        var xmlElement = map[id];
+        var href = xmlElement.getAttribute("href");
+        // Do we have to load the shell
+        if (href) {
+            var color = DataLoader.parseColor("7d7d7d");
+            var boundingBox = DataLoader.parseBoundingBox(xmlElement.getAttribute("bbox"));
+            var size = parseFloat(xmlElement.getAttribute("size"));
+            var shell = new Shell(id, assembly, parent, size, color, boundingBox);
+            this.addRequest({
+                url: req.base + href,
+                validateType: "shell",
+                shell: shell,
+                shellSize: size,
+                callback: function(err) {
+                    console.log("Shell load callback");
+                }
+            });
+            return shell;
+        } else {
+            console.log("DataLoader.buildShellXML - Online - Not yet implemented");
+            return undefined;
+        }
+    };
 
-    function JSONDataLoader(rootDocument) {
-
-    }
-
+    // Give the dataLoader some eventing!
+    THREE.EventDispatcher.prototype.apply(DataLoader.prototype);
     return DataLoader;
 });

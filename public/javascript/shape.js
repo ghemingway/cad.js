@@ -7,385 +7,376 @@
 
 /********************************* Shape Class ********************************/
 
-function Shape(id, builder, assembly, parent, transform, makeInstance) {
-    var ret = builder.make(id, this, "shape"),
-        localTransform,
-        i,
-        self = this;
-    if (!ret) {
-        var el = builder.getElement(id);
-        this.id = id;
-        this.assembly = assembly;
-        this.parent = parent;
-        // If we are here, this is the first one
-        this.instanceID = 0;
-        this.instances = [];
-        this.instance = undefined;
+define(["THREE"], function(THREE) {
+    function Shape(id, assembly, parent, transform, unit, isRoot) {
+        var ret = assembly.makeChild(id, this);
+        if (!ret) {
+//            console.log("Make new shape: " + id);
+            this._id = id;
+            this._assembly = assembly;
+            this._parent = parent;
+            this._unit = unit;
+            // If we are here, this is the first one
+            this._instanceID = 0;
+            this._instances = [];
+            this._instance = undefined;
+            // Other setup items
+            this._isRoot = isRoot;
+            this._shells = [];
+            this._children = [];
+            // Setup 3D
+            this._object3D = new THREE.Object3D();
+            // Setup any transform from the parent reference frame
+            this._transform = (new THREE.Matrix4()).copy(transform);
+            this._object3D.applyMatrix(this._transform);
+        } else {
+            if (isRoot) {
+                // Set up the object to be an instance
+                this.instance(ret, assembly, parent, transform);
+                ret = this;
+            }
+        }
+        return ret;
+    }
 
-        //this.unit = builder.parseUnit(el.getAttribute("unit"));
-        this.object3D = new THREE.Object3D();
-        // Setup any transform from the parent reference frame
-        this.transform = (new THREE.Matrix4()).copy(transform);
-        this.object3D.applyMatrix(this.transform);
-
-        // Load shells - if any
-        this.shells = [];
-        var shells = builder.getArrayFromAttribute(el, "shell");
-        for (i = 0; i < shells.length; i++) {
-            var shell = new Shell(shells[i], builder, assembly, this);
+    Shape.prototype.instance = function(source, assembly, parent, transform) {
+//        console.log("Instance existing shape: " + source._id);
+        // Setup the basic info
+        this._id = source._id;
+        this._assembly = source._assembly;
+        this._parent = parent;
+        this._unit = source._unit;
+        // Setup instance info
+        source._instances.push(this);
+        this._instanceID = source._instances.length;
+        this._instance = source;
+        this._instances = [];
+        // Other setup items
+        this._isRoot = source._isRoot;
+        // Prep the object3D
+        this._object3D = new THREE.Object3D();
+        this._transform = (new THREE.Matrix4()).copy(transform);
+        this._object3D.applyMatrix(this._transform);
+        // Need to clone child shell events
+        this._shells = [];
+        for (var i = 0; i < source._shells.length; i++) {
+            var shell = source._shells[i];
             shell.addEventListener("shellEndLoad", function(event) {
                 self.addGeometry(event.shell.geometry);
             });
-            this.shells.push(shell);
+            this._shells.push(shell);
         }
-
-        // Load child shapes
-        this.children = [];
-        var childShapeIDs = el.getElementsByTagName("child");
-        if (childShapeIDs.length > 0) {
-            for (i = 0; i < childShapeIDs.length; i++) {
-                var childEl = childShapeIDs[i];
-                // Setup the child's transform
-                localTransform = builder.parseXform(childEl.getAttribute("xform"), true);
-                // Build the child
-                var refID = childEl.getAttribute("ref");
-                var shape = new Shape(refID, builder, assembly, this, localTransform, makeInstance);
-                // Bubble the shapeLoaded event
-                shape.addEventListener("shapeLoaded", function(event) {
-                    self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
-                });
-                // Add of the child shape to the scene graph
-                this.object3D.add(shape.getObject3D());
-                this.children.push(shape);
-            }
+        // Need to clone all child shapes
+        this._children = [];
+        for (i = 0; i < source._children.length; i++) {
+            // Clone the child shape
+            var shapeID = source._children[i]._id;
+            var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit, true);
+            // Bubble the shapeLoaded event
+            shape.addEventListener("shapeLoaded", function(event) {
+                self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
+            });
+            // Add of the child shape to the scene graph
+            this._object3D.add(shape.getObject3D());
+            this._children.push(shape);
         }
-    } else {
-        if (makeInstance) {
-            // Set up the object to be an instance
-            this.instance(ret, builder, parent, transform);
-            ret = this;
-        }
-    }
-    return ret;
-}
+    };
 
-Shape.prototype.instance = function(source, builder, parent, transform) {
-    var i,
-        shell,
-        self = this;
-
-    // Setup the basic info
-    this.id = source.id;
-    this.assembly = source.assembly;
-    this.parent = parent;
-    // Setup instance info
-    source.instances.push(this);
-    this.instanceID =   source.instances.length;
-    this.instance = source;
-    this.instances = [];
-
-    // Need to clone Object3D and subscribe to child shell events
-    this.shells = [];
-    for (i = 0; i < source.shells.length; i++) {
-        shell = source.shells[i];
-        shell.addEventListener("shellEndLoad", function(event) {
-            self.addGeometry(event.shell.geometry);
-        });
-        this.shells.push(shell);
-    }
-
-    // Prep the object3D
-    this.object3D = new THREE.Object3D();
-    this.transform = (new THREE.Matrix4()).copy(transform);
-    this.object3D.applyMatrix(this.transform);
-
-    // Need to clone all child shapes
-    this.children = [];
-    for (i = 0; i < source.children.length; i++) {
-        // Clone the child shape
-        var shapeID = source.children[i].id;
-        var shape = new Shape(shapeID, builder, this.assembly, this, source.children[i].transform, true);
+    Shape.prototype.addChild = function(childShape) {
+        var self = this;
+        this._children.push(childShape);
         // Bubble the shapeLoaded event
-        shape.addEventListener("shapeLoaded", function(event) {
+        childShape.addEventListener("shapeLoaded", function(event) {
             self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
         });
         // Add of the child shape to the scene graph
-        this.object3D.add(shape.getObject3D());
-        this.children.push(shape);
-    }
-};
+        this._object3D.add(childShape.getObject3D());
+    };
 
-Shape.prototype.setProduct = function(product) {
-    this.product = product;
-    // Set the product for all instances
-    for (var i = 0; i < this.instances.length; i++) {
-        this.instances[i].setProduct(product);
-    }
-};
-
-Shape.prototype.addGeometry = function(geometry) {
-    var material = new THREE.MeshPhongMaterial({
-        color: 0xaaaaaa,
-        ambient: 0xaaaaaa,
-        specular: 0xffffff,
-        shininess: 255,
-        side: THREE.FrontSide,
-        vertexColors: THREE.VertexColors,
-        transparent: true
-    });
-    var mesh = new THREE.SkinnedMesh(geometry, material, false);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.userData = this;
-    this.object3D.add(mesh);
-    this.dispatchEvent({ type: "shapeLoaded" });
-};
-
-Shape.prototype.getObject3D = function() {
-    return this.object3D;
-};
-
-Shape.prototype.getName = function() {
-    return "Shape";
-};
-
-Shape.prototype.getID = function() {
-    return this.id + "_" + this.instanceID;
-};
-
-Shape.prototype.getSize = function() {
-    if (!this.size) {
-        this.size = 0;
-        var i;
-        for (i = 0; i < this.shells.length; i++) {
-            this.size += this.shells[i].size;
+    Shape.prototype.addShell = function(shell) {
+        var self = this;
+        this._shells.push(shell);
+        if (this._isRoot) {
+            shell.addEventListener("shellEndLoad", function(event) {
+                var shell = event.shell;
+                self.addGeometry(shell._geometry);
+            });
         }
-        for (i = 0; i < this.children.length; i++) {
-            this.size += this.children[i].getSize();
-        }
-    }
-    return this.size;
-};
+    };
 
-Shape.prototype.getLabel = function() {
-    if (this.product) {
-        return this.product.getProductName();
-    }
-    return null;
-};
+    Shape.prototype.setProduct = function(product) {
+        this._product = product;
+        // Set the product for all instances
+        for (var i = 0; i < this._instances.length; i++) {
+            this._instances[i].setProduct(product);
+        }
+    };
 
-Shape.prototype.getNamedParent = function(includeSelf) {
-    if (includeSelf === undefined) includeSelf = true;
-    if (includeSelf && this.product) {
-        return this;
-    } else {
-        var obj = this.parent;
-        while (!obj.product && obj.parent) {
-            console.log(obj.getID());
-            obj = obj.parent;
-        }
-        return obj;
-    }
-};
+    Shape.prototype.addGeometry = function(geometry) {
+        var material = new THREE.MeshPhongMaterial({
+            color: 0xaaaaaa,
+            ambient: 0xaaaaaa,
+            specular: 0xffffff,
+            shininess: 255,
+            side: THREE.FrontSide,
+            vertexColors: THREE.VertexColors,
+            transparent: true
+        });
+        var mesh = new THREE.SkinnedMesh(geometry, material, false);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.userData = this;
+        this._object3D.add(mesh);
+        this.dispatchEvent({ type: "shapeLoaded" });
+    };
 
-Shape.prototype.getTree = function() {
-    // Check if only geometry-aligned Shapes get added to tree
-    var children = [], tmpChild;
-    for (var i = 0; i < this.children.length; i++) {
-        tmpChild = this.children[i].getTree();
-        if (tmpChild) {
-            children.push(tmpChild);
-        }
-    }
-    // Only show things that are product-driven
-    if (!this.product || this.boundingBox.empty()) {
-        return undefined;
-    } else {
-        var id = this.getID();
-        this.name = "Shape " + id;
-        if (this.product) {
-            this.name = this.product.getProductName();
-        }
-        // Don't show children if this is an instance
-        return {
-            id          : id,
-            text        : this.name,
-            state       : {
-                opened    : this.instanceID === 0,
-                disabled  : false,
-                selected  : false
-            },
-            children    : children
-        };
-    }
-};
+    Shape.prototype.getObject3D = function() {
+        return this._object3D;
+    };
 
-Shape.prototype.getBoundingBox = function(transform) {
-    if (!this.boundingBox) {
-        var i;
-        this.boundingBox = new THREE.Box3();
-        for (i = 0; i < this.shells.length; i++) {
-            var shellBounds = this.shells[i].getBoundingBox(true);
-            if (!shellBounds.empty()) this.boundingBox.union(shellBounds);
-        }
-        for (i = 0; i < this.children.length; i++) {
-            var childBounds = this.children[i].getBoundingBox(true);
-            if (!childBounds.empty()) {
-                this.boundingBox.union(childBounds);
+    Shape.prototype.getName = function() {
+        return "Shape";
+    };
+
+    Shape.prototype.getID = function() {
+        return this._id + "_" + this._instanceID;
+    };
+
+    Shape.prototype.getSize = function() {
+        if (!this._size) {
+            this._size = 0;
+            var i;
+            for (i = 0; i < this._shells.length; i++) {
+                this._size += this._shells[i].size;
+            }
+            for (i = 0; i < this._children.length; i++) {
+                this._size += this._children[i].getSize();
             }
         }
-    }
-    var bounds = this.boundingBox.clone();
-    if (transform && !bounds.empty()) {
-        bounds.applyMatrix4(this.transform);
-    }
-    return bounds;
-};
+        return this._size;
+    };
 
-Shape.prototype.toggleVisibility = function() {
-    if (this.object3D.visible) this.hide();
-    else this.show();
-};
+    Shape.prototype.getLabel = function() {
+        if (this._product) {
+            return this._product.getProductName();
+        }
+        return null;
+    };
 
-Shape.prototype.hide = function() {
-    this.object3D.traverse(function(object) {
-        object.visible = false;
-    });
-};
+    Shape.prototype.getNamedParent = function(includeSelf) {
+        if (includeSelf === undefined) includeSelf = true;
+        if (includeSelf && this._product) {
+            return this;
+        } else {
+            var obj = this._parent;
+            while (!obj.product && obj.parent) {
+                console.log(obj.getID());
+                obj = obj.parent;
+            }
+            return obj;
+        }
+    };
 
-Shape.prototype.show = function() {
-    this.object3D.traverse(function(object) {
-        object.visible = true;
-    });
-};
-
-Shape.prototype.highlight = function(colorHex) {
-    var self = this;
-    this.object3D.traverse(function(object) {
-        if (object.material) {
-            object.material._color = {
-                ambient: object.material.ambient,
-                color: object.material.color,
-                specular: object.material.specular
+    Shape.prototype.getTree = function() {
+        // Check if only geometry-aligned Shapes get added to tree
+        var children = [], tmpChild;
+        for (var i = 0; i < this._children.length; i++) {
+            tmpChild = this._children[i].getTree();
+            if (tmpChild) {
+                children.push(tmpChild);
+            }
+        }
+        // Only show things that are product-driven
+        if (!this._product || this.boundingBox.empty()) {
+            return undefined;
+        } else {
+            var id = this.getID();
+            this.name = "Shape " + id;
+            if (this._product) {
+                this.name = this._product.getProductName();
+            }
+            // Don't show children if this is an instance
+            return {
+                id          : id,
+                text        : this.name,
+                state       : {
+                    opened    : this._instanceID === 0,
+                    disabled  : false,
+                    selected  : false
+                },
+                children    : children
             };
-            object.material.ambient = new THREE.Color(colorHex);
-            object.material.color = object.material.ambient;
-            object.material.specular = object.material.specular;
-            self.assembly.addEventListener("_clearHighlights", function() {
-                object.material.ambient = object.material._color.ambient;
-                object.material.color = object.material._color.color;
-                object.material.specular = object.material._color.specular;
-            });
         }
-    });
-};
+    };
 
-Shape.prototype.setOpacity = function (opacity) {
-    var self = this;
-    this.object3D.traverse(function(object) {
-        if (object.material) {
-            object.material.opacity = opacity;
-            self.assembly.addEventListener("_clearOpacity", function() {
-                object.material.opacity = 1;
-            });
+    Shape.prototype.getBoundingBox = function(transform) {
+        if (!this.boundingBox) {
+            var i;
+            this.boundingBox = new THREE.Box3();
+            for (i = 0; i < this._shells.length; i++) {
+                var shellBounds = this._shells[i].getBoundingBox(true);
+                if (!shellBounds.empty()) this.boundingBox.union(shellBounds);
+            }
+            for (i = 0; i < this._children.length; i++) {
+                var childBounds = this._children[i].getBoundingBox(true);
+                if (!childBounds.empty()) {
+                    this.boundingBox.union(childBounds);
+                }
+            }
         }
-    });
-};
+        var bounds = this.boundingBox.clone();
+        if (transform && !bounds.empty()) {
+            bounds.applyMatrix4(this._transform);
+        }
+        return bounds;
+    };
 
-Shape.prototype.showBoundingBox = function() {
-    var bounds = this.getBoundingBox(false);
-    if (!this.bbox && !bounds.empty()) {
-        this.bbox = this.assembly.geometryViewer.buildBoundingBox(bounds);
-    }
-    if (this.bbox) {
+    Shape.prototype.toggleVisibility = function() {
+        if (this._object3D.visible) this.hide();
+        else this.show();
+    };
+
+    Shape.prototype.hide = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = false;
+        });
+    };
+
+    Shape.prototype.show = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = true;
+        });
+    };
+
+    Shape.prototype.highlight = function(colorHex) {
         var self = this;
-        this._eventFunc = function() {
-            self.hideBoundingBox();
-        };
-        // Start listening for assembly _hideBounding events
-        this.assembly.addEventListener("_hideBounding", this._eventFunc);
-        this.object3D.add(this.bbox);
-    }
-};
+        this._object3D.traverse(function(object) {
+            if (object.material) {
+                object.material._color = {
+                    ambient: object.material.ambient,
+                    color: object.material.color,
+                    specular: object.material.specular
+                };
+                object.material.ambient = new THREE.Color(colorHex);
+                object.material.color = object.material.ambient;
+                object.material.specular = object.material.specular;
+                self._assembly.addEventListener("_clearHighlights", function() {
+                    object.material.ambient = object.material._color.ambient;
+                    object.material.color = object.material._color.color;
+                    object.material.specular = object.material._color.specular;
+                });
+            }
+        });
+    };
 
-Shape.prototype.hideBoundingBox = function() {
-    // Start listening for assembly _hideBounding events
-    this.assembly.removeEventListener("_hideBounding", this._eventFunc);
-    this.object3D.remove(this.bbox);
-};
+    Shape.prototype.setOpacity = function (opacity) {
+        var self = this;
+        this._object3D.traverse(function(object) {
+            if (object.material) {
+                object.material.opacity = opacity;
+                self._assembly.addEventListener("_clearOpacity", function() {
+                    object.material.opacity = 1;
+                });
+            }
+        });
+    };
 
-Shape.prototype.getCentroid = function(world) {
-    if (world === undefined) world = true;
-    var bbox = this.getBoundingBox(false);
-    if (world) {
-        bbox.min.applyMatrix4(this.object3D.matrixWorld);
-        bbox.max.applyMatrix4(this.object3D.matrixWorld);
-    }
-    return bbox.center();
-};
-
-Shape.prototype.explode = function(distance, timeS) {
-    var i, child, self = this;
-    // Do we need to determine explosion direction
-    if (!this._explodeDistance) {
-        this._explodeStates = {};
-        this._explodeDistance = 0;
-        timeS = timeS ? timeS : 1.0;
-        this._explodeStepSize = distance / 60.0 * timeS;
-        this._explodeStepRemain = 60.0 * timeS;
-        var explosionCenter = this.getCentroid();
-        for (i = 0; i < this.children.length; i++) {
-            child = this.children[i];
-            // Convert the objectCenter
-            var localExplosionCenter = explosionCenter.clone();
-            child.object3D.worldToLocal(localExplosionCenter);
-            // Get the child's centroid in local frame
-            var childCenter = child.getCentroid(false);
-            // Calculate explosion direction vector in local frame and save it
-            childCenter.sub(localExplosionCenter).normalize();
-            this._explodeStates[child.id] = childCenter;
+    Shape.prototype.showBoundingBox = function() {
+        var bounds = this.getBoundingBox(false);
+        if (!this.bbox && !bounds.empty()) {
+            this.bbox = this._assembly.buildBoundingBox(bounds);
         }
-        // After all children are loaded - start listening for assembly events
+        if (this.bbox) {
+            var self = this;
+            this._eventFunc = function() {
+                self.hideBoundingBox();
+            };
+            // Start listening for assembly _hideBounding events
+            this._assembly.addEventListener("_hideBounding", this._eventFunc);
+            this._object3D.add(this.bbox);
+        }
+    };
+
+    Shape.prototype.hideBoundingBox = function() {
+        // Start listening for assembly _hideBounding events
+        this._assembly.removeEventListener("_hideBounding", this._eventFunc);
+        this._object3D.remove(this.bbox);
+    };
+
+    Shape.prototype.getCentroid = function(world) {
+        if (world === undefined) world = true;
+        var bbox = this.getBoundingBox(false);
+        if (world) {
+            bbox.min.applyMatrix4(this._object3D.matrixWorld);
+            bbox.max.applyMatrix4(this._object3D.matrixWorld);
+        }
+        return bbox.center();
+    };
+
+    Shape.prototype.explode = function(distance, timeS) {
+        var i, child, self = this;
+        // Do we need to determine explosion direction
+        if (!this._explodeDistance) {
+            this._explodeStates = {};
+            this._explodeDistance = 0;
+            timeS = timeS ? timeS : 1.0;
+            this._explodeStepSize = distance / 60.0 * timeS;
+            this._explodeStepRemain = 60.0 * timeS;
+            var explosionCenter = this.getCentroid();
+            for (i = 0; i < this._children.length; i++) {
+                child = this._children[i];
+                // Convert the objectCenter
+                var localExplosionCenter = explosionCenter.clone();
+                child.getObject3D().worldToLocal(localExplosionCenter);
+                // Get the child's centroid in local frame
+                var childCenter = child.getCentroid(false);
+                // Calculate explosion direction vector in local frame and save it
+                childCenter.sub(localExplosionCenter).normalize();
+                this._explodeStates[child.id] = childCenter;
+            }
+            // After all children are loaded - start listening for assembly events
 //        this.assembly.addEventListener("_updateAnimation", function() {
 //            self._updateAnimation();
 //        });
-    }
-    // Make sure explosion distance does not go negative
-    if (this._explodeDistance + distance < 0) {
-        distance = -this._explodeDistance;
-    }
-    // Now, do the explosion
-    this._explodeDistance += distance;
+        }
+        // Make sure explosion distance does not go negative
+        if (this._explodeDistance + distance < 0) {
+            distance = -this._explodeDistance;
+        }
+        // Now, do the explosion
+        this._explodeDistance += distance;
 //    console.log("Exploded Distance: " + this._explodeDistance);
-    for (i = 0; i < this.children.length; i++) {
-        child = this.children[i];
-        var explosionDirection = this._explodeStates[child.id];
-        child.object3D.translateOnAxis(explosionDirection, distance);
-    }
-    // Clean up after myself
-    if (this._explodeDistance === 0) {
-        this.resetExplode();
-    }
-};
+        for (i = 0; i < this._children.length; i++) {
+            child = this._children[i];
+            var explosionDirection = this._explodeStates[child.id];
+            child.getObject3D().translateOnAxis(explosionDirection, distance);
+        }
+        // Clean up after myself
+        if (this._explodeDistance === 0) {
+            this.resetExplode();
+        }
+    };
 
-Shape.prototype._explodeStep = function(distance, step) {
+    Shape.prototype._explodeStep = function(distance, step) {
 
-};
+    };
 
-Shape.prototype._updateAnimation = function() {
-    if (this._explodeStepRemain > 0) {
-    }
-};
+    Shape.prototype._updateAnimation = function() {
+        if (this._explodeStepRemain > 0) {
+        }
+    };
 
-Shape.prototype.resetExplode = function() {
-    if (this._explodeDistance) {
-        // Explode by the negative distance
-        this.explode(-this._explodeDistance);
-        this._explodeDistance = undefined;
-        this._explodeStates = undefined;
-        this._exploseStep = undefined;
-    }
-};
+    Shape.prototype.resetExplode = function() {
+        if (this._explodeDistance) {
+            // Explode by the negative distance
+            this.explode(-this._explodeDistance);
+            this._explodeDistance = undefined;
+            this._explodeStates = undefined;
+            this._exploseStep = undefined;
+        }
+    };
 
-
-THREE.EventDispatcher.prototype.apply(Shape.prototype);
+    // Let shape have event system
+    THREE.EventDispatcher.prototype.apply(Shape.prototype);
+    return Shape;
+});
