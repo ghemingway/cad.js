@@ -57,6 +57,9 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             } else {
                 // Add the part to the list
                 self._parts.push(part);
+                // Call back with the new Assembly - nicely centered
+                part.centerGeometry();
+                part.zoomToFit(self._viewer.camera, self._viewer.controls);
                 // Update the tree
                 self.renderTree();
                 // Get the rest of the files
@@ -74,7 +77,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         var canvasDOM = document.getElementById(this._viewContainer);
 
         // Download manager interface
-        var $downloads = $(this.downloadsContainer);
+        var $downloads = $(this._downloadsContainer);
         this._loader.addEventListener("addRequest", function(event) {
             var id = event.file.split(".")[0];
             $downloads.append("<li id='" + id + "'>" + event.file + "</li>");
@@ -83,9 +86,28 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
-            $("li#" + id).remove();
+            // Update the download count
             var count = self._loader.queueLength(true);
             $(".steptools-downloads-count").text(count);
+            // Is this the index file
+            if (id === "index") {
+                $("li#index").remove();
+            } else {
+                // Change the file status to 'parsing'
+                $("li#" + id).text(event.file + ": Parsing");
+            }
+        });
+        this._loader.addEventListener("parseComplete", function(event) {
+            var id = event.file.split(".")[0];
+//            console.log("ParseComplete: " + id);
+            // Change the file status to 'parsing'
+            $("li#" + id).text(event.file + ": Finishing");
+        });
+        this._loader.addEventListener("shellLoad", function(event) {
+            var id = event.file.split(".")[0];
+//            console.log("ShellLoad: " + id);
+            // Remove the item from the list
+            $("li#" + id).remove();
         });
         this._loader.addEventListener("queueEmpty", function() {
             var count = self._loader.queueLength(true);
@@ -114,8 +136,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         }, false);
 
         // Keybased events
-        canvasDOM.addEventListener("keypress", function(event) {
-            console.log(event.keyCode);
+        window.addEventListener("keypress", function(event) {
+            //console.log(event.keyCode);
             switch(event.keyCode) {
                 // Explode on 'x' key pressed
                 case 120:
@@ -139,8 +161,12 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 case 112:
                     self.setSelectedOpacity(1.0);
                     break;
+                // 'z' to zoomToFit
+                case 122:
+                    self._parts[0].zoomToFit(self._viewer.camera, self._viewer.controls);
+                    break;
             }
-        });
+        }, true);
     };
 
     CADjs.prototype.onClick = function(event) {

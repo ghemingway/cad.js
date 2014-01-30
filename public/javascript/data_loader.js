@@ -171,7 +171,7 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
     };
 
     DataLoader.prototype.runLoadQueue = function() {
-        console.log("QLF: " + this._queue.length + ", " + this._loading.length + ", " + this._freeWorkers.length);
+        //console.log("QLF: " + this._queue.length + ", " + this._loading.length + ", " + this._freeWorkers.length);
         // Keep issuing loads until no workers left
         while (this._queue.length > 0 && this._freeWorkers.length > 0) {
             var worker = this._freeWorkers.shift();
@@ -207,13 +207,17 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
             case "shellLoad":
                 var data = event.data.data;
                 req.shell.addGeometry(data.position, data.normals, data.colors);
+                this.dispatchEvent({ type: "shellLoad", file: event.data.file });
+                break;
+            case "parseComplete":
+                this.dispatchEvent(event.data);
                 break;
             case "loadProgress":
                 // Send out the loadProgress message
                 this.dispatchEvent(event.data);
                 break;
-            case "loadEnd":
-                console.log('Worker said: ', event.data.url);
+            case "loadComplete":
+                this.dispatchEvent({ type: "loadComplete", file: event.data.file });
                 break;
         }
     };
@@ -252,8 +256,6 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
         this._scene.add(rootProduct.getObject3D());
-        // Call back with the new Assembly - nicely centered
-        assembly.centerGeometry();
         req.callback(undefined, assembly);
     };
 
@@ -263,15 +265,15 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
         var name = xmlElement.getAttribute("name");
         // Create the product
         var product = new Product(id, assembly, name, step, isRoot);
-        // Load child shapes
+
+        // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
         var shapes = DataLoader.getArrayFromAttribute(xmlElement, "shape");
         var i, identityTransform = (new THREE.Matrix4()).identity();
         for (i = 0; i < shapes.length; i++) {
             var shape = this.buildShapeXML(req, map, assembly, shapes[i], undefined, identityTransform, isRoot);
-//            if (isRoot) {
-                product.addShape(shape);
-//            }
+            product.addShape(shape);
         }
+
         // Load child products
         var childProducts = DataLoader.getArrayFromAttribute(xmlElement, "children");
         for (i = 0; i < childProducts.length; i++) {
@@ -296,6 +298,17 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
                 shape.addShell(shell);
             }
         }
+
+        // Load Child annotations
+        var annotations = xmlElement.getElementsByTagName("annotation");
+        for (i = 0; i < annotations.length; i++) {
+            var annotationEl = annotations[i];
+            var annotation = this.buildAnnotationXML(req, map, assembly, shape, isRoot);
+            if (isRoot) {
+                shape.addAnnotation(annotation);
+            }
+        }
+
         // Load child shapes
         var childShapes = xmlElement.getElementsByTagName("child");
         for (i = 0; i < childShapes.length; i++) {
@@ -311,7 +324,20 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
         return shape;
     };
 
+    DataLoader.prototype.buildAnnotationXML = function(req, map, assembly, parent, isRoot) {
+        var xmlElement = map[id];
+        var href = xmlElement.getAttribute("href");
+        // Do we have to load the shell
+        if (href) {
+            return undefined;
+        } else {
+            console.log("DataLoader.buildAnnotationXML - Online - Not yet implemented");
+            return undefined;
+        }
+    };
+
     DataLoader.prototype.buildShellXML = function(req, map, id, assembly, parent) {
+        var alreadyLoaded = assembly.isChild(id);
         var xmlElement = map[id];
         var href = xmlElement.getAttribute("href");
         // Do we have to load the shell
@@ -320,15 +346,18 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
             var boundingBox = DataLoader.parseBoundingBox(xmlElement.getAttribute("bbox"));
             var size = parseFloat(xmlElement.getAttribute("size"));
             var shell = new Shell(id, assembly, parent, size, color, boundingBox);
-            this.addRequest({
-                url: req.base + href,
-                validateType: "shell",
-                shell: shell,
-                shellSize: size,
-                callback: function(err) {
-                    console.log("Shell load callback");
-                }
-            });
+            // Have we already loaded this Shell - if not, request the shell be loaded?
+            if (!alreadyLoaded) {
+                this.addRequest({
+                    url: req.base + href,
+                    validateType: "shell",
+                    shell: shell,
+                    shellSize: size,
+                    callback: function(err) {
+                        console.log("Shell load callback");
+                    }
+                });
+            }
             return shell;
         } else {
             console.log("DataLoader.buildShellXML - Online - Not yet implemented");

@@ -22,8 +22,9 @@ define(["THREE"], function(THREE) {
             this._instance = undefined;
             // Other setup items
             this._isRoot = isRoot;
-            this._shells = [];
             this._children = [];
+            this._annotations = [];
+            this._shells = [];
             // Setup 3D
             this._object3D = new THREE.Object3D();
             // Setup any transform from the parent reference frame
@@ -59,6 +60,7 @@ define(["THREE"], function(THREE) {
         this._object3D.applyMatrix(this._transform);
         // Need to clone child shell events
         this._shells = [];
+        var self = this;
         for (var i = 0; i < source._shells.length; i++) {
             var shell = source._shells[i];
             shell.addEventListener("shellEndLoad", function(event) {
@@ -91,6 +93,10 @@ define(["THREE"], function(THREE) {
         });
         // Add of the child shape to the scene graph
         this._object3D.add(childShape.getObject3D());
+    };
+
+    Shape.prototype.addAnnotation = function(annotation) {
+        this._annotations.push(annotation);
     };
 
     Shape.prototype.addShell = function(shell) {
@@ -298,7 +304,7 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.hideBoundingBox = function() {
-        // Start listening for assembly _hideBounding events
+        // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._object3D.remove(this.bbox);
     };
@@ -322,7 +328,7 @@ define(["THREE"], function(THREE) {
             timeS = timeS ? timeS : 1.0;
             this._explodeStepSize = distance / 60.0 * timeS;
             this._explodeStepRemain = 60.0 * timeS;
-            var explosionCenter = this.getCentroid();
+            var explosionCenter = this.getCentroid(true);
             for (i = 0; i < this._children.length; i++) {
                 child = this._children[i];
                 // Convert the objectCenter
@@ -330,12 +336,14 @@ define(["THREE"], function(THREE) {
                 child.getObject3D().worldToLocal(localExplosionCenter);
                 // Get the child's centroid in local frame
                 var childCenter = child.getCentroid(false);
+                var childDirection = new THREE.Vector3().copy(childCenter);
                 // Calculate explosion direction vector in local frame and save it
-                childCenter.sub(localExplosionCenter).normalize();
-                this._explodeStates[child.id] = childCenter;
+                childDirection.sub(localExplosionCenter).normalize();
+                this._explodeStates[child.getID()] = childDirection;
+//                this._object3D.add( new THREE.ArrowHelper(childDirection, childCenter, 1000.0, 0xff0000, 20, 10) );
             }
             // After all children are loaded - start listening for assembly events
-//        this.assembly.addEventListener("_updateAnimation", function() {
+//        this._assembly.addEventListener("_updateAnimation", function() {
 //            self._updateAnimation();
 //        });
         }
@@ -348,7 +356,7 @@ define(["THREE"], function(THREE) {
 //    console.log("Exploded Distance: " + this._explodeDistance);
         for (i = 0; i < this._children.length; i++) {
             child = this._children[i];
-            var explosionDirection = this._explodeStates[child.id];
+            var explosionDirection = this._explodeStates[child.getID()];
             child.getObject3D().translateOnAxis(explosionDirection, distance);
         }
         // Clean up after myself

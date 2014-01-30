@@ -41,12 +41,23 @@ function loadPoints(el) {
 }
 
 function processShell(url, xml, expectedSize) {
+    // Parse the XML file
+    var start = Date.now();
     var xmlDoc = new XMLDoc(xml, function(err) {
         console.log("Webworker-xml parser error: " + err);
     });
+    var end = Date.now();
+    console.log("Parse time: " + (end - start));
+    var parts = url.split("/");
+    self.postMessage({
+        type: "parseComplete",
+        file: parts[parts.length - 1],
+        duration: (end-start)
+    });
+
     var xmlRoot = xmlDoc.docNode;
     var size = expectedSize * 9;
-    //console.log("Process XML of shell: " + size);
+    console.log("Process XML of shell: " + expectedSize);
     var defaultColor = parseColor("d8d8d8");
     // Load the points array
     var points = loadPoints(xmlRoot);
@@ -63,6 +74,7 @@ function processShell(url, xml, expectedSize) {
         color = color ? parseColor(color) : defaultColor;
         // Work through each triangle - an 'F' is one
         var tris = facets[i].getElements("f");
+        totalTris += tris.length;
         var indexVals, tri, norms, index0, index1, index2, normCoordinates;
         for (var j = 0; j < tris.length; j++) {
             tri = tris[j];
@@ -109,6 +121,11 @@ function processShell(url, xml, expectedSize) {
             colors[cIndex++] = color.b;
         }
     }
+    console.log("Total Tris: " + totalTris + "(" + (totalTris * 9) + ")");
+    console.log("Positions: " + pIndex);
+    console.log("Normals: " + nIndex);
+    console.log("Colors: " + cIndex);
+
     var data = {
         position: position,
         normals: normals,
@@ -117,7 +134,8 @@ function processShell(url, xml, expectedSize) {
     self.postMessage({
         type: "shellLoad",
         data: data,
-        url: url
+        url: url,
+        file: parts[parts.length - 1]
     }, [data.position.buffer, data.normals.buffer, data.colors.buffer]);
 }
 
@@ -131,7 +149,8 @@ self.addEventListener("message", function(e) {
     var xhr = new XMLHttpRequest();
 
     xhr.addEventListener("load", function() {
-        self.postMessage({ type: "loadEnd", url: e.data.url });
+        var parts = url.split("/");
+        self.postMessage({ type: "loadComplete", file: parts[parts.length - 1] });
         // What did we get back
         switch(e.data.type) {
             case "shell":
@@ -141,12 +160,12 @@ self.addEventListener("message", function(e) {
                 processAssembly(url, xhr.responseText);
                 break;
             default:
-                throw Error("DataLoader.webworker-xml - Invalid request type: " + e.data.type)
+                throw Error("DataLoader.webworker-xml - Invalid request type: " + e.data.type);
                 break;
         }
     });
     xhr.addEventListener("loadend", function() {
-        self.postMessage({ type: "loadComplete" });
+        // Should really do some error checking
     });
     xhr.addEventListener("progress", function(event) {
         var parts = url.split("/");

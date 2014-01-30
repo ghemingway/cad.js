@@ -90,15 +90,22 @@ define(["THREE"], function(THREE) {
     Product.prototype.showBoundingBox = function() {
         var bounds = this.getBoundingBox();
         if (!this.bbox && !bounds.empty()) {
-//            this.bbox = this.assembly.geometryViewer.buildBoundingBox(bounds);
+            this.bbox = this._assembly.buildBoundingBox(bounds);
         }
         if (this.bbox) {
+            var self = this;
+            this._eventFunc = function() {
+                self.hideBoundingBox();
+            };
+            // Start listening for assembly _hideBounding events
+            this._assembly.addEventListener("_hideBounding", this._eventFunc);
             this._object3D.add(this.bbox);
-//            this.assembly.render();
         }
     };
 
     Product.prototype.hideBoundingBox = function() {
+        // Stop listening for assembly _hideBounding events
+        this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._object3D.remove(this.bbox);
     };
 

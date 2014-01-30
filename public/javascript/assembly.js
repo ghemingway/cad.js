@@ -21,6 +21,10 @@ define(["THREE"], function(THREE) {
         this._product = undefined;
     }
 
+    Assembly.prototype.isChild = function(id) {
+        return (this._objects[id] !== undefined);
+    };
+
     Assembly.prototype.makeChild = function(id, fallback) {
 //        console.log("Assembly.makeChild: " + id);
         if (!id) {
@@ -140,18 +144,19 @@ define(["THREE"], function(THREE) {
         }
     };
 
-    Assembly.prototype.focusOn = function(obj) {
-        if (!obj) return;
-        var bbox = obj.getBoundingBox(true);
-        obj.getObject3D().updateMatrixWorld();
-        var inverseGlobalMatrix = (new THREE.Matrix4()).getInverse(obj.getObject3D().matrixWorld);
-        if (!bbox.empty()) {
-            bbox.applyMatrix(inverseGlobalMatrix);
-            console.log(bbox.min);
-            console.log(bbox.max);
-        }
+    Assembly.prototype.zoomToFit = function(camera, controls) {
+        var bbox = this._product.getBoundingBox();
+        var min = this._product.getObject3D().localToWorld(bbox.min);
+        var max = this._product.getObject3D().localToWorld(bbox.max);
+        var projector = new THREE.Projector();
+        min = projector.projectVector(min, camera);
+        max = projector.projectVector(max, camera);
+        var factor = Math.max(
+            Math.abs(max.x - min.x),
+            Math.abs(max.y - min.y)
+        );
+        controls.object.position.multiplyScalar(factor);
     };
-
     Assembly.prototype.select = function(camera, mouseX, mouseY) {
         if (!this._product) return undefined;
         mouseX = (mouseX / window.innerWidth) * 2 - 1;
