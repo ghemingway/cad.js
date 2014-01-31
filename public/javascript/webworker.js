@@ -14,11 +14,12 @@ function parseColor(hex) {
 
 /*********************************************************************/
 
-function processAssembly(url, workerID, xml) {
+function processAssembly(url, workerID, data) {
+    // All we really need to do is pass this back to the main thread
     var message = {
         type: "rootLoad",
         url: url,
-        data: xml,
+        data: data,
         workerID: workerID
     };
     self.postMessage(message);
@@ -41,24 +42,24 @@ function loadPoints(el) {
     return points;
 }
 
-function processShell(url, workerID, xml, expectedSize) {
+function processShellXML(url, workerID, xml, expectedSize) {
     // Parse the XML file
     var start = Date.now();
     var xmlDoc = new XMLDoc(xml, function(err) {
         console.log("Webworker-xml parser error: " + err);
     });
-    var end = Date.now();
-    console.log("Parse time: " + (end - start));
+    var parseTime = (Date.now() - start) / 1000.0;
+//    console.log("Parse time: " + parseTime);
     var parts = url.split("/");
     self.postMessage({
         type: "parseComplete",
         file: parts[parts.length - 1],
-        duration: (end-start)
+        duration: parseTime
     });
 
     var xmlRoot = xmlDoc.docNode;
     var size = expectedSize * 9;
-    console.log("Process XML of shell: " + expectedSize);
+//    console.log("Process XML of shell: " + expectedSize);
     var defaultColor = parseColor("d8d8d8");
     // Load the points array
     var points = loadPoints(xmlRoot);
@@ -122,10 +123,10 @@ function processShell(url, workerID, xml, expectedSize) {
             colors[cIndex++] = color.b;
         }
     }
-    console.log("Total Tris: " + totalTris + "(" + (totalTris * 9) + ")");
-    console.log("Positions: " + pIndex);
-    console.log("Normals: " + nIndex);
-    console.log("Colors: " + cIndex);
+//    console.log("Total Tris: " + totalTris + "(" + (totalTris * 9) + ")");
+//    console.log("Positions: " + pIndex);
+//    console.log("Normals: " + nIndex);
+//    console.log("Colors: " + cIndex);
 
     var data = {
         position: position,
@@ -141,24 +142,60 @@ function processShell(url, workerID, xml, expectedSize) {
     }, [data.position.buffer, data.normals.buffer, data.colors.buffer]);
 }
 
+
+function processShellJSON(url, workerID, data, expectedSize) {
+    // Parse the JSON file
+    var start = Date.now();
+    var dataJSON = JSON.parse(data);
+    var parseTime = (Date.now() - start) / 1000.0;
+    console.log("Parse time: " + parseTime);
+    var parts = url.split("/");
+    self.postMessage({
+        type: "parseComplete",
+        file: parts[parts.length - 1],
+        duration: parseTime
+    });
+
+    // Just copy the data into arrays
+    var size = expectedSize * 9;
+    var buffers = {
+        position: new Float32Array(size),
+        normals: new Float32Array(size),
+        colors: new Float32Array(size)
+    };
+
+    self.postMessage({
+        type: "shellLoad",
+        data: buffers,
+        url: url,
+        workerID: workerID,
+        file: parts[parts.length - 1]
+    }, [buffers.position.buffer, buffers.normals.buffer, buffers.colors.buffer]);
+}
+
 /*********************************************************************/
 
 
 self.addEventListener("message", function(e) {
     // event is a new file to request and process
-    console.log("Worker: " + e.data.workerID);
+    console.log("Worker " + e.data.workerID + ": " + e.data.url);
     // Get the request URL info
     var url = e.data.url;
     var workerID = e.data.workerID;
     var xhr = new XMLHttpRequest();
 
+    // Determine data type
+    var parts = url.split('.');
+    var dataType = parts[parts.length-1].toLowerCase();
+    parts = url.split("/");
+
     xhr.addEventListener("load", function() {
-        var parts = url.split("/");
         self.postMessage({ type: "loadComplete", file: parts[parts.length - 1] });
         // What did we get back
         switch(e.data.type) {
             case "shell":
-                processShell(url, workerID, xhr.responseText, e.data.shellSize);
+                if (dataType === "xml") processShellXML(url, workerID, xhr.responseText, e.data.shellSize);
+                else processShellJSON(url, workerID, xhr.responseText, e.data.shellSize);
                 break;
             case "assembly":
                 processAssembly(url, workerID, xhr.responseText);
@@ -172,7 +209,6 @@ self.addEventListener("message", function(e) {
         // Should really do some error checking
     });
     xhr.addEventListener("progress", function(event) {
-        var parts = url.split("/");
         var message = { type: "loadProgress", file: parts[parts.length - 1] };
         if (event.lengthComputable) {
             message.loaded = event.loaded / event.total * 100.0;
