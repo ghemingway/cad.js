@@ -39,7 +39,7 @@ if (cluster.isMaster) {
         res.sendfile('public/viewer.html');
     });
 
-    app.get("/cad", function(req, res) {
+    app.get("/cad.js", function(req, res) {
         res.sendfile('public/viewer.html');
     });
 

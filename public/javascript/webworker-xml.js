@@ -14,11 +14,12 @@ function parseColor(hex) {
 
 /*********************************************************************/
 
-function processAssembly(url, xml) {
+function processAssembly(url, workerID, xml) {
     var message = {
         type: "rootLoad",
         url: url,
-        data: xml
+        data: xml,
+        workerID: workerID
     };
     self.postMessage(message);
 }
@@ -40,7 +41,7 @@ function loadPoints(el) {
     return points;
 }
 
-function processShell(url, xml, expectedSize) {
+function processShell(url, workerID, xml, expectedSize) {
     // Parse the XML file
     var start = Date.now();
     var xmlDoc = new XMLDoc(xml, function(err) {
@@ -135,6 +136,7 @@ function processShell(url, xml, expectedSize) {
         type: "shellLoad",
         data: data,
         url: url,
+        workerID: workerID,
         file: parts[parts.length - 1]
     }, [data.position.buffer, data.normals.buffer, data.colors.buffer]);
 }
@@ -144,8 +146,10 @@ function processShell(url, xml, expectedSize) {
 
 self.addEventListener("message", function(e) {
     // event is a new file to request and process
+    console.log("Worker: " + e.data.workerID);
     // Get the request URL info
     var url = e.data.url;
+    var workerID = e.data.workerID;
     var xhr = new XMLHttpRequest();
 
     xhr.addEventListener("load", function() {
@@ -154,10 +158,10 @@ self.addEventListener("message", function(e) {
         // What did we get back
         switch(e.data.type) {
             case "shell":
-                processShell(url, xhr.responseText, e.data.shellSize);
+                processShell(url, workerID, xhr.responseText, e.data.shellSize);
                 break;
             case "assembly":
-                processAssembly(url, xhr.responseText);
+                processAssembly(url, workerID, xhr.responseText);
                 break;
             default:
                 throw Error("DataLoader.webworker-xml - Invalid request type: " + e.data.type);

@@ -21,10 +21,10 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
         while (this._workers.length < this._maxWorkers) {
             var worker = new Worker("/javascript/webworker-xml.js");
             worker.addEventListener("message", function(event) {
-                self.workerMessage(worker, event);
+                self.workerMessage(event);
             });
+            this._freeWorkers.push(this._workers.length);
             this._workers.push(worker);
-            this._freeWorkers.push(worker);
         }
     }
 
@@ -163,33 +163,34 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
     };
 
     DataLoader.prototype.queueLength = function(onlyLoad) {
+        var numWorking = this._maxWorkers - this._freeWorkers.length;
         if (onlyLoad) {
-            return this._loading.length;
+            return numWorking;
         } else {
-            return this._queue.length + this._loading.length;
+            return this._queue.length + numWorking;
         }
     };
 
     DataLoader.prototype.runLoadQueue = function() {
-        //console.log("QLF: " + this._queue.length + ", " + this._loading.length + ", " + this._freeWorkers.length);
+        //console.log("QF: " + this._queue.length + ", " + this._freeWorkers.length);
         // Keep issuing loads until no workers left
         while (this._queue.length > 0 && this._freeWorkers.length > 0) {
-            var worker = this._freeWorkers.shift();
+            var workerID = this._freeWorkers.shift();
             var req = this._queue.shift();
-            this._loading[req.url] = req;
-            this.initRequest(worker, req);
+            req.workerID = workerID;
+            this._loading[workerID] = req;
+            this.initRequest(req);
         }
     };
 
-    DataLoader.prototype.workerMessage = function(worker, event) {
+    DataLoader.prototype.workerMessage = function(event) {
         // Put worker back into the queue - if it is the time
         var req;
         if (event.data.type === "rootLoad" || event.data.type === "shellLoad") {
             // Remove the job from the loading queue
-            var index = this._loading.indexOf(event.data.url);
-            req = this._loading[event.data.url];
-            this._loading.splice(index, 1);
-            this._freeWorkers.push(worker);
+            req = this._loading[event.data.workerID];
+            this._loading[event.data.workerID] = undefined;
+            this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
         }
         switch(event.data.type) {
@@ -222,10 +223,13 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
         }
     };
 
-    DataLoader.prototype.initRequest = function(worker, req) {
+    DataLoader.prototype.initRequest = function(req) {
+        // Fetch the worker to use
+        var worker = this._workers[req.workerID];
         // Send the request to the worker
         var data = {
             url: req.url,
+            workerID: req.workerID,
             type: req.validateType
         };
         if (data.type === "shell") data.shellSize = req.shellSize;
