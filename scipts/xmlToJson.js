@@ -1,7 +1,6 @@
 var fs = require("fs"),
     _ = require("underscore"),
-    xml2js = require("xml2js"),
-    opts = require("commander");
+    xml2js = require("xml2js");
 
 /***********************************************************************/
 
@@ -71,15 +70,15 @@ var fs = require("fs"),
         "id": "id1404",
         "unit": "mm 0.001000",
         "children": [
-            { "ref": "id1394", "xform": [1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1] },
-            { "ref": "id1399", "xform": [1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1] }
+            { "ref": "id1394", "xform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1] },
+            { "ref": "id1399", "xform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1] }
         ]
     }
     // Terminal Shape JSON
     {
         "id": "id1394",
         "unit": "mm 0.001000",
-        "shell": "id1215"
+        "shells": ["id1215","id1234"]
      }
 
      // Stub Shell JSON
@@ -92,23 +91,17 @@ var fs = require("fs"),
     // Terminal Shell JSON
     {
         "id": "id575",
-        "color": "dfdfdf",
-        "verts": [
+        "points": [
             152.4, 1860.55, 1005,
             ..., ..., ...
         ],
-        "facets": [
-            {
-                "color": "7d7d7d",
-                "v": [32,44,45],
-                 <n d="0 1 0"/>
-                 <n d="0 1 0"/>
-                 <n d="0 1 0"/>
-            }
+        "normals": [
+            152.4, 1860.55, 1005,
+            ..., ..., ...
         ]
-        "colors": ["dfdfdf", "7d7d7d"],
-        "verts": [
-
+        "colors": [
+            "dfdfdf", "7d7d7d", "9s9sk2",
+            ..., ..., ...
         ]
     }
  */
@@ -141,51 +134,167 @@ var translateProduct = function(product) {
 
 var translateShape = function(shape) {
     // Parent Shape JSON
-    var parentShape = {
-        "id": "id1404",
-        "unit": "mm 0.001000",
-        "children": [
-            { "ref": "id1394", "xform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1] },
-            { "ref": "id1399", "xform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1] }
-        ]
+    var data = {
+        "id": shape.$.id,
+        "unit": shape.$.unit,
+        "children": []
     };
+    // Add children, if there are any
+    _.forEach(shape.child, function(child) {
+        data.children.push({
+            "ref": child.$.ref,
+            "xform": child.$.xform.split(" ")
+        });
+    });
     // Terminal Shape JSON
-    var terminalShape = {
-        "id": "id1394",
-        "unit": "mm 0.001000",
-        "shell": "id1215"
-    };
-    return {};
+    if (shape.$.shell) {
+        data.shells = shape.$.shell.split(" ");
+    }
+    return data;
 };
 
 var translateShell = function(shell) {
-    return {};
+    // Do href here
+    if (shell.$.href) {
+        return {
+            "id": shell.$.id,
+            "size": shell.$.size,
+            "bbox": shell.$.bbox.split(" "),
+            "href":  shell.$.href
+        };
+    // Convert XML point/vert/color to new way
+    } else {
+        var points = loadPoints(shell.verts);
+        var defaultColor = parseColor("7d7d7d");
+        if (shell.$.color) {
+            defaultColor = parseColor(shell.$.color);
+        }
+        var data = {
+            "id": shell.$.id,
+            "size": 0,
+            "points": [],
+            "normals": [],
+            "colors": []
+        };
+        _.forEach(shell.facets, function(facet) {
+            var color = _.clone(defaultColor);
+            if (facet.$ && facet.$.color) {
+                color = parseColor(facet.$.color);
+            }
+            _.forEach(facet.f, function(f) {
+                // Get every vertex index and convert using points array
+                indexVals = f.$.v.split(" ");
+                index0 = parseInt(indexVals[0]) * 3;
+                index1 = parseInt(indexVals[1]) * 3;
+                index2 = parseInt(indexVals[2]) * 3;
+
+                data.points.push(points[index0]);
+                data.points.push(points[index0 + 1]);
+                data.points.push(points[index0 + 2]);
+                data.points.push(points[index1]);
+                data.points.push(points[index1 + 1]);
+                data.points.push(points[index1 + 2]);
+                data.points.push(points[index2]);
+                data.points.push(points[index2 + 1]);
+                data.points.push(points[index2 + 2]);
+
+                // Get the vertex normals
+                norms = f.n;
+                normCoordinates = norms[0].$.d.split(" ");
+                data.normals.push(normCoordinates[0]);
+                data.normals.push(normCoordinates[1]);
+                data.normals.push(normCoordinates[2]);
+                normCoordinates = norms[1].$.d.split(" ");
+                data.normals.push(normCoordinates[0]);
+                data.normals.push(normCoordinates[1]);
+                data.normals.push(normCoordinates[2]);
+                normCoordinates = norms[2].$.d.split(" ");
+                data.normals.push(normCoordinates[0]);
+                data.normals.push(normCoordinates[1]);
+                data.normals.push(normCoordinates[2]);
+
+                // Get the vertex colors
+                data.colors.push(color.r);
+                data.colors.push(color.g);
+                data.colors.push(color.b);
+                data.colors.push(color.r);
+                data.colors.push(color.g);
+                data.colors.push(color.b);
+                data.colors.push(color.r);
+                data.colors.push(color.g);
+                data.colors.push(color.b);
+            });
+        });
+        data.size = data.points.length / 9;
+        return data;
+    }
 };
 
+function parseColor(hex) {
+    var cval = parseInt(hex, 16);
+    return {
+        r: ((cval >>16) & 0xff) / 255,
+        g: ((cval >>8) & 0xff) / 255,
+        b: ((cval >>0) & 0xff) / 255
+    };
+}
 
-/*************************************************************************/
-
-
-var scanDirForXML = function(dirname) {
-    fs.readdir(dirname, function(err, files) {
-        console.log(files);
+function loadPoints(verts) {
+    // Load all of the point information
+    var points = [];
+    _.forEach(verts, function(vert) {
+        _.forEach(vert.v, function(v) {
+            var coords = v.$.p.split(" ");
+            points.push(coords[0]);
+            points.push(coords[1]);
+            points.push(coords[2]);
+        });
     });
-};
+    return points;
+}
 
 
 /*************************************************************************/
 
 
-var filename = "./data/e137_hull_double_v_3panel_roof/index.xml";
+var argv = require('optimist')
+    .demand(['i'])
+    .argv;
+
 var parser = new xml2js.Parser();
-fs.readFile(filename, function(err, doc) {
+var pathPrefix = argv.d + "/";
+var rootPath = pathPrefix + argv.i;
+fs.readFile(rootPath, function(err, doc) {
     if (err) {
-        console.log("Error reading file: " + filename);
+        console.log("Error reading index file: " + rootPath);
     }
     parser.parseString(doc, function(err, results) {
         if (!err) {
             var data = translateIndex(results);
-            console.log(data);
+            // Get output file name
+            var indexOut = pathPrefix + argv.i.replace("xml", "json");
+            var externals = _.pluck(data.shells, "href");
+            console.log("Writing new index file: " + indexOut);
+            console.log("\tProducts: " + data.products.length);
+            console.log("\tShapes: " + data.shapes.length);
+            console.log("\tShells: " + data.shells.length);
+            console.log("\tExternal Shells: " + externals.length);
+            // Write index to file
+            fs.writeFileSync(indexOut, JSON.stringify(data));
+            // Get all of the href's for external shells
+            _.forEach(externals, function(external) {
+                var shellPath = pathPrefix + external;
+                fs.readFile(shellPath, function(err, doc) {
+                    parser.parseString(doc, function(err, results) {
+                        data = translateShell(results.shell);
+                        var shellOut = pathPrefix + external.replace("xml", "json");
+                        console.log("\tShell: " + shellOut);
+                        console.log("\t\tSize: " + data.size);
+                        // Write shell to file
+                        fs.writeFileSync(shellOut, JSON.stringify(data));
+                    });
+                });
+            });
         }
     });
 });

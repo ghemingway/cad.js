@@ -201,7 +201,7 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
                         this.buildAssemblyXML(event.data.data, req);
                         break;
                     case "application/json":
-                        console.log("DataLoader.buildAssemblyJSON - Not Implemented");
+                        this.buildAssemblyJSON(event.data.data, req);
                         break;
                 }
                 break;
@@ -263,6 +263,19 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
         req.callback(undefined, assembly);
     };
 
+    DataLoader.prototype.buildAssemblyJSON = function(jsonText, req) {
+        var doc = JSON.parse(jsonText);
+        var rootID = doc.root;
+        var defaultColor = DataLoader.parseColor("7d7d7d");
+        var assembly = new Assembly(rootID, defaultColor, this);
+        // Process the rest of the index xml
+        var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
+        assembly.setRootProduct(rootProduct);
+        // Add the assembly to the scene
+        this._scene.add(rootProduct.getObject3D());
+        req.callback(undefined, assembly);
+    };
+
     DataLoader.prototype.buildProductXML = function(req, map, assembly, id, isRoot) {
         var xmlElement = map[id];
         var step = xmlElement.getAttribute ("step");
@@ -287,6 +300,12 @@ define(["THREE", "assembly", "product", "shape", "shell"], function(THREE, Assem
             }
         }
         return product;
+    };
+
+    DataLoader.prototype.buildProductJSON = function(req, doc, assembly, id, isRoot) {
+        // Create the product
+        //var product = new Product(id, assembly, doc.name, doc.step, isRoot);
+        return undefined;
     };
 
     DataLoader.prototype.buildShapeXML = function(req, map, assembly, id, parent, transform, isRoot) {
