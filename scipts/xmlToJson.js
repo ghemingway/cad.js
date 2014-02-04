@@ -132,11 +132,20 @@ var translateProduct = function(product) {
     return data;
 };
 
+var setTransform = function(transform) {
+    // Look for identity transforms
+    if (transform === "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1") return "I";
+    // Otherwise, turn this into an array of float values
+    return transform.split(" ").map(function(val) {
+        return parseFloat(val);
+    })
+};
+
 var translateShape = function(shape) {
     // Base Shape JSON
     var data = {
         "id": shape.$.id,
-        "unit": shape.$.unit,
+//        "unit": shape.$.unit,
         "shells": [],
         "annotations": [],
         "children": []
@@ -145,7 +154,7 @@ var translateShape = function(shape) {
     _.forEach(shape.child, function(child) {
         data.children.push({
             "ref": child.$.ref,
-            "xform": child.$.xform.split(" ").map(function(val) { return parseFloat(val); })
+            "xform": setTransform(child.$.xform)
         });
     });
     // Terminal Shape JSON

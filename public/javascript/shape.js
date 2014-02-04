@@ -41,7 +41,6 @@ define(["THREE"], function(THREE) {
     }
 
     Shape.prototype.instance = function(source, assembly, parent, transform) {
-//        console.log("Instance existing shape: " + source._id);
         // Setup the basic info
         this._id = source._id;
         this._assembly = source._assembly;
@@ -52,6 +51,7 @@ define(["THREE"], function(THREE) {
         this._instanceID = source._instances.length;
         this._instance = source;
         this._instances = [];
+        console.log("Instance existing shape: " + this.getID());
         // Other setup items
         this._isRoot = source._isRoot;
         // Prep the object3D
@@ -60,28 +60,28 @@ define(["THREE"], function(THREE) {
         this._object3D.applyMatrix(this._transform);
         // Need to clone child shell events
         this._shells = [];
-        var self = this;
-        for (var i = 0; i < source._shells.length; i++) {
-            var shell = source._shells[i];
-            shell.addEventListener("shellEndLoad", function(event) {
-                self.addGeometry(event.shell.geometry);
-            });
-            this._shells.push(shell);
-        }
+//        var self = this;
+//        for (var i = 0; i < source._shells.length; i++) {
+//            var shell = source._shells[i];
+//            shell.addEventListener("shellEndLoad", function(event) {
+//                self.addGeometry(event.shell.geometry);
+//            });
+//            this._shells.push(shell);
+//        }
         // Need to clone all child shapes
         this._children = [];
-        for (i = 0; i < source._children.length; i++) {
-            // Clone the child shape
-            var shapeID = source._children[i]._id;
-            var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit, true);
-            // Bubble the shapeLoaded event
-            shape.addEventListener("shapeLoaded", function(event) {
-                self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
-            });
-            // Add of the child shape to the scene graph
-            this._object3D.add(shape.getObject3D());
-            this._children.push(shape);
-        }
+//        for (i = 0; i < source._children.length; i++) {
+//            // Clone the child shape
+//            var shapeID = source._children[i]._id;
+//            var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit, true);
+//            // Bubble the shapeLoaded event
+//            shape.addEventListener("shapeLoaded", function(event) {
+//                self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
+//            });
+//            // Add of the child shape to the scene graph
+//            this._object3D.add(shape.getObject3D());
+//            this._children.push(shape);
+//        }
     };
 
     Shape.prototype.addChild = function(childShape) {
@@ -193,9 +193,9 @@ define(["THREE"], function(THREE) {
             }
         }
         // Only show things that are product-driven
-        if (!this._product || this.boundingBox.empty()) {
-            return undefined;
-        } else {
+//        if (!this._product || this.boundingBox.empty()) {
+//            return undefined;
+//        } else {
             var id = this.getID();
             this.name = "Shape " + id;
             if (this._product) {
@@ -212,7 +212,7 @@ define(["THREE"], function(THREE) {
                 },
                 children    : children
             };
-        }
+//        }
     };
 
     Shape.prototype.getBoundingBox = function(transform) {

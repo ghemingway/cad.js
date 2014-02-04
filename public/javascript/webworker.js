@@ -148,7 +148,7 @@ function processShellJSON(url, workerID, data, expectedSize) {
     var start = Date.now();
     var dataJSON = JSON.parse(data);
     var parseTime = (Date.now() - start) / 1000.0;
-    console.log("Parse time: " + parseTime);
+//    console.log("Parse time: " + parseTime);
     var parts = url.split("/");
     self.postMessage({
         type: "parseComplete",
@@ -157,11 +157,10 @@ function processShellJSON(url, workerID, data, expectedSize) {
     });
 
     // Just copy the data into arrays
-    var size = expectedSize * 9;
     var buffers = {
-        position: new Float32Array(size),
-        normals: new Float32Array(size),
-        colors: new Float32Array(size)
+        position: new Float32Array(dataJSON.points),
+        normals: new Float32Array(dataJSON.normals),
+        colors: new Float32Array(dataJSON.colors)
     };
 
     self.postMessage({

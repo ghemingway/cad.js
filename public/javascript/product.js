@@ -9,7 +9,7 @@
 
 
 define(["THREE"], function(THREE) {
-    function Product(id, assembly, name, stepFile, isRoot) {
+    function Product(id, assembly, name, stepFile) {
         var ret = assembly.makeChild(id, this);
         if (!ret) {
 //            console.log("Make new product: " + id);
@@ -17,11 +17,11 @@ define(["THREE"], function(THREE) {
             this._assembly = assembly;
             this._stepFile = stepFile;
             this._name = name;
-            this._isRoot = isRoot;
             this._shapes = [];
             this._children = [];
             this._object3D = new THREE.Object3D();
         }
+        else console.log("Repeat product");
         return ret;
     }
 
@@ -33,9 +33,7 @@ define(["THREE"], function(THREE) {
         var self = this;
         shape.setProduct(this);
         this._shapes.push(shape);
-        if (this._isRoot) {
-            this._object3D.add(shape.getObject3D());
-        }
+        this._object3D.add(shape.getObject3D());
         shape.addEventListener("shapeLoaded", function(event) {
             self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
         });

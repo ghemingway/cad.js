@@ -186,13 +186,15 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onMove = function(event) {
-        this._parts[0].clearHighlights();
-        var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
-        // Did we find an object
-        if (obj) {
-            obj = obj.getNamedParent();
-            // Yes, go highlight it in the tree
-            obj.highlight(0xffff8f);
+        if (this._parts.length > 0) {
+            this._parts[0].clearHighlights();
+            var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
+            // Did we find an object
+            if (obj) {
+                obj = obj.getNamedParent();
+                // Yes, go highlight it in the tree
+                obj.highlight(0xffff8f);
+            }
         }
     };
 
@@ -290,6 +292,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             for (var i = 0; i < data.selected.length; i++) {
                 var obj = self._parts[0].getByID(data.selected[i]);
                 if (obj) {
+                    console.log(obj.getID());
                     obj.showBoundingBox();
                     //obj.highlight(0xff0000);
                 }

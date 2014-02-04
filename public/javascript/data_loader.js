@@ -13,7 +13,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         this._scene = scene;
         this._queue = [];       // The queue of requests to load
         this._loading = [];     // List of active loading jobs
-        this._maxWorkers = config.maxWorkers ? config.maxWorkers : 1;
+        this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
 
         var self = this;
@@ -37,7 +37,14 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
     DataLoader.parseXform = function(str, colOriented) {
         if (str == null) return null;
         var arr = str;
-        if (typeof str === "string") arr = DataLoader.parseFloatVec(str);
+        if (typeof str === "string") {
+            // Identity transform compression
+            if (str === "I") {
+                arr = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+            } else {
+                arr = DataLoader.parseFloatVec(str);
+            }
+        }
         if (arr.length !== 16) {
             throw new Error("Invalid Xform found");
         }
@@ -312,16 +319,14 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
         var identityTransform = (new THREE.Matrix4()).identity();
         _.each(productJSON.shapes, function(shapeID) {
-            var shape = self.buildShapeJSON(req, doc, assembly, shapeID, undefined, identityTransform, isRoot);
+            var shape = self.buildShapeJSON(req, doc, assembly, shapeID, undefined, identityTransform);
             product.addShape(shape);
         });
 
         // Load child products
-        _.each(productJSON.children, function(childJSON) {
-            var child = self.buildProductJSON(req, doc, assembly, childJSON, false);
-            if (isRoot) {
-                product.addChild(child);
-            }
+        _.each(productJSON.children, function(childID) {
+            var child = self.buildProductJSON(req, doc, assembly, childID, false);
+            product.addChild(child);
         });
         return product;
     };
@@ -369,33 +374,34 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         var self = this;
         var shapeJSON = _.findWhere(doc.shapes, { id: id });
         // Create the shape
-        var shape = new Shape(id, assembly, parent, transform, shapeJSON.unit, isRoot);
-        // Load child shells
+        var unit = shapeJSON.unit ? shapeJSON.unit : "";
+        var shape = new Shape(id, assembly, parent, transform, unit, isRoot);
+
         if (isRoot) {
+            // Load child shells
             _.each(shapeJSON.shells, function(shellID) {
                 var shell = self.buildShellJSON(req, doc, shellID, assembly, shape);
                 shape.addShell(shell);
-            })
-        }
+            });
 
-        // Load Child annotations
-        _.each(shapeJSON.annotations, function(annotationID) {
-            var annotation = self.buildAnnotationJSON(req, doc, assembly, annotationID, shape, isRoot);
-            if (isRoot) {
-                shape.addAnnotation(annotation);
-            }
-        });
+            // Load Child annotations
+//        _.each(shapeJSON.annotations, function(annotationID) {
+//            var annotation = self.buildAnnotationJSON(req, doc, assembly, annotationID, shape, isRoot);
+//            if (isRoot) {
+//                shape.addAnnotation(annotation);
+//            }
+//        });
 
-        // Load child shapes
-        _.each(shapeJSON.children, function(childJSON) {
-            // Setup the child's transform
-            var localTransform = DataLoader.parseXform(childJSON.xform, true);
-            // Build the child
-            var child = self.buildShapeJSON(req, doc, assembly, childJSON.ref, shape, localTransform, isRoot);
-            if (isRoot) {
+            // Load child shapes
+            _.each(shapeJSON.children, function(childJSON) {
+                if (id === "id137001") console.log(childJSON);
+                // Setup the child's transform
+                var localTransform = DataLoader.parseXform(childJSON.xform, true);
+                // Build the child
+                var child = self.buildShapeJSON(req, doc, assembly, childJSON.ref, shape, localTransform, isRoot);
                 shape.addChild(child);
-            }
-        });
+            });
+        }
         return shape;
     };
 
@@ -463,15 +469,15 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
             var shell = new Shell(id, assembly, parent, shellJSON.size, color, boundingBox);
             // Have we already loaded this Shell - if not, request the shell be loaded?
             if (!alreadyLoaded) {
-//                this.addRequest({
-//                    url: req.base + shellJSON.href,
-//                    validateType: "shell",
-//                    shell: shell,
-//                    shellSize: shellJSON.size,
-//                    callback: function(err) {
-//                        console.log("Shell load callback");
-//                    }
-//                });
+                this.addRequest({
+                    url: req.base + shellJSON.href,
+                    validateType: "shell",
+                    shell: shell,
+                    shellSize: shellJSON.size,
+                    callback: function(err) {
+                        console.log("Shell load callback");
+                    }
+                });
             }
             return shell;
         } else {
