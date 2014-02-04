@@ -178,7 +178,7 @@ function processShellJSON(url, workerID, data, expectedSize) {
 
 self.addEventListener("message", function(e) {
     // event is a new file to request and process
-    console.log("Worker " + e.data.workerID + ": " + e.data.url);
+    //console.log("Worker " + e.data.workerID + ": " + e.data.url);
     // Get the request URL info
     var url = e.data.url;
     var workerID = e.data.workerID;
@@ -201,7 +201,7 @@ self.addEventListener("message", function(e) {
                 processAssembly(url, workerID, xhr.responseText);
                 break;
             default:
-                throw Error("DataLoader.webworker-xml - Invalid request type: " + e.data.type);
+                throw Error("DataLoader.webworker - Invalid request type: " + e.data.type);
                 break;
         }
     });
@@ -221,6 +221,6 @@ self.addEventListener("message", function(e) {
     try {
         xhr.send();
     } catch (ex) {
-        console.log ("DataLoader.webworker-xml - Error loading file: " + url);
+        console.log ("DataLoader.webworker - Error loading file: " + url);
     }
 }, false);

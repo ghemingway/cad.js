@@ -12,6 +12,7 @@ define(["THREE"], function(THREE) {
     function Product(id, assembly, name, stepFile, isRoot) {
         var ret = assembly.makeChild(id, this);
         if (!ret) {
+//            console.log("Make new product: " + id);
             this._id = id;
             this._assembly = assembly;
             this._stepFile = stepFile;

@@ -127,23 +127,25 @@ var translateProduct = function(product) {
     }
     // Add shapes, if there are any
     if (product.$.shape) {
-        data.shape = product.$.shape.split(" ");
+        data.shapes = product.$.shape.split(" ");
     }
     return data;
 };
 
 var translateShape = function(shape) {
-    // Parent Shape JSON
+    // Base Shape JSON
     var data = {
         "id": shape.$.id,
         "unit": shape.$.unit,
+        "shells": [],
+        "annotations": [],
         "children": []
     };
     // Add children, if there are any
     _.forEach(shape.child, function(child) {
         data.children.push({
             "ref": child.$.ref,
-            "xform": child.$.xform.split(" ")
+            "xform": child.$.xform.split(" ").map(function(val) { return parseFloat(val); })
         });
     });
     // Terminal Shape JSON
@@ -158,9 +160,9 @@ var translateShell = function(shell) {
     if (shell.$.href) {
         return {
             "id": shell.$.id,
-            "size": shell.$.size,
-            "bbox": shell.$.bbox.split(" "),
-            "href":  shell.$.href
+            "size": parseInt(shell.$.size),
+            "bbox": shell.$.bbox.split(" ").map(function(val) { return parseFloat(val); }),
+            "href":  shell.$.href.replace("xml", "json")
         };
     // Convert XML point/vert/color to new way
     } else {
@@ -188,30 +190,30 @@ var translateShell = function(shell) {
                 index1 = parseInt(indexVals[1]) * 3;
                 index2 = parseInt(indexVals[2]) * 3;
 
-                data.points.push(points[index0]);
-                data.points.push(points[index0 + 1]);
-                data.points.push(points[index0 + 2]);
-                data.points.push(points[index1]);
-                data.points.push(points[index1 + 1]);
-                data.points.push(points[index1 + 2]);
-                data.points.push(points[index2]);
-                data.points.push(points[index2 + 1]);
-                data.points.push(points[index2 + 2]);
+                data.points.push(parseFloat(points[index0]));
+                data.points.push(parseFloat(points[index0 + 1]));
+                data.points.push(parseFloat(points[index0 + 2]));
+                data.points.push(parseFloat(points[index1]));
+                data.points.push(parseFloat(points[index1 + 1]));
+                data.points.push(parseFloat(points[index1 + 2]));
+                data.points.push(parseFloat(points[index2]));
+                data.points.push(parseFloat(points[index2 + 1]));
+                data.points.push(parseFloat(points[index2 + 2]));
 
                 // Get the vertex normals
                 norms = f.n;
                 normCoordinates = norms[0].$.d.split(" ");
-                data.normals.push(normCoordinates[0]);
-                data.normals.push(normCoordinates[1]);
-                data.normals.push(normCoordinates[2]);
+                data.normals.push(parseFloat(normCoordinates[0]));
+                data.normals.push(parseFloat(normCoordinates[1]));
+                data.normals.push(parseFloat(normCoordinates[2]));
                 normCoordinates = norms[1].$.d.split(" ");
-                data.normals.push(normCoordinates[0]);
-                data.normals.push(normCoordinates[1]);
-                data.normals.push(normCoordinates[2]);
+                data.normals.push(parseFloat(normCoordinates[0]));
+                data.normals.push(parseFloat(normCoordinates[1]));
+                data.normals.push(parseFloat(normCoordinates[2]));
                 normCoordinates = norms[2].$.d.split(" ");
-                data.normals.push(normCoordinates[0]);
-                data.normals.push(normCoordinates[1]);
-                data.normals.push(normCoordinates[2]);
+                data.normals.push(parseFloat(normCoordinates[0]));
+                data.normals.push(parseFloat(normCoordinates[1]));
+                data.normals.push(parseFloat(normCoordinates[2]));
 
                 // Get the vertex colors
                 data.colors.push(color.r);
@@ -283,7 +285,7 @@ fs.readFile(rootPath, function(err, doc) {
             fs.writeFileSync(indexOut, JSON.stringify(data));
             // Get all of the href's for external shells
             _.forEach(externals, function(external) {
-                var shellPath = pathPrefix + external;
+                var shellPath = pathPrefix + external.replace("json", "xml");
                 fs.readFile(shellPath, function(err, doc) {
                     parser.parseString(doc, function(err, results) {
                         data = translateShell(results.shell);
