@@ -21,6 +21,14 @@ define(["THREE"], function(THREE) {
         this._product = undefined;
     }
 
+    Assembly.prototype.getID = function() {
+        if (this._product) {
+            return this._product.getID();
+        } else {
+            return "id0";
+        }
+    };
+
     Assembly.prototype.isChild = function(id) {
         return (this._objects[id] !== undefined);
     };
@@ -189,6 +197,9 @@ define(["THREE"], function(THREE) {
             }
         }
         return object;
+    };
+
+    Assembly.prototype.explode = function(distance, timeS) {
     };
 
     /***********************************/

@@ -11,7 +11,7 @@ define(["THREE"], function(THREE) {
     function Shape(id, assembly, parent, transform, unit) {
         var ret = assembly.makeChild(id, this);
         if (!ret) {
-            console.log("Make new shape: " + id);
+//            console.log("Make new shape: " + id);
             this._id = id;
             this._assembly = assembly;
             this._parent = parent;
@@ -48,7 +48,7 @@ define(["THREE"], function(THREE) {
         this._instanceID = source._instances.length;
         this._instance = source;
         this._instances = [];
-        console.log("Instance existing shape: " + this.getID());
+//        console.log("Instance existing shape: " + this.getID());
         // Other setup items
         this._isRoot = source._isRoot;
         // Prep the object3D
@@ -116,7 +116,7 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.addGeometry = function(geometry) {
-        console.log("Adding Geo: " + this.getID());
+//        console.log("Adding Geo: " + this.getID());
         var material = new THREE.MeshPhongMaterial({
             color: 0xaaaaaa,
             ambient: 0xaaaaaa,
@@ -192,9 +192,9 @@ define(["THREE"], function(THREE) {
             }
         }
         // Only show things that are product-driven
-//        if (!this._product || this.boundingBox.empty()) {
-//            return undefined;
-//        } else {
+        if (!this._product || this.boundingBox.empty()) {
+            return undefined;
+        } else {
             var id = this.getID();
             this.name = "Shape " + id;
             if (this._product) {
@@ -211,7 +211,7 @@ define(["THREE"], function(THREE) {
                 },
                 children    : children
             };
-//        }
+        }
     };
 
     Shape.prototype.getBoundingBox = function(transform) {

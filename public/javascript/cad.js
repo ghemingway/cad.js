@@ -87,7 +87,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
             // Update the download count
-            var count = self._loader.queueLength(true);
+            var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
             // Is this the index file
             if (id === "index") {
@@ -108,9 +108,12 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 //            console.log("ShellLoad: " + id);
             // Remove the item from the list
             $("li#" + id).remove();
+            // Udate the count
+            var count = self._loader.queueLength(false);
+            $(".steptools-downloads-count").text(count);
         });
         this._loader.addEventListener("queueEmpty", function() {
-            var count = self._loader.queueLength(true);
+            var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
         });
         this._loader.addEventListener("loadProgress", function(event) {
@@ -292,7 +295,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             for (var i = 0; i < data.selected.length; i++) {
                 var obj = self._parts[0].getByID(data.selected[i]);
                 if (obj) {
-                    console.log(obj.getID());
+//                    console.log(obj.getID());
                     obj.showBoundingBox();
                     //obj.highlight(0xff0000);
                 }

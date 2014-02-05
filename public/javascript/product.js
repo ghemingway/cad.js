@@ -11,7 +11,7 @@
 define(["THREE"], function(THREE) {
     function Product(id, assembly, name, stepFile, isRoot) {
         assembly.makeChild(id, this);
-        console.log("Make new product: " + id);
+//        console.log("Make new product: " + id);
         this._id = id;
         this._assembly = assembly;
         this._stepFile = stepFile;
@@ -37,6 +37,10 @@ define(["THREE"], function(THREE) {
                 self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
             });
         }
+    };
+
+    Product.prototype.getID = function() {
+        return this._id;
     };
 
     Product.prototype.getProductName = function() {
@@ -106,6 +110,9 @@ define(["THREE"], function(THREE) {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._object3D.remove(this.bbox);
+    };
+
+    Product.prototype.explode = function(distance, timeS) {
     };
 
     // Let product have event system
