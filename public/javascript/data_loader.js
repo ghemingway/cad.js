@@ -272,19 +272,6 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         req.callback(undefined, assembly);
     };
 
-    DataLoader.prototype.buildAssemblyJSON = function(jsonText, req) {
-        var doc = JSON.parse(jsonText);
-        var rootID = doc.root;
-        var defaultColor = DataLoader.parseColor("7d7d7d");
-        var assembly = new Assembly(rootID, defaultColor, this);
-        // Process the rest of the index JSON - get the product with the root ID
-        var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
-        assembly.setRootProduct(rootProduct);
-        // Add the assembly to the scene
-        this._scene.add(rootProduct.getObject3D());
-        req.callback(undefined, assembly);
-    };
-
     DataLoader.prototype.buildProductXML = function(req, map, assembly, id, isRoot) {
         var xmlElement = map[id];
         var step = xmlElement.getAttribute ("step");
@@ -308,26 +295,6 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
                 product.addChild(child);
             }
         }
-        return product;
-    };
-
-    DataLoader.prototype.buildProductJSON = function(req, doc, assembly, id, isRoot) {
-        // Create the product
-        var self = this;
-        var productJSON = _.findWhere(doc.products, { id: id });
-        var product = new Product(id, assembly, productJSON.name, productJSON.step, isRoot);
-        // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
-        var identityTransform = (new THREE.Matrix4()).identity();
-        _.each(productJSON.shapes, function(shapeID) {
-            var shape = self.buildShapeJSON(req, doc, assembly, shapeID, undefined, identityTransform);
-            product.addShape(shape);
-        });
-
-        // Load child products
-        _.each(productJSON.children, function(childID) {
-            var child = self.buildProductJSON(req, doc, assembly, childID, false);
-            product.addChild(child);
-        });
         return product;
     };
 
@@ -370,59 +337,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         return shape;
     };
 
-    DataLoader.prototype.buildShapeJSON = function(req, doc, assembly, id, parent, transform, isRoot) {
-        var self = this;
-        var shapeJSON = _.findWhere(doc.shapes, { id: id });
-        // Create the shape
-        var unit = shapeJSON.unit ? shapeJSON.unit : "";
-        var shape = new Shape(id, assembly, parent, transform, unit, isRoot);
-
-        if (isRoot) {
-            // Load child shells
-            _.each(shapeJSON.shells, function(shellID) {
-                var shell = self.buildShellJSON(req, doc, shellID, assembly, shape);
-                shape.addShell(shell);
-            });
-
-            // Load Child annotations
-//        _.each(shapeJSON.annotations, function(annotationID) {
-//            var annotation = self.buildAnnotationJSON(req, doc, assembly, annotationID, shape, isRoot);
-//            if (isRoot) {
-//                shape.addAnnotation(annotation);
-//            }
-//        });
-
-            // Load child shapes
-            _.each(shapeJSON.children, function(childJSON) {
-                if (id === "id137001") console.log(childJSON);
-                // Setup the child's transform
-                var localTransform = DataLoader.parseXform(childJSON.xform, true);
-                // Build the child
-                var child = self.buildShapeJSON(req, doc, assembly, childJSON.ref, shape, localTransform, isRoot);
-                shape.addChild(child);
-            });
-        }
-        return shape;
-    };
-
     DataLoader.prototype.buildAnnotationXML = function(req, map, assembly, id, parent, isRoot) {
         var xmlElement = map[id];
         var href = xmlElement.getAttribute("href");
         // Do we have to load the shell
         if (href) {
-            return undefined;
-        } else {
-            console.log("DataLoader.buildAnnotationXML - Online - Not yet implemented");
-            return undefined;
-        }
-    };
-
-    DataLoader.prototype.buildAnnotationJSON = function(req, doc, assembly, id, parent, isRoot) {
-        var self = this;
-        var annoJSON = _.findWhere(doc.annotations, { id: id });
-
-        // Do we have to load the shell
-        if (annoJSON.href) {
             return undefined;
         } else {
             console.log("DataLoader.buildAnnotationXML - Online - Not yet implemented");
@@ -455,6 +374,89 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
             return shell;
         } else {
             console.log("DataLoader.buildShellXML - Online - Not yet implemented");
+            return undefined;
+        }
+    };
+
+    DataLoader.prototype.buildAssemblyJSON = function(jsonText, req) {
+        var doc = JSON.parse(jsonText);
+        var rootID = doc.root;
+        var defaultColor = DataLoader.parseColor("7d7d7d");
+        var assembly = new Assembly(rootID, defaultColor, this);
+        // Process the rest of the index JSON - get the product with the root ID
+        var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
+        assembly.setRootProduct(rootProduct);
+        // Add the assembly to the scene
+        this._scene.add(rootProduct.getObject3D());
+        req.callback(undefined, assembly);
+    };
+
+    DataLoader.prototype.buildProductJSON = function(req, doc, assembly, id, isRoot) {
+        // Create the product
+        var self = this;
+        var productJSON = _.findWhere(doc.products, { id: id });
+        // Have we already seen this product
+        if (!assembly.isChild(id)) {
+            var product = new Product(id, assembly, productJSON.name, productJSON.step, isRoot);
+            // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
+            var identityTransform = (new THREE.Matrix4()).identity();
+            _.each(productJSON.shapes, function(shapeID) {
+                var shape = self.buildShapeJSON(req, doc, assembly, shapeID, undefined, identityTransform, isRoot);
+                product.addShape(shape);
+            });
+            // Load child products
+            _.each(productJSON.children, function(childID) {
+                var child = self.buildProductJSON(req, doc, assembly, childID, false);
+                product.addChild(child);
+            });
+            return product;
+        }
+        // Otherwise, just return the existing product
+        return assembly.getChild(id);
+    };
+
+    DataLoader.prototype.buildShapeJSON = function(req, doc, assembly, id, parent, transform, isRoot) {
+        // We are really only looking up stuff when non-root
+        if (!isRoot) return assembly.getChild(id);
+        // Ok, now let's really build some stuff
+        var self = this;
+        var shapeJSON = _.findWhere(doc.shapes, { id: id });
+        var unit = shapeJSON.unit ? shapeJSON.unit : "unit 0.01";
+        var shape = new Shape(id, assembly, parent, transform, unit, isRoot);
+        // Load child shells
+        _.each(shapeJSON.shells, function(shellID) {
+            var shell = self.buildShellJSON(req, doc, shellID, assembly, shape);
+            shape.addShell(shell);
+        });
+
+/*        // Load Child annotations
+         _.each(shapeJSON.annotations, function(annotationID) {
+            var annotation = self.buildAnnotationJSON(req, doc, assembly, annotationID, shape, isRoot);
+            if (isRoot) {
+                shape.addAnnotation(annotation);
+            }
+         });*/
+
+        // Load child shapes
+        _.each(shapeJSON.children, function(childJSON) {
+            // Setup the child's transform
+            var localTransform = DataLoader.parseXform(childJSON.xform, true);
+            // Build the child
+            var child = self.buildShapeJSON(req, doc, assembly, childJSON.ref, shape, localTransform, isRoot);
+            shape.addChild(child);
+        });
+        return shape;
+    };
+
+    DataLoader.prototype.buildAnnotationJSON = function(req, doc, assembly, id, parent, isRoot) {
+        var self = this;
+        var annoJSON = _.findWhere(doc.annotations, { id: id });
+
+        // Do we have to load the shell
+        if (annoJSON.href) {
+            return undefined;
+        } else {
+            console.log("DataLoader.buildAnnotationXML - Online - Not yet implemented");
             return undefined;
         }
     };

@@ -8,10 +8,10 @@
 /********************************* Shape Class ********************************/
 
 define(["THREE"], function(THREE) {
-    function Shape(id, assembly, parent, transform, unit, isRoot) {
+    function Shape(id, assembly, parent, transform, unit) {
         var ret = assembly.makeChild(id, this);
         if (!ret) {
-//            console.log("Make new shape: " + id);
+            console.log("Make new shape: " + id);
             this._id = id;
             this._assembly = assembly;
             this._parent = parent;
@@ -21,7 +21,6 @@ define(["THREE"], function(THREE) {
             this._instances = [];
             this._instance = undefined;
             // Other setup items
-            this._isRoot = isRoot;
             this._children = [];
             this._annotations = [];
             this._shells = [];
@@ -31,11 +30,9 @@ define(["THREE"], function(THREE) {
             this._transform = (new THREE.Matrix4()).copy(transform);
             this._object3D.applyMatrix(this._transform);
         } else {
-            if (isRoot) {
-                // Set up the object to be an instance
-                this.instance(ret, assembly, parent, transform);
-                ret = this;
-            }
+            // Set up the object to be an instance
+            this.instance(ret, assembly, parent, transform);
+            ret = this;
         }
         return ret;
     }
@@ -58,30 +55,32 @@ define(["THREE"], function(THREE) {
         this._object3D = new THREE.Object3D();
         this._transform = (new THREE.Matrix4()).copy(transform);
         this._object3D.applyMatrix(this._transform);
-        // Need to clone child shell events
+
+        // Need to clone child shell references & events
         this._shells = [];
-//        var self = this;
-//        for (var i = 0; i < source._shells.length; i++) {
-//            var shell = source._shells[i];
-//            shell.addEventListener("shellEndLoad", function(event) {
-//                self.addGeometry(event.shell.geometry);
-//            });
-//            this._shells.push(shell);
-//        }
+        var self = this;
+        for (var i = 0; i < source._shells.length; i++) {
+            var shell = source._shells[i];
+            shell.addEventListener("shellEndLoad", function(event) {
+                self.addGeometry(event.shell.geometry);
+            });
+            this._shells.push(shell);
+        }
+
         // Need to clone all child shapes
         this._children = [];
-//        for (i = 0; i < source._children.length; i++) {
-//            // Clone the child shape
-//            var shapeID = source._children[i]._id;
-//            var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit, true);
-//            // Bubble the shapeLoaded event
-//            shape.addEventListener("shapeLoaded", function(event) {
-//                self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
-//            });
-//            // Add of the child shape to the scene graph
-//            this._object3D.add(shape.getObject3D());
-//            this._children.push(shape);
-//        }
+        for (i = 0; i < source._children.length; i++) {
+            // Clone the child shape
+            var shapeID = source._children[i]._id;
+            var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit);
+            // Bubble the shapeLoaded event
+            shape.addEventListener("shapeLoaded", function(event) {
+                self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
+            });
+            // Add of the child shape to the scene graph
+            this._object3D.add(shape.getObject3D());
+            this._children.push(shape);
+        }
     };
 
     Shape.prototype.addChild = function(childShape) {
@@ -102,12 +101,10 @@ define(["THREE"], function(THREE) {
     Shape.prototype.addShell = function(shell) {
         var self = this;
         this._shells.push(shell);
-        if (this._isRoot) {
-            shell.addEventListener("shellEndLoad", function(event) {
-                var shell = event.shell;
-                self.addGeometry(shell._geometry);
-            });
-        }
+        shell.addEventListener("shellEndLoad", function(event) {
+            var shell = event.shell;
+            self.addGeometry(shell._geometry);
+        });
     };
 
     Shape.prototype.setProduct = function(product) {
@@ -119,12 +116,14 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.addGeometry = function(geometry) {
+        console.log("Adding Geo: " + this.getID());
         var material = new THREE.MeshPhongMaterial({
             color: 0xaaaaaa,
             ambient: 0xaaaaaa,
             specular: 0xffffff,
             shininess: 255,
-            side: THREE.FrontSide,
+//            side: THREE.FrontSide,
+            side: THREE.DoubleSide,
             vertexColors: THREE.VertexColors,
             transparent: true
         });

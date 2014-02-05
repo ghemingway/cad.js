@@ -9,20 +9,18 @@
 
 
 define(["THREE"], function(THREE) {
-    function Product(id, assembly, name, stepFile) {
-        var ret = assembly.makeChild(id, this);
-        if (!ret) {
-//            console.log("Make new product: " + id);
-            this._id = id;
-            this._assembly = assembly;
-            this._stepFile = stepFile;
-            this._name = name;
-            this._shapes = [];
-            this._children = [];
-            this._object3D = new THREE.Object3D();
-        }
-        else console.log("Repeat product");
-        return ret;
+    function Product(id, assembly, name, stepFile, isRoot) {
+        assembly.makeChild(id, this);
+        console.log("Make new product: " + id);
+        this._id = id;
+        this._assembly = assembly;
+        this._stepFile = stepFile;
+        this._name = name;
+        this._isRoot = isRoot;
+        this._shapes = [];
+        this._children = [];
+        this._object3D = new THREE.Object3D();
+        return this;
     }
 
     Product.prototype.addChild = function(childProduct) {
@@ -30,13 +28,15 @@ define(["THREE"], function(THREE) {
     };
 
     Product.prototype.addShape = function(shape) {
-        var self = this;
         shape.setProduct(this);
         this._shapes.push(shape);
-        this._object3D.add(shape.getObject3D());
-        shape.addEventListener("shapeLoaded", function(event) {
-            self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
-        });
+        if (this._isRoot) {
+            var self = this;
+            this._object3D.add(shape.getObject3D());
+            shape.addEventListener("shapeLoaded", function(event) {
+                self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
+            });
+        }
     };
 
     Product.prototype.getProductName = function() {
