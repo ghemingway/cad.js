@@ -1,4 +1,4 @@
 Test URLs:
 ==========
 
-http://localhost:8080/cad?resource_url=/data/modelname/index.xml
+http://localhost:8080/cad.js?resource_url=/data/modelname/index.xml
