@@ -1,0 +1,40 @@
+<step-assembly root="id8701">
+    <product .../>
+    <product .../>
+    <product .../>
+
+    <shape .../>
+    <shape .../>
+    <shape .../>
+
+    <shell .../>
+    <shell .../>
+    <shell .../>
+</step-assembly>
+
+<product id="id8701" step="partname.stp" name="this_is_a_label" shape="id607" children="id8678 id602"/>
+
+<shape id="id1404" unit="mm 0.001000">
+    <child ref="id1394" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id1399" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+</shape>
+<shape id="id1394" unit="mm 0.001000" shell="id1215"/>
+
+<shell id="id805" size="84" bbox="2252.53 -1490.73 -4483.1 2866.8 1490.73 -4159.3" a="3.91799e+06" href="shell_id805.xml"/>
+<shell id="id575" color="dfdfdf">
+    <verts>                                     // Only 1 verts per shell
+        <v p="152.4 1860.55 1005"/>
+        <v .../>
+        <v .../>
+    </verts>
+    <facets color="7d7d7d">
+        <f v="32 44 45" fn="-0 1 -0">
+            <n d="0 1 0"/>
+            <n d="0 1 0"/>
+            <n d="0 1 0"/>
+        </f>
+        <f>
+            ...
+        </f>
+    </facets>
+ </shell>
