@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * Manage the drawing context
+ * Visual model navigator - Helps with orientation and viewing aspects
  */
 
 "use strict";

@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * Product class for the STEP file
+ * Product class for the CAD models
  */
 
 "use strict";

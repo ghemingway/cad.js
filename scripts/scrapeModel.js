@@ -1,3 +1,7 @@
+/* G. Hemingway Copyright @2014
+ * Pull down all XML files related to one STEP model - per the STEPTOOLS defined XML spec.
+ */
+
 var fs = require("fs"),
     request = require("request"),
     _ = require("underscore"),

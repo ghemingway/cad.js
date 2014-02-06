@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * Context for the overall STEP file
+ * Context for the visualization of a set of CAD models
  */
 
 "use strict";

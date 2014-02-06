@@ -1,5 +1,10 @@
+/* G. Hemingway Copyright @2014
+ * Convert a CAD model (per the STEPTOOLS defined XML spec) into a JSON spec model
+ */
+
 var fs = require("fs"),
     _ = require("underscore"),
+    os = require("os"),
     xml2js = require("xml2js");
 
 /***********************************************************************/
@@ -186,19 +191,100 @@ function loadPoints(verts) {
     return points;
 }
 
-function loadExternals(externals, name, translationFunc) {
-    _.forEach(externals, function(external) {
-        var path = pathPrefix + external.replace("json", "xml");
-        fs.readFile(path, function(err, doc) {
-            parser.parseString(doc, function(err, results) {
-                var data = translationFunc(results[name]);
-                var outPath = pathPrefix + external.replace("xml", "json");
-                // Write the object to file
-                fs.writeFileSync(outPath, JSON.stringify(data));
-            });
+/*************************************************************************/
+
+// Get the workers
+var async = require("async");
+
+
+function XMLTranslator() {
+    var self = this;
+    this.parser = new xml2js.Parser();
+    this.queue = [];
+    this.workers = [];
+    this.freeWorkers = [];
+    var maxWorkers = os.cpus().length;
+
+    // Spawn all of the threads we need
+    console.log("Spawning Workers: " + maxWorkers);
+    this.queue = async.queue(function(task, callback) {
+        self.exec(task, callback);
+    }, maxWorkers);
+}
+
+XMLTranslator.prototype.translate = function(dir, filename) {
+    var self = this;
+    this.pathPrefix = dir + "/";
+    var rootPath = this.pathPrefix + filename;
+    // Setup XML parser
+    // Read the root file
+    fs.readFile(rootPath, function(err, doc) {
+        if (err) {
+            console.log("Error reading index file: " + rootPath);
+        }
+        self.parser.parseString(doc, function(err, results) {
+            if (!err) {
+                var data = translateIndex(results);
+                // Get output file name
+                var indexOut = self.pathPrefix + filename.replace("xml", "json");
+                var externalShells = _.pluck(data.shells, "href");
+                var externalAnnotations = _.pluck(data.annotations, "href");
+                console.log("Writing new index file: " + indexOut);
+                console.log("\tProducts: " + data.products.length);
+                console.log("\tShapes: " + data.shapes.length);
+                console.log("\tAnnotations: " + data.annotations.length);
+                console.log("\tExternal Annotations: " + externalAnnotations.length);
+                console.log("\tShells: " + data.shells.length);
+                console.log("\tExternal Shells: " + externalShells.length);
+                // Write index to file
+                fs.writeFileSync(indexOut, JSON.stringify(data));
+
+                // Push jobs to the workers
+                _.forEach(externalAnnotations, function(annotation) {
+                    self.queue.push({
+                        type: "annotation",
+                        path: annotation,
+                        func: translateAnnotation
+                    });
+                });
+                _.forEach(externalShells, function(shell) {
+                    self.queue.push({
+                        type: "shell",
+                        path: shell,
+                        func: translateShell
+                    });
+                });
+            } else {
+                console.log("Error parsing index file: " + err);
+            }
         });
     });
-}
+};
+
+XMLTranslator.prototype.exec = function(task, callback) {
+    var self = this;
+    var path = this.pathPrefix + task.path.replace("json", "xml");
+    fs.readFile(path, function(err, doc) {
+        if (err) {
+            console.log("Not able to read file: " + path);
+            console.log(err);
+        } else {
+            self.parser.parseString(doc, function(err, results) {
+                if (err) {
+                    console.log("Invalid XML: " + err);
+                } else {
+                    console.log("Translating: " + path);
+                    var data = task.func(results[task.type]);
+                    var outPath = self.pathPrefix + task.path.replace("xml", "json");
+                    // Write the object to file
+                    fs.writeFileSync(outPath, JSON.stringify(data));
+                    // Now done
+                    callback();
+                }
+            });
+        }
+    });
+};
 
 /*************************************************************************/
 
@@ -207,34 +293,6 @@ var argv = require('optimist')
     .demand(['i'])
     .argv;
 
-var parser = new xml2js.Parser();
-var pathPrefix = argv.d + "/";
-var rootPath = pathPrefix + argv.i;
-fs.readFile(rootPath, function(err, doc) {
-    if (err) {
-        console.log("Error reading index file: " + rootPath);
-    }
-    parser.parseString(doc, function(err, results) {
-        if (!err) {
-            var data = translateIndex(results);
-            // Get output file name
-            var indexOut = pathPrefix + argv.i.replace("xml", "json");
-            var externalShells = _.pluck(data.shells, "href");
-            var externalAnnotations = _.pluck(data.annotations, "href");
-            console.log("Writing new index file: " + indexOut);
-            console.log("\tProducts: " + data.products.length);
-            console.log("\tShapes: " + data.shapes.length);
-            console.log("\tAnnotations: " + data.annotations.length);
-            console.log("\tExternal Annotations: " + externalAnnotations.length);
-            console.log("\tShells: " + data.shells.length);
-            console.log("\tExternal Shells: " + externalShells.length);
-            // Write index to file
-            fs.writeFileSync(indexOut, JSON.stringify(data));
-
-            // Get all of the href's for the external annotations
-            loadExternals(externalAnnotations, "annotation", translateAnnotation);
-            // Get all of the href's for external shells
-            loadExternals(externalShells, "shell", translateShell);
-        }
-    });
-});
+// Translate the requested model file
+var translator = new XMLTranslator();
+translator.translate(argv.d, argv.i);

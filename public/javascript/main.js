@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * Context for the overall STEP file
+ * Primary RequireJS entry point
  */
 
 "use strict";

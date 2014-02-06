@@ -1,3 +1,6 @@
+/* G. Hemingway Copyright @2014
+ * Lightweight Node.js based CAD file server
+ */
 
 /**
  * Module dependencies.

@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * XML Data loader - should be folded in with ShapeBuilder and extended to handle JSON
+ * Data loader - Specialized for each type of data (e.g. XML or JSON)
  */
 
 "use strict";

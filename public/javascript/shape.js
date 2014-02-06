@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * Shape class for the STEP file
+ * Shape class for the CAD models
  */
 
 "use strict";

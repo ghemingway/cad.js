@@ -1,3 +1,7 @@
+/* G. Hemingway Copyright @2014
+ * Asynchronous loading and parsing of CAD model information
+ */
+
 // Import the XML parser
 importScripts("/javascript/libs/tinyxmldom.js");
 

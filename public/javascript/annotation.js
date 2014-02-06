@@ -1,5 +1,5 @@
 /* G. Hemingway Copyright @2014
- * Shape class for the STEP file
+ * Annotation object
  */
 
 "use strict";
