@@ -4,114 +4,14 @@ var fs = require("fs"),
 
 /***********************************************************************/
 
-/*
-<step-assembly root="id8701">
-    <product .../>
-    <product .../>
-    <product .../>
-
-    <shape .../>
-    <shape .../>
-    <shape .../>
-
-    <shell .../>
-    <shell .../>
-    <shell .../>
-</step-assembly>
-
-<product id="id8701" step="partname.stp" name="this_is_a_label" shape="id607" children="id8678 id602"/>
-
-<shape id="id1404" unit="mm 0.001000">
-    <child ref="id1394" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
-    <child ref="id1399" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
-</shape>
-<shape id="id1394" unit="mm 0.001000" shell="id1215"/>
-
-<shell id="id805" size="84" bbox="2252.53 -1490.73 -4483.1 2866.8 1490.73 -4159.3" a="3.91799e+06" href="shell_id805.xml"/>
-<shell id="id575" color="dfdfdf">
-    <verts>                                     // Only 1 verts per shell
-        <v p="152.4 1860.55 1005"/>
-        <v .../>
-        <v .../>
-    </verts>
-    <facets color="7d7d7d">
-        <f v="32 44 45" fn="-0 1 -0">
-            <n d="0 1 0"/>
-            <n d="0 1 0"/>
-            <n d="0 1 0"/>
-        </f>
-        <f>
-            ...
-        </f>
-    </facets>
- </shell>
- */
-
-/*
-    // Assembly JSON
-    {
-        "root": "id8701",
-        "products": [],
-        "shapes":   [],
-        "shells":   []
-    }
-
-    // Product JSON
-    {
-        "id": "id8701",
-        "step": "partname.stp",
-        "name": "this_is_a_label",
-        "shape": ["id607"],
-        "children": ["id8678","id602"]
-    }
-
-    // Parent Shape JSON
-    {
-        "id": "id1404",
-        "unit": "mm 0.001000",
-        "children": [
-            { "ref": "id1394", "xform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1] },
-            { "ref": "id1399", "xform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1] }
-        ]
-    }
-    // Terminal Shape JSON
-    {
-        "id": "id1394",
-        "unit": "mm 0.001000",
-        "shells": ["id1215","id1234"]
-     }
-
-     // Stub Shell JSON
-    {
-        "id": "id805",
-        "size": 84,
-        "bbox": [2252.53,-1490.73,-4483.1,2866.8,1490.73,-4159.3],
-        "href": "shell_id805.xml"
-    }
-    // Terminal Shell JSON
-    {
-        "id": "id575",
-        "points": [
-            152.4, 1860.55, 1005,
-            ..., ..., ...
-        ],
-        "normals": [
-            152.4, 1860.55, 1005,
-            ..., ..., ...
-        ]
-        "colors": [
-            "dfdfdf", "7d7d7d", "9s9sk2",
-            ..., ..., ...
-        ]
-    }
- */
 var translateIndex = function(doc) {
     // Return the full JSON
     return {
         root: doc["step-assembly"].$.root,
         products: _.map(doc["step-assembly"].product, translateProduct),
         shapes: _.map(doc["step-assembly"].shape, translateShape),
-        shells: _.map(doc["step-assembly"].shell, translateShell)
+        shells: _.map(doc["step-assembly"].shell, translateShell),
+        annotations: _.map(doc["step-assembly"].annotation, translateAnnotation)
     };
 };
 
@@ -160,6 +60,28 @@ var translateShape = function(shape) {
     // Terminal Shape JSON
     if (shape.$.shell) {
         data.shells = shape.$.shell.split(" ");
+    }
+    return data;
+};
+
+var translateAnnotation = function(annotation) {
+    var data = {
+        "id": annotation.$.id
+    };
+    // Is this a non-terminal annotation
+    if (annotation.$.href) {
+        data.href = annotation.$.href.replace("xml", "json");
+    // Otherwise, add all those lines
+    } else {
+        data.lines = _.map(annotation.polyline, function(polyline) {
+            var points = [];
+            _.forEach(polyline.p, function(line) {
+                _.forEach(line.$.l.split(" "), function(val) {
+                    points.push(parseFloat(val));
+                });
+            });
+            return points;
+        });
     }
     return data;
 };
@@ -264,6 +186,19 @@ function loadPoints(verts) {
     return points;
 }
 
+function loadExternals(externals, name, translationFunc) {
+    _.forEach(externals, function(external) {
+        var path = pathPrefix + external.replace("json", "xml");
+        fs.readFile(path, function(err, doc) {
+            parser.parseString(doc, function(err, results) {
+                var data = translationFunc(results[name]);
+                var outPath = pathPrefix + external.replace("xml", "json");
+                // Write the object to file
+                fs.writeFileSync(outPath, JSON.stringify(data));
+            });
+        });
+    });
+}
 
 /*************************************************************************/
 
@@ -284,28 +219,22 @@ fs.readFile(rootPath, function(err, doc) {
             var data = translateIndex(results);
             // Get output file name
             var indexOut = pathPrefix + argv.i.replace("xml", "json");
-            var externals = _.pluck(data.shells, "href");
+            var externalShells = _.pluck(data.shells, "href");
+            var externalAnnotations = _.pluck(data.annotations, "href");
             console.log("Writing new index file: " + indexOut);
             console.log("\tProducts: " + data.products.length);
             console.log("\tShapes: " + data.shapes.length);
+            console.log("\tAnnotations: " + data.annotations.length);
+            console.log("\tExternal Annotations: " + externalAnnotations.length);
             console.log("\tShells: " + data.shells.length);
-            console.log("\tExternal Shells: " + externals.length);
+            console.log("\tExternal Shells: " + externalShells.length);
             // Write index to file
             fs.writeFileSync(indexOut, JSON.stringify(data));
+
+            // Get all of the href's for the external annotations
+            loadExternals(externalAnnotations, "annotation", translateAnnotation);
             // Get all of the href's for external shells
-            _.forEach(externals, function(external) {
-                var shellPath = pathPrefix + external.replace("json", "xml");
-                fs.readFile(shellPath, function(err, doc) {
-                    parser.parseString(doc, function(err, results) {
-                        data = translateShell(results.shell);
-                        var shellOut = pathPrefix + external.replace("xml", "json");
-                        console.log("\tShell: " + shellOut);
-                        console.log("\t\tSize: " + data.size);
-                        // Write shell to file
-                        fs.writeFileSync(shellOut, JSON.stringify(data));
-                    });
-                });
-            });
+            loadExternals(externalShells, "shell", translateShell);
         }
     });
 });

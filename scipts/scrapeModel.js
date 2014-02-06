@@ -18,24 +18,21 @@ function getFile(href, callback) {
     });
 }
 
-function parseShells(xmlDoc) {
-    var shells = xmlDoc.find('//shell');
-    var shellFiles = [];
-    _.each(shells, function(shell) {
-        shellFiles.push(shell.attr('href').value());
+function parsePath(xmlDoc, path) {
+    return _.map(xmlDoc.find(path), function(shell) {
+        return shell.attr('href').value()
     });
-    return shellFiles;
 }
 
-function fetchShell(shellName, hrefBase, dir) {
-    // Fetch the shell file
-    var path = hrefBase + "/" + shellName;
+function fetchFile(fileName, hrefBase, dir) {
+    // Fetch the file
+    var path = hrefBase + "/" + fileName;
     getFile(path, function(err, doc) {
         if (err) {
             console.log("Error reading file: " + path);
         } else {
-            // Write the shell xml file to the file system
-            path = dir + "/" + shellName;
+            // Write the xml file to the file system
+            path = dir + "/" + fileName;
             fs.writeFile(path, doc, function(err) {
                 if (err) throw err;
                 console.log(path + " saved.");
@@ -55,9 +52,16 @@ function processIndex(dir, hrefBase, doc) {
         });
         // Get all of the shell data
         console.log("Reading " + xmlDoc.root().name());
-        var shells = parseShells(xmlDoc);
+        var shells = parsePath(xmlDoc, "//shell");
+        console.log("Found Shells: " + shells.length);
         _.each(shells, function(shell) {
-            fetchShell(shell, hrefBase, dir);
+            fetchFile(shell, hrefBase, dir);
+        });
+        // Get all of the annotation data
+        var annos = parsePath(xmlDoc, "//annotation");
+        console.log("Found Annotations: " + annos.length);
+        _.each(annos, function(anno) {
+            fetchFile(anno, hrefBase, dir);
         });
     } catch(e) {
         console.log(e);
@@ -98,6 +102,3 @@ getFile(argv.h, function(err, doc) {
         processIndex(argv.d, hrefBase, doc);
     }
 });
-
-//fs.readFile(argv.f, function(err, doc) {
-//});
