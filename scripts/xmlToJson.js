@@ -116,10 +116,10 @@ var translateShell = function(shell) {
             }
             _.forEach(facet.f, function(f) {
                 // Get every vertex index and convert using points array
-                indexVals = f.$.v.split(" ");
-                index0 = parseInt(indexVals[0]) * 3;
-                index1 = parseInt(indexVals[1]) * 3;
-                index2 = parseInt(indexVals[2]) * 3;
+                var indexVals = f.$.v.split(" ");
+                var index0 = parseInt(indexVals[0]) * 3;
+                var index1 = parseInt(indexVals[1]) * 3;
+                var index2 = parseInt(indexVals[2]) * 3;
 
                 data.points.push(parseFloat(points[index0]));
                 data.points.push(parseFloat(points[index0 + 1]));
@@ -132,8 +132,8 @@ var translateShell = function(shell) {
                 data.points.push(parseFloat(points[index2 + 2]));
 
                 // Get the vertex normals
-                norms = f.n;
-                normCoordinates = norms[0].$.d.split(" ");
+                var norms = f.n;
+                var normCoordinates = norms[0].$.d.split(" ");
                 data.normals.push(parseFloat(normCoordinates[0]));
                 data.normals.push(parseFloat(normCoordinates[1]));
                 data.normals.push(parseFloat(normCoordinates[2]));
