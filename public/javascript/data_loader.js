@@ -8,9 +8,9 @@
 /********************************* Helper Functions ********************************/
 
 define(["THREE", "underscore", "assembly", "product", "shape", "shell"], function(THREE, _, Assembly, Product, Shape, Shell) {
-    function DataLoader (parent, scene, config) {
+    function DataLoader (parent, viewer, config) {
         this._parent = parent;
-        this._scene = scene;
+        this._viewer = viewer;
         this._queue = [];       // The queue of requests to load
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
@@ -268,7 +268,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         var rootProduct = this.buildProductXML(req, map, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        this._scene.add(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getObject3D());
         req.callback(undefined, assembly);
     };
 
@@ -387,7 +387,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        this._scene.add(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getObject3D());
         req.callback(undefined, assembly);
     };
 

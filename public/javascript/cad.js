@@ -35,7 +35,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         // Create the viewer
         this._viewer = new Viewer(this._viewContainer, this._compassContainer);
         // Create the data loader
-        this._loader = new DataLoader(this, this._viewer.scene, { autorun: false });
+        this._loader = new DataLoader(this, this._viewer, { autorun: false });
         // Setup the tree
         //...
         // Setup the toolbar

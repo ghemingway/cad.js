@@ -112,6 +112,7 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
         } else {
             throw( new Error("No camera specified") );
         }
+
         return trackballControl;
     }
 
@@ -132,6 +133,7 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
             }
         };
         that.update( viewAngles, viewDistance );
+
         var on_trackBallControlChanged = function() {
             that.distance = trackballControl.object.position.length();
             that.angles.rotationX = makePositiveAngle( Math.round( trackballControl.object.rotation.x * 180/Math.PI ) );
@@ -139,8 +141,12 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
             that.angles.rotationZ = makePositiveAngle( Math.round( trackballControl.object.rotation.z * 180/Math.PI ) );
 
             that.aspect = 'custom';
+
+            console.log( 'change' );
         };
+
         trackballControl.addEventListener( 'change' , on_trackBallControlChanged );
+
         return that;
     }
 
