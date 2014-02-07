@@ -96,6 +96,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Change the file status to 'parsing'
                 $("li#" + id).text(event.file + ": Parsing");
             }
+
+            self._viewer.invalidate();
         });
         this._loader.addEventListener("parseComplete", function(event) {
             var id = event.file.split(".")[0];

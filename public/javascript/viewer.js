@@ -14,6 +14,7 @@ define( [ "THREE", "compass", "viewer_controls" ], function( THREE, Compass, Vie
 
         var self = this,
             shouldRender = false,
+            continuousRendering = false,
 
             canvasParent, renderer, canvas, scene, camera,
             light1, light2, controls, compass,
@@ -101,15 +102,14 @@ define( [ "THREE", "compass", "viewer_controls" ], function( THREE, Compass, Vie
                 animate( false );
             } );
 
-            console.log( shouldRender );
 
-            if ( shouldRender === true || forceRendering === true ) {
+            if ( continuousRendering === true || shouldRender === true || forceRendering === true ) {
+
+                shouldRender = false;
 
                 render();
                 controls.update();
                 compass.update();
-
-                shouldRender = false;
 
             }
         };
@@ -120,16 +120,25 @@ define( [ "THREE", "compass", "viewer_controls" ], function( THREE, Compass, Vie
 
         add3DObject = function( a3DObject ) {
             scene.add( a3DObject );
+
             invalidate();
         };
 
-        // ATTACH EVENT HANDLERS
+        // CONTROL EVENT HANDLERS
         controls.addEventListener( 'change', function() {
             invalidate();
-            console.log( 'control change' );
+        });
+
+        controls.addEventListener( 'start', function() {
+            continuousRendering = true;
+        });
+
+        controls.addEventListener( 'end', function() {
+            continuousRendering = false;
         });
 
 
+        // SCREEN RESIZE
         window.addEventListener( "resize", function() {
             renderer.setSize( canvasParent.offsetWidth,  canvasParent.offsetHeight );
             camera.aspect =  canvasParent.offsetWidth / canvasParent.offsetHeight;

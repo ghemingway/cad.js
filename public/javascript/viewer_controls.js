@@ -142,7 +142,6 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
 
             that.aspect = 'custom';
 
-            console.log( 'change' );
         };
 
         trackballControl.addEventListener( 'change' , on_trackBallControlChanged );
