@@ -157,6 +157,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     self._parts[0].hideAllBoundingBoxes();
                     console.log("Got here");
                     self.tree.deselect_all();
+                    self._viewer.invalidate();
                     break;
                 // 'o' to set opacity of selected to 0.5
                 case 111:
@@ -169,8 +170,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // 'z' to zoomToFit
                 case 122:
                     self._parts[0].zoomToFit(self._viewer.camera, self._viewer.controls);
+                    self._viewer.invalidate();
                     break;
             }
+
         }, true);
     };
 
@@ -188,6 +191,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             var node = this.tree.get_node(obj.getID());
             this.tree.select_node(node);
         }
+
+        this._viewer.invalidate();
     };
 
     CADjs.prototype.onMove = function(event) {
@@ -201,6 +206,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 obj.highlight(0xffff8f);
             }
         }
+
+        this._viewer.invalidate();
     };
 
     CADjs.prototype.explode = function(distance) {
@@ -212,6 +219,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     obj.explode(distance);
                 }
             }
+            this._viewer.invalidate();
         }
     };
 
@@ -224,6 +232,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     obj.setOpacity(opacity);
                 }
             }
+            this._viewer.invalidate();
         }
     };
 
