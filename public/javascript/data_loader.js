@@ -7,7 +7,7 @@
 
 /********************************* Helper Functions ********************************/
 
-define(["THREE", "underscore", "assembly", "product", "shape", "shell"], function(THREE, _, Assembly, Product, Shape, Shell) {
+define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "shell"], function(THREE, _, Assembly, Product, Shape, Annotation, Shell) {
     function DataLoader (parent, scene, config) {
         this._parent = parent;
         this._scene = scene;
@@ -195,7 +195,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
     DataLoader.prototype.workerMessage = function(event) {
         // Put worker back into the queue - if it is the time
         var req;
-        if (event.data.type === "rootLoad" || event.data.type === "shellLoad") {
+        if (event.data.type === "rootLoad" || event.data.type === "shellLoad" || event.data.type === "annotationLoad") {
             // Remove the job from the loading queue
             req = this._loading[event.data.workerID];
             this._loading[event.data.workerID] = undefined;
@@ -213,6 +213,17 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
                         this.buildAssemblyJSON(event.data.data, req);
                         break;
                 }
+                break;
+            case "annotationLoad":
+                // Parse the JSON file
+                var dataJSON = JSON.parse(event.data.data);
+//                this.dispatchEvent({
+//                    type: "parseComplete"
+//                    file: parts[parts.length - 1],
+//                    duration: parseTime
+//                });
+                req.annotation.addGeometry(dataJSON);
+                // Try to copy into a buffer
                 break;
             case "shellLoad":
                 var data = event.data.data;
@@ -428,14 +439,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
             var shell = self.buildShellJSON(req, doc, shellID, assembly, shape);
             shape.addShell(shell);
         });
-
-/*        // Load Child annotations
+        // Load Child annotations
          _.each(shapeJSON.annotations, function(annotationID) {
-            var annotation = self.buildAnnotationJSON(req, doc, assembly, annotationID, shape, isRoot);
-            if (isRoot) {
-                shape.addAnnotation(annotation);
-            }
-         });*/
+            var annotation = self.buildAnnotationJSON(req, doc, annotationID, assembly, shape);
+            shape.addAnnotation(annotation);
+         });
 
         // Load child shapes
         _.each(shapeJSON.children, function(childJSON) {
@@ -448,15 +456,26 @@ define(["THREE", "underscore", "assembly", "product", "shape", "shell"], functio
         return shape;
     };
 
-    DataLoader.prototype.buildAnnotationJSON = function(req, doc, assembly, id, parent, isRoot) {
-        var self = this;
+    DataLoader.prototype.buildAnnotationJSON = function(req, doc, id, assembly, parent) {
+        var alreadyLoaded = assembly.isChild(id);
         var annoJSON = _.findWhere(doc.annotations, { id: id });
-
         // Do we have to load the shell
         if (annoJSON.href) {
-            return undefined;
+            var anno = new Annotation(id, assembly, parent);
+            // Have we already loaded this annotation - if not, request the shell be loaded?
+            if (!alreadyLoaded) {
+                this.addRequest({
+                    url: req.base + annoJSON.href,
+                    validateType: "annotation",
+                    annotation: anno,
+                    callback: function(err) {
+                        console.log("Annotation load callback");
+                    }
+                });
+            }
+            return anno;
         } else {
-            console.log("DataLoader.buildAnnotationXML - Online - Not yet implemented");
+            console.log("DataLoader.buildAnnotationJSON - Online - Not yet implemented");
             return undefined;
         }
     };

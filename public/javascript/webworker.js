@@ -29,6 +29,19 @@ function processAssembly(url, workerID, data) {
     self.postMessage(message);
 }
 
+function processAnnotation(url, workerID, data) {
+    var parts = url.split("/");
+    // All we really need to do is pass this back to the main thread
+    var message = {
+        type: "annotationLoad",
+        url: url,
+        file: parts[parts.length - 1],
+        data: data,
+        workerID: workerID
+    };
+    self.postMessage(message);
+}
+
 /*********************************************************************/
 
 function loadPoints(el) {
@@ -146,8 +159,7 @@ function processShellXML(url, workerID, xml, expectedSize) {
     }, [data.position.buffer, data.normals.buffer, data.colors.buffer]);
 }
 
-
-function processShellJSON(url, workerID, data, expectedSize) {
+function processShellJSON(url, workerID, data) {
     // Parse the JSON file
     var start = Date.now();
     var dataJSON = JSON.parse(data);
@@ -166,7 +178,6 @@ function processShellJSON(url, workerID, data, expectedSize) {
         normals: new Float32Array(dataJSON.normals),
         colors: new Float32Array(dataJSON.colors)
     };
-
     self.postMessage({
         type: "shellLoad",
         data: buffers,
@@ -181,7 +192,7 @@ function processShellJSON(url, workerID, data, expectedSize) {
 
 self.addEventListener("message", function(e) {
     // event is a new file to request and process
-    //console.log("Worker " + e.data.workerID + ": " + e.data.url);
+//    console.log("Worker " + e.data.workerID + ": " + e.data.url);
     // Get the request URL info
     var url = e.data.url;
     var workerID = e.data.workerID;
@@ -196,9 +207,12 @@ self.addEventListener("message", function(e) {
         self.postMessage({ type: "loadComplete", file: parts[parts.length - 1] });
         // What did we get back
         switch(e.data.type) {
+            case "annotation":
+                processAnnotation(url, workerID, xhr.responseText);
+                break;
             case "shell":
                 if (dataType === "xml") processShellXML(url, workerID, xhr.responseText, e.data.shellSize);
-                else processShellJSON(url, workerID, xhr.responseText, e.data.shellSize);
+                else processShellJSON(url, workerID, xhr.responseText);
                 break;
             case "assembly":
                 processAssembly(url, workerID, xhr.responseText);

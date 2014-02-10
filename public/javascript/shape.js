@@ -24,6 +24,7 @@ define(["THREE"], function(THREE) {
             this._children = [];
             this._annotations = [];
             this._shells = [];
+            this._annotations = [];
             // Setup 3D
             this._object3D = new THREE.Object3D();
             // Setup any transform from the parent reference frame
@@ -60,11 +61,13 @@ define(["THREE"], function(THREE) {
         this._shells = [];
         var self = this;
         for (var i = 0; i < source._shells.length; i++) {
-            var shell = source._shells[i];
-            shell.addEventListener("shellEndLoad", function(event) {
-                self.addGeometry(event.shell.geometry);
-            });
-            this._shells.push(shell);
+            this._shells.push(source._shells[i]);
+        }
+
+        // Need to clone child annotation references & events
+        this._annotations = [];
+        for (i = 0; i < source._annotations.length; i++) {
+            this._annotations.push(source._annotations[i]);
         }
 
         // Need to clone all child shapes
@@ -95,7 +98,12 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.addAnnotation = function(annotation) {
+        var self = this;
         this._annotations.push(annotation);
+        annotation.addEventListener("annotationEndLoad", function(event) {
+            var anno = event.annotation;
+            self.addAnnotationGeometry(anno.getGeometry());
+        });
     };
 
     Shape.prototype.addShell = function(shell) {
@@ -103,7 +111,7 @@ define(["THREE"], function(THREE) {
         this._shells.push(shell);
         shell.addEventListener("shellEndLoad", function(event) {
             var shell = event.shell;
-            self.addGeometry(shell._geometry);
+            self.addGeometry(shell.getGeometry());
         });
     };
 
@@ -116,7 +124,7 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.addGeometry = function(geometry) {
-//        console.log("Adding Geo: " + this.getID());
+//        console.log("Adding Shell Geo: " + this.getID());
         var material = new THREE.MeshPhongMaterial({
             color: 0xaaaaaa,
             ambient: 0xaaaaaa,
@@ -132,6 +140,20 @@ define(["THREE"], function(THREE) {
         mesh.receiveShadow = true;
         mesh.userData = this;
         this._object3D.add(mesh);
+        this.dispatchEvent({ type: "shapeLoaded" });
+    };
+
+    Shape.prototype.addAnnotationGeometry = function(lineGeometries) {
+//        console.log("Adding Annotation Geo: " + lineGeometries.length);
+        var material = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            linewidth: 1
+        });
+        for (var i = 0; i < lineGeometries.length; i++) {
+            var geometry = lineGeometries[i];
+            var lines = new THREE.Line(geometry, material, THREE.LineStrip);
+            this._object3D.add(lines);
+        }
         this.dispatchEvent({ type: "shapeLoaded" });
     };
 

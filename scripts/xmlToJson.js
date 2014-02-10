@@ -13,9 +13,9 @@ var translateIndex = function(doc) {
     // Return the full JSON
     return {
         root: doc["step-assembly"].$.root,
-        products: _.map(doc["step-assembly"].product, translateProduct),
-        shapes: _.map(doc["step-assembly"].shape, translateShape),
-        shells: _.map(doc["step-assembly"].shell, translateShell),
+        products:    _.map(doc["step-assembly"].product, translateProduct),
+        shapes:      _.map(doc["step-assembly"].shape, translateShape),
+        shells:      _.map(doc["step-assembly"].shell, translateShell),
         annotations: _.map(doc["step-assembly"].annotation, translateAnnotation)
     };
 };
@@ -62,6 +62,10 @@ var translateShape = function(shape) {
             "xform": setTransform(child.$.xform)
         });
     });
+    // Add child annotations
+    if (shape.$.annotation) {
+        data.annotations = shape.$.annotation.split(" ");
+    }
     // Terminal Shape JSON
     if (shape.$.shell) {
         data.shells = shape.$.shell.split(" ");

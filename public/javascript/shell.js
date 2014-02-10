@@ -17,7 +17,6 @@ define(["THREE"], function(THREE) {
             this._parent = parent;
             this._size = size;
             this._color = defaultColor;
-            this._isLoaded = false;
             this._boundingBox = boundingBox;
             if (this._boundingBox.empty()) {
                 console.log("Found empty bounding box: " + this._id);
@@ -30,7 +29,7 @@ define(["THREE"], function(THREE) {
         console.log("Shell.unloadData - Not Implemented");
     };
 
-    Shell.prototype.getId = function() {
+    Shell.prototype.getID = function() {
         return  this._id;
     };
 
@@ -66,11 +65,6 @@ define(["THREE"], function(THREE) {
         // All done - signal completion
         this._isLoaded = true;
         this.dispatchEvent({ type: "shellEndLoad", shell: this });
-    };
-
-    Shell.prototype.getGeometry = function() {
-        console.log("getting geometry");
-        return this._geometry;
     };
 
     Shell.prototype.getBoundingBox = function() {
