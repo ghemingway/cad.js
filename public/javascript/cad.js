@@ -189,7 +189,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onMove = function(event) {
-        if (this._parts.length > 0) {
+/*        if (this._parts.length > 0) {
             this._parts[0].clearHighlights();
             var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
             // Did we find an object
@@ -198,7 +198,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Yes, go highlight it in the tree
                 obj.highlight(0xffff8f);
             }
-        }
+        }*/
     };
 
     CADjs.prototype.explode = function(distance) {

@@ -39,7 +39,7 @@ define(["THREE"], function(THREE) {
         return this._lines;
     };
 
-    // And Graham said, let shells have events too, for they are good
+    // And Graham said, let annotations have events too, for they are good
     THREE.EventDispatcher.prototype.apply(Annotation.prototype);
     return Annotation;
 });

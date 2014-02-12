@@ -110,7 +110,6 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     /************** DataLoader Class Functions ****************************/
 
     DataLoader.prototype.load = function(url, validateType, callback) {
-        // TODO: Make sure validateType is string and callback is function
         this.addRequest({
             url: url,
             validateType: validateType,
@@ -202,6 +201,8 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
         }
+        var parser = new DOMParser();
+        var xmlDoc, data;
         switch(event.data.type) {
             case "rootLoad":
                 // Handle the assembly
@@ -215,18 +216,33 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 }
                 break;
             case "annotationLoad":
-                // Parse the JSON file
-                var dataJSON = JSON.parse(event.data.data);
-//                this.dispatchEvent({
-//                    type: "parseComplete"
-//                    file: parts[parts.length - 1],
-//                    duration: parseTime
-//                });
-                req.annotation.addGeometry(dataJSON);
-                // Try to copy into a buffer
+                switch (req.contentType) {
+                    case "application/xml":
+                        xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
+                        data = {
+                            id: xmlDoc.getAttribute("id"),
+                            lines: this.parseAnnotationXML(xmlDoc)
+                        };
+                        console.log(data);
+                        req.annotation.addGeometry(data);
+                        break;
+                    case "application/json":
+                        data = JSON.parse(event.data.data);
+                        console.log(data);
+                        req.annotation.addGeometry(data);
+                        break;
+                }
                 break;
             case "shellLoad":
-                var data = event.data.data;
+                switch (req.contentType) {
+                    case "application/xml":
+                        xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
+                        data = this.parseShellXML(xmlDoc, req.shellSize);
+                        break;
+                    case "application/json":
+                        data = event.data.data;
+                        break;
+                }
                 req.shell.addGeometry(data.position, data.normals, data.colors);
                 this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
@@ -284,80 +300,186 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     };
 
     DataLoader.prototype.buildProductXML = function(req, map, assembly, id, isRoot) {
+        var self = this;
         var xmlElement = map[id];
         var step = xmlElement.getAttribute ("step");
         var name = xmlElement.getAttribute("name");
-        // Create the product
-        var product = new Product(id, assembly, name, step, isRoot);
 
-        // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
-        var shapes = DataLoader.getArrayFromAttribute(xmlElement, "shape");
-        var i, identityTransform = (new THREE.Matrix4()).identity();
-        for (i = 0; i < shapes.length; i++) {
-            var shape = this.buildShapeXML(req, map, assembly, shapes[i], undefined, identityTransform, isRoot);
-            product.addShape(shape);
-        }
-
-        // Load child products
-        var childProducts = DataLoader.getArrayFromAttribute(xmlElement, "children");
-        for (i = 0; i < childProducts.length; i++) {
-            var child = this.buildProductXML(req, map, assembly, childProducts[i], false);
-            if (isRoot) {
+        // Have we already seen this product
+        if (!assembly.isChild(id)) {
+            var product = new Product(id, assembly, name, step, isRoot);
+            // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
+            var identityTransform = (new THREE.Matrix4()).identity();
+            var shapes = DataLoader.getArrayFromAttribute(xmlElement, "shape");
+            _.each(shapes, function(shapeID) {
+                var shape = self.buildShapeXML(req, map, assembly, shapeID, undefined, identityTransform, isRoot);
+                product.addShape(shape);
+            });
+            // Load child products
+            var childProducts = DataLoader.getArrayFromAttribute(xmlElement, "children");
+            _.each(childProducts, function(childID) {
+                var child = self.buildProductXML(req, map, assembly, childID, false);
                 product.addChild(child);
-            }
+            });
+            return product;
         }
-        return product;
+        // Otherwise, just return the existing product
+        return assembly.getChild(id);
     };
 
     DataLoader.prototype.buildShapeXML = function(req, map, assembly, id, parent, transform, isRoot) {
+        // We are really only looking up stuff when non-root
+        if (!isRoot) return assembly.getChild(id);
+        // Ok, now let's really build some stuff
+        var self = this;
         var xmlElement = map[id];
         var unit = xmlElement.getAttribute("unit");
-        // Create the shape
         var shape = new Shape(id, assembly, parent, transform, unit, isRoot);
         // Load child shells
-        if (isRoot) {
-            var shells = DataLoader.getArrayFromAttribute(xmlElement, "shell");
-            for (var i = 0; i < shells.length; i++) {
-                var shell = this.buildShellXML(req, map, shells[i], assembly, shape);
-                shape.addShell(shell);
-            }
-        }
-
+        var shells = DataLoader.getArrayFromAttribute(xmlElement, "shell");
+        _.each(shells, function(shellID) {
+            var shell = self.buildShellXML(req, map, shellID, assembly, shape);
+            shape.addShell(shell);
+        });
         // Load Child annotations
-        var annotations = xmlElement.getElementsByTagName("annotation");
-        for (i = 0; i < annotations.length; i++) {
-            var annotationEl = annotations[i];
-            var annotation = this.buildAnnotationXML(req, map, assembly, annotationEl, shape, isRoot);
-            if (isRoot) {
-                shape.addAnnotation(annotation);
-            }
-        }
-
+        var annotations = DataLoader.getArrayFromAttribute(xmlElement, "annotation");
+        _.each(annotations, function(annotationID) {
+            var annotation = self.buildAnnotationXML(req, map, assembly, annotationID, shape);
+            shape.addAnnotation(annotation);
+        });
         // Load child shapes
         var childShapes = xmlElement.getElementsByTagName("child");
-        for (i = 0; i < childShapes.length; i++) {
-            var childEl = childShapes[i];
+        _.each(childShapes, function(childEl) {
             // Setup the child's transform
             var localTransform = DataLoader.parseXform(childEl.getAttribute("xform"), true);
             // Build the child
-            var child = this.buildShapeXML(req, map, assembly, childEl.getAttribute("ref"), shape, localTransform, isRoot);
-            if (isRoot) {
-                shape.addChild(child);
-            }
-        }
+            var child = self.buildShapeXML(req, map, assembly, childEl.getAttribute("ref"), shape, localTransform, isRoot);
+            shape.addChild(child);
+        });
         return shape;
     };
 
-    DataLoader.prototype.buildAnnotationXML = function(req, map, assembly, id, parent, isRoot) {
+    DataLoader.prototype.parseAnnotationXML = function(xmlDoc) {
+        return _.map(xmlDoc.getElementsByTagName("polyline"), function(polyline) {
+            var points = [];
+            var ps = polyline.getElementsByTagName("p");
+            _.forEach(ps, function(pt) {
+                _.forEach(pt.getAttribute("l").split(" "), function(val) {
+                    points.push(parseFloat(val));
+                });
+            });
+            return points;
+        });
+    };
+
+    DataLoader.prototype.buildAnnotationXML = function(req, map, assembly, id, parent) {
+        var alreadyLoaded = assembly.isChild(id);
         var xmlElement = map[id];
         var href = xmlElement.getAttribute("href");
         // Do we have to load the shell
         if (href) {
-            return undefined;
+            var anno = new Annotation(id, assembly, parent);
+            // Have we already loaded this annotation - if not, request the shell be loaded?
+            if (!alreadyLoaded) {
+                this.addRequest({
+                    url: req.base + href,
+                    validateType: "annotation",
+                    annotation: anno
+                });
+            }
+            return anno;
         } else {
             console.log("DataLoader.buildAnnotationXML - Online - Not yet implemented");
             return undefined;
         }
+    };
+
+    DataLoader.prototype.loadPoints = function(el) {
+        // Load all of the point information
+        var verts = el.getElementsByTagName("verts")[0].getElementsByTagName("v");
+        var points = new Float32Array(verts.length * 3);
+        var index = 0, pt, coords;
+        for (var i = 0; i < verts.length; i++) {
+            pt = verts[i].getAttribute("p");
+            coords = pt.split(" ", 3);
+            points[index++] = parseFloat(coords[0]);
+            points[index++] = parseFloat(coords[1]);
+            points[index++] = parseFloat(coords[2]);
+        }
+        return points;
+    };
+
+    DataLoader.prototype.parseShellXML = function(xmlRoot, expectedSize) {
+        var size = expectedSize * 9;
+ //    console.log("Process XML of shell: " + expectedSize);
+        var defaultColor = DataLoader.parseColor("d8d8d8");
+        // Load the points array
+        var points = this.loadPoints(xmlRoot);
+        // Get all of the facet information ready
+        var facets = xmlRoot.getElementsByTagName("facets");
+        // Now load the rest of the data
+        var position = new Float32Array(size);
+        var normals = new Float32Array(size);
+        var colors = new Float32Array(size);
+        var pIndex = 0, nIndex = 0, cIndex = 0, totalTris = 0;
+        for (var i = 0; i < facets.length; i++) {
+            // Set the color
+            var color = facets[i].getAttribute("color");
+            color = color ? DataLoader.parseColor(color) : defaultColor;
+            // Work through each triangle - an 'F' is one
+            var tris = facets[i].getElementsByTagName("f");
+            totalTris += tris.length;
+            var indexVals, tri, norms, index0, index1, index2, normCoordinates;
+            for (var j = 0; j < tris.length; j++) {
+                tri = tris[j];
+                // Get the index information
+                indexVals = tri.getAttribute("v").split(" ", 3);
+                index0 = parseInt(indexVals[0]) * 3;
+                index1 = parseInt(indexVals[1]) * 3;
+                index2 = parseInt(indexVals[2]) * 3;
+
+                position[pIndex++] = points[index0];
+                position[pIndex++] = points[index0 + 1];
+                position[pIndex++] = points[index0 + 2];
+                position[pIndex++] = points[index1];
+                position[pIndex++] = points[index1 + 1];
+                position[pIndex++] = points[index1 + 2];
+                position[pIndex++] = points[index2];
+                position[pIndex++] = points[index2 + 1];
+                position[pIndex++] = points[index2 + 2];
+
+                // Get the normal information
+                norms = tri.getElementsByTagName("n");
+                normCoordinates = norms[0].getAttribute("d").split(" ", 3);
+                normals[nIndex++] = parseFloat(normCoordinates[0]);
+                normals[nIndex++] = parseFloat(normCoordinates[1]);
+                normals[nIndex++] = parseFloat(normCoordinates[2]);
+                normCoordinates = norms[1].getAttribute("d").split(" ", 3);
+                normals[nIndex++] = parseFloat(normCoordinates[0]);
+                normals[nIndex++] = parseFloat(normCoordinates[1]);
+                normals[nIndex++] = parseFloat(normCoordinates[2]);
+                normCoordinates = norms[2].getAttribute("d").split(" ", 3);
+                normals[nIndex++] = parseFloat(normCoordinates[0]);
+                normals[nIndex++] = parseFloat(normCoordinates[1]);
+                normals[nIndex++] = parseFloat(normCoordinates[2]);
+
+                // Set the color information
+                colors[cIndex++] = color.r;
+                colors[cIndex++] = color.g;
+                colors[cIndex++] = color.b;
+                colors[cIndex++] = color.r;
+                colors[cIndex++] = color.g;
+                colors[cIndex++] = color.b;
+                colors[cIndex++] = color.r;
+                colors[cIndex++] = color.g;
+                colors[cIndex++] = color.b;
+            }
+        }
+        return {
+            position: position,
+            normals: normals,
+            colors: colors
+        };
     };
 
     DataLoader.prototype.buildShellXML = function(req, map, id, assembly, parent) {
@@ -376,10 +498,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                     url: req.base + href,
                     validateType: "shell",
                     shell: shell,
-                    shellSize: size,
-                    callback: function(err) {
-                        console.log("Shell load callback");
-                    }
+                    shellSize: size
                 });
             }
             return shell;
@@ -444,7 +563,6 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             var annotation = self.buildAnnotationJSON(req, doc, annotationID, assembly, shape);
             shape.addAnnotation(annotation);
          });
-
         // Load child shapes
         _.each(shapeJSON.children, function(childJSON) {
             // Setup the child's transform
@@ -467,10 +585,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 this.addRequest({
                     url: req.base + annoJSON.href,
                     validateType: "annotation",
-                    annotation: anno,
-                    callback: function(err) {
-                        console.log("Annotation load callback");
-                    }
+                    annotation: anno
                 });
             }
             return anno;
@@ -494,10 +609,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                     url: req.base + shellJSON.href,
                     validateType: "shell",
                     shell: shell,
-                    shellSize: shellJSON.size,
-                    callback: function(err) {
-                        console.log("Shell load callback");
-                    }
+                    shellSize: shellJSON.size
                 });
             }
             return shell;

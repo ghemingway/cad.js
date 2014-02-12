@@ -10,16 +10,15 @@
 define(["THREE"], function(THREE) {
     function Shape(id, assembly, parent, transform, unit) {
         var ret = assembly.makeChild(id, this);
+        this._id = id;
+        this._assembly = assembly;
+        this._parent = parent;
+        this._unit = unit;
+        this._instances = [];
         if (!ret) {
 //            console.log("Make new shape: " + id);
-            this._id = id;
-            this._assembly = assembly;
-            this._parent = parent;
-            this._unit = unit;
             // If we are here, this is the first one
             this._instanceID = 0;
-            this._instances = [];
-            this._instance = undefined;
             // Other setup items
             this._children = [];
             this._annotations = [];
@@ -39,40 +38,22 @@ define(["THREE"], function(THREE) {
     }
 
     Shape.prototype.instance = function(source, assembly, parent, transform) {
-        // Setup the basic info
-        this._id = source._id;
-        this._assembly = source._assembly;
-        this._parent = parent;
-        this._unit = source._unit;
         // Setup instance info
         source._instances.push(this);
         this._instanceID = source._instances.length;
-        this._instance = source;
-        this._instances = [];
 //        console.log("Instance existing shape: " + this.getID());
-        // Other setup items
-        this._isRoot = source._isRoot;
         // Prep the object3D
         this._object3D = new THREE.Object3D();
         this._transform = (new THREE.Matrix4()).copy(transform);
         this._object3D.applyMatrix(this._transform);
 
-        // Need to clone child shell references & events
-        this._shells = [];
-        var self = this;
-        for (var i = 0; i < source._shells.length; i++) {
-            this._shells.push(source._shells[i]);
-        }
-
-        // Need to clone child annotation references & events
-        this._annotations = [];
-        for (i = 0; i < source._annotations.length; i++) {
-            this._annotations.push(source._annotations[i]);
-        }
-
+        // Need to clone shell & annotation references & events
+        this._shells = source._shells;
+        this._annotations = source._annotations;
         // Need to clone all child shapes
         this._children = [];
-        for (i = 0; i < source._children.length; i++) {
+        var self = this;
+        for (var i = 0; i < source._children.length; i++) {
             // Clone the child shape
             var shapeID = source._children[i]._id;
             var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit);
@@ -111,7 +92,7 @@ define(["THREE"], function(THREE) {
         this._shells.push(shell);
         shell.addEventListener("shellEndLoad", function(event) {
             var shell = event.shell;
-            self.addGeometry(shell.getGeometry());
+            self.addShellGeometry(shell.getGeometry());
         });
     };
 
@@ -123,14 +104,112 @@ define(["THREE"], function(THREE) {
         }
     };
 
-    Shape.prototype.addGeometry = function(geometry) {
+     var vshader = [
+        "precision mediump float;",
+        "uniform mat4 u_projMatrix;",
+        "uniform mat4 u_modelViewMatrix;",
+        // is the light on
+        "uniform bool u_light_on;",
+        "attribute vec3 a_normal;",
+        "attribute highp vec4 a_color;",
+        "attribute vec4 a_position;",
+        "varying vec4 v_eye_loc;",
+        "varying highp vec4 v_Color;",
+        "varying vec3 v_normal;",
+        "void main() {",
+        "    v_eye_loc = u_modelViewMatrix * a_position;",
+        "    gl_Position = u_projMatrix * v_eye_loc;",
+        "    v_Color = a_color;",
+        "    v_normal = a_normal;",
+        "}"].join("\n");
+
+     var fshader = [
+        "precision mediump float;",
+        "uniform mat3 u_normalMatrix;",
+        "uniform vec3 u_ambient;",
+        "uniform bool u_light_on;",
+        "varying highp vec4 v_Color;",
+        "varying vec4 v_eye_loc;",
+        "varying vec3 v_normal;",
+        // material properties.  If we want to change these, they should
+        // be passed in as uniforms.
+        "const float mat_ambient=.15;",
+        "const float mat_diffuse=1.;",
+        "const float mat_specular=.4;",
+        "const float shine=6.;",
+         "void main() {",
+        "    if (!u_light_on) {",
+        "      gl_FragColor = v_Color;",
+        "      return;",
+        "    }",
+        // if u_normalMatrix were normalized, the call to normalize()
+        // here would not be necessary
+        "    vec3 normal = normalize(u_normalMatrix * v_normal);",
+        // ambient color generation
+        "    float color_factor = .65 * mat_ambient;",
+        "    float light_dot =  dot(normal, vec3(-.4082, .4082, .8165));",
+        "    if ( light_dot > 0.)",
+        "        color_factor += .45 * mat_diffuse * light_dot;",
+        // vector from point to light.  We are placing a point light in the
+        // scenegraph at the same level as the near clipping plane.
+        // The z value of the vector may want to be a uniform so that it can
+        // be derived from the camera_ratio.
+        "    vec3 dir = normalize(vec3(0., 1., -3.) - v_eye_loc.xyz);",
+        "    light_dot = dot(normal, dir);",
+        "    if (light_dot > 0.) {",
+        "        color_factor += .4 * mat_diffuse * light_dot;",
+        "        vec3 s = normalize(dir + vec3(0.,0.,1.));",
+        "        float ndot = dot(s,normal);",
+        "        color_factor += mat_specular * max(pow(ndot, shine), 0.);",
+        "    ",
+        "    }",
+        "    gl_FragColor = vec4(color_factor * v_Color.rgb, v_Color.a);",
+        "}"].join("\n");
+/*
+     var prog = create_program(gl, vshader, fshader);
+     gl.useProgram(prog);
+     gl.proj_mtx = gl.getUniformLocation(prog, "u_projMatrix");
+     if (!gl.proj_mtx)
+     throw new Error ("Could not get proj matrix");
+     gl.mv_mtx = gl.getUniformLocation(prog, "u_modelViewMatrix");
+     if (!gl.mv_mtx)
+         throw new Error ("Could not get model viewmatrix");
+     gl.normal_mtx = gl.getUniformLocation(prog, "u_normalMatrix");
+     gl.light_on = gl.getUniformLocation(prog, "u_light_on");
+     if (gl.light_on) {
+        gl.uniform1i(gl.light_on, true);
+        gl.light = true;
+     }
+     gl.xforms = new GLTransform(gl, gl.proj_mtx, gl.mv_mtx, gl.normal_mtx);
+     gl.pos_loc = gl.getAttribLocation(prog, "a_position");
+     gl.norm_loc = gl.getAttribLocation(prog, "a_normal");
+     gl.color_loc = gl.getAttribLocation(prog, "a_color");
+     if (gl.pos_loc < 0 || gl.norm_loc < 0 || gl.color_loc < 0)
+        throw new Error ("Could not get location");
+*/
+
+    Shape.prototype.addShellGeometry = function(geometry) {
 //        console.log("Adding Shell Geo: " + this.getID());
-        var material = new THREE.MeshPhongMaterial({
-            color: 0xaaaaaa,
-            ambient: 0xaaaaaa,
-            specular: 0xffffff,
-            shininess: 255,
+//        var material = new THREE.MeshPhongMaterial({
+//            color: 0xaaaaaa,
+//            ambient: 0xaaaaaa,
+//            specular: 0xffffff,
+//            shininess: 255,
 //            side: THREE.FrontSide,
+//            side: THREE.DoubleSide,
+//            vertexColors: THREE.VertexColors,
+//            transparent: true
+//        });
+//        var material = new THREE.MeshBasicMaterial({
+//            side: THREE.DoubleSide
+//        });
+//        var material = new THREE.ShaderMaterial({
+//            uniforms: uniforms,
+//            attributes: attributes,
+//            vertexShader: vshader,
+//            fragmentShader: fshader
+//        });
+        var material = new THREE.MeshNormalMaterial({
             side: THREE.DoubleSide,
             vertexColors: THREE.VertexColors,
             transparent: true
@@ -187,7 +266,7 @@ define(["THREE"], function(THREE) {
         if (this._product) {
             return this._product.getProductName();
         }
-        return null;
+        return "";
     };
 
     Shape.prototype.getNamedParent = function(includeSelf) {
@@ -286,7 +365,7 @@ define(["THREE"], function(THREE) {
                 };
                 object.material.ambient = new THREE.Color(colorHex);
                 object.material.color = object.material.ambient;
-                object.material.specular = object.material.specular;
+                object.material.specular = object.material.ambient;
                 self._assembly.addEventListener("_clearHighlights", function() {
                     object.material.ambient = object.material._color.ambient;
                     object.material.color = object.material._color.color;
