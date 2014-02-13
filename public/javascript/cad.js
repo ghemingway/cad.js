@@ -62,7 +62,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Update the tree
                 self.renderTree();
                 // Get the rest of the files
-                self._loader.runLoadQueue(true);
+                self._loader.runLoadQueue();
             }
         });
     };
@@ -95,7 +95,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Change the file status to 'parsing'
                 $("li#" + id).text(event.file + ": Parsing");
             }
-
+            // Make sure to redraw the model
             self._viewer.invalidate();
         });
         this._loader.addEventListener("parseComplete", function(event) {
@@ -106,12 +106,13 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("shellLoad", function(event) {
             var id = event.file.split(".")[0];
-//            console.log("ShellLoad: " + id);
             // Remove the item from the list
             $("li#" + id).remove();
             // Udate the count
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
+            // Make sure to redraw the model
+            self._viewer.invalidate();
         });
         this._loader.addEventListener("queueEmpty", function() {
             var count = self._loader.queueLength(false);
@@ -135,8 +136,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             if (!_change) self.onClick(event);
             _change = false;
         }, false);
-        canvasDOM.addEventListener("mousemove", function(event) {
-            if (!_change) self.onMove(event);
+        canvasDOM.addEventListener("mousemove", function() {
+            if (!_change) self.onMove();
         }, false);
 
         // Keybased events
@@ -194,7 +195,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._viewer.invalidate();
     };
 
-    CADjs.prototype.onMove = function(event) {
+    CADjs.prototype.onMove = function() {
         if (this._parts.length > 0) {
 /*            this._parts[0].clearHighlights();
             var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
