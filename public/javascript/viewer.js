@@ -8,43 +8,60 @@
 /*************************************************************************/
 
 
-define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerControls) {
+define( [ "THREE", "compass", "viewer_controls" ], function( THREE, Compass, ViewerControls ) {
     // Define Viewer class
-    function Viewer(canvasParent, compassParent) {
+    function Viewer( canvasParentId, compassParentId ) {
+
+        var self = this,
+            shouldRender = false,
+            continuousRendering = false,
+
+            canvasParent, renderer, canvas, scene, camera,
+            light1, light2, controls, compass,
+
+            render, animate, add3DObject, invalidate;
+        
+
         // RENDERER
-        this.canvasParent = document.getElementById(canvasParent);
-        this.renderer = new THREE.WebGLRenderer( { antialias: true } );
-        this.renderer.setSize(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight);
-//    this.renderer.shadowMapEnabled = true;
-//    this.renderer.shadowMapType = THREE.PCFShadowMap;
-        this.renderer.sortObjects = true;
+        canvasParent = document.getElementById( canvasParentId );
+
+        renderer = new THREE.WebGLRenderer( { antialias: true });
+        renderer.setSize( canvasParent.offsetWidth, canvasParent.offsetHeight );
+
+        //    renderer.shadowMapEnabled = true;
+        //    renderer.shadowMapType = THREE.PCFShadowMap;
+        renderer.sortObjects = true;
 
         // CANVAS
-        this.canvas = this.renderer.domElement;
-        this.canvasParent.appendChild(this.canvas);
+        canvas = renderer.domElement;
+        canvasParent.appendChild( canvas );
 
         // SCENE
-        this.clock = new THREE.Clock();
-        this.scene = new THREE.Scene();
+        scene = new THREE.Scene();
 
         // CAMERA
-        this.camera = new THREE.PerspectiveCamera(75, this.canvasParent.offsetWidth / this.canvasParent.offsetHeight, 0.1, 1000000);
-        this.camera.position.x = -5000;
-        this.camera.position.y = -5000;
-        this.camera.position.z = 0;
-        this.camera.lookAt(this.scene.position);
+        camera = new THREE.PerspectiveCamera(
+            75,
+            canvasParent.offsetWidth / canvasParent.offsetHeight,
+            0.1,
+            1000000
+        );
+        camera.position.x = -5000;
+        camera.position.y = -5000;
+        camera.position.z = 0;
+        camera.lookAt( scene.position );
 
         // LIGHTS
-        this.scene.add(new THREE.AmbientLight(0xdddddd));
-        var light1 = new THREE.DirectionalLight(0xffffff, 0.5);
-        light1.position.set(1, 1, 1);
-        this.scene.add(light1);
+        scene.add( new THREE.AmbientLight( 0xdddddd ) );
+        light1 = new THREE.DirectionalLight( 0xffffff, 0.5 );
+        light1.position.set( 1, 1, 1 );
+        scene.add( light1 );
 
-        var light2 = new THREE.DirectionalLight(0xffffff, 0.5);
-        light2.position.set(0, -1, 0);
-        this.scene.add( light2 );
+        light2 = new THREE.DirectionalLight( 0xffffff, 0.5 );
+        light2.position.set( 0, -1, 0 );
+        scene.add( light2 );
         /*
-         var light3 = new THREE.SpotLight( 0xffffff, 1.5 );
+         light3 = new THREE.SpotLight( 0xffffff, 1.5 );
          light3.position.set( 0, 0, 10000 );
          light3.castShadow = true;
          light3.shadowCameraNear = 200;
@@ -56,54 +73,95 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
          light3.shadowMapHeight = 2048;
          this.scene.add(light3);
          */
-        var self = this;
+
         // VIEW CONTROLS
-        this.controls = ViewerControls({
-            camera: this.camera,
-            canvas: this.canvas
+        controls =  ViewerControls({
+            camera: camera,
+            canvas: canvas
         });
 
+
         // COMPASS
-        this.compass = new Compass(compassParent, this.camera, this.controls, {
+        compass = new Compass( compassParentId, camera, controls, {
             width: 200,
             height: 200
         });
-        this.scene.add(this.compass.object3D);
 
-        // EVENT HANDLERS
-        this.controls.addEventListener('change', function() {
-            self.render();
+        scene.add( compass.object3D );
+
+
+        // PRIVATE FUNCTIONS
+
+        render = function() {
+            renderer.render( scene,  camera );
+        };
+
+        animate = function( forceRendering ) {
+
+            requestAnimationFrame( function() {
+                animate( false );
+            } );
+
+
+            if ( continuousRendering === true || shouldRender === true || forceRendering === true ) {
+
+                shouldRender = false;
+
+                render();
+                controls.update();
+                compass.update();
+
+            }
+        };
+
+        invalidate = function() {
+            shouldRender = true;
+        };
+
+        add3DObject = function( a3DObject ) {
+            scene.add( a3DObject );
+
+            invalidate();
+        };
+
+        // CONTROL EVENT HANDLERS
+        controls.addEventListener( 'change', function() {
+            invalidate();
         });
-        window.addEventListener("resize", function() {
-            self.onResize();
+
+        controls.addEventListener( 'start', function() {
+            continuousRendering = true;
         });
-        this.animate();
+
+        controls.addEventListener( 'end', function() {
+            continuousRendering = false;
+        });
+
+
+        // SCREEN RESIZE
+        window.addEventListener( "resize", function() {
+            renderer.setSize( canvasParent.offsetWidth,  canvasParent.offsetHeight );
+            camera.aspect =  canvasParent.offsetWidth / canvasParent.offsetHeight;
+            camera.updateProjectionMatrix();
+            camera.lookAt( scene.position );
+            controls.handleResize();
+            render();
+        });
+
+
+        // MAKING PUBLIC
+
+        this.camera = camera;
+        this.controls = controls;
+        this.invalidate = invalidate;
+        this.add3DObject = add3DObject;
+
+        animate( true ); // Initial Rendering
     }
 
-    Viewer.prototype.onResize = function() {
-        this.renderer.setSize(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight);
-        this.camera.aspect = this.canvasParent.offsetWidth / this.canvasParent.offsetHeight;
-        this.camera.updateProjectionMatrix();
-        this.camera.lookAt(this.scene.position);
-        this.controls.handleResize();
-        this.render();
-    };
-
-    Viewer.prototype.animate = function() {
-        var self = this;
-        requestAnimationFrame(function() {
-            self.animate();
-        });
-        this.render();
-        this.controls.update();
-        this.compass.update();
-    };
-
-    Viewer.prototype.render = function() {
-        this.renderer.render(this.scene, this.camera);
-    };
 
     // Extend Viewer with events
     THREE.EventDispatcher.prototype.apply(Viewer.prototype);
+
     return Viewer;
 });

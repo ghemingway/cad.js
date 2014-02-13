@@ -8,9 +8,9 @@
 /********************************* Helper Functions ********************************/
 
 define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "shell"], function(THREE, _, Assembly, Product, Shape, Annotation, Shell) {
-    function DataLoader (parent, scene, config) {
+    function DataLoader (parent, viewer, config) {
         this._parent = parent;
-        this._scene = scene;
+        this._viewer = viewer;
         this._queue = [];       // The queue of requests to load
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
@@ -166,9 +166,9 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         this.dispatchEvent({ type: "addRequest", file: parts[parts.length - 1] });
     };
 
-    DataLoader.prototype.sortQueue = function() {
-        console.log("DataLoader.sortQueue - not yet implemented");
-    };
+//    DataLoader.prototype.sortQueue = function() {
+//        console.log("DataLoader.sortQueue - not yet implemented");
+//    };
 
     DataLoader.prototype.queueLength = function(onlyLoad) {
         var numWorking = this._maxWorkers - this._freeWorkers.length;
@@ -293,7 +293,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         var rootProduct = this.buildProductXML(req, map, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        this._scene.add(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getObject3D());
         req.callback(undefined, assembly);
     };
 
@@ -515,7 +515,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        this._scene.add(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getObject3D());
         req.callback(undefined, assembly);
     };
 
