@@ -102,6 +102,8 @@ self.addEventListener("message", function(e) {
     parts = url.split("/");
 
     xhr.addEventListener("load", function() {
+        // Handle 404 in loadend
+        if (xhr.status === 404) return;
         self.postMessage({ type: "loadComplete", file: parts[parts.length - 1] });
         // What did we get back
         switch(e.data.type) {
@@ -121,7 +123,14 @@ self.addEventListener("message", function(e) {
         }
     });
     xhr.addEventListener("loadend", function() {
-        // Should really do some error checking
+        if (xhr.status === 404) {
+            self.postMessage({
+                type: "loadError",
+                url: url,
+                file: parts[parts.length - 1],
+                workerID: workerID
+            });
+        }
     });
     xhr.addEventListener("progress", function(event) {
         var message = { type: "loadProgress", file: parts[parts.length - 1] };

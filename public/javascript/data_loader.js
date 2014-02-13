@@ -110,11 +110,20 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     /************** DataLoader Class Functions ****************************/
 
     DataLoader.prototype.load = function(url, validateType, callback) {
-        this.addRequest({
+        var loadErrorCheck = function(error, assembly) {
+            if (!error) callback(error, assembly);
+            else {
+                console.log(error);
+            }
+        };
+        var req = {
             url: url,
             validateType: validateType,
-            callback: callback
-        });
+            callback: loadErrorCheck
+        };
+        // Need to try to get index.json then index.xml then pop error message
+        this.resolveUrl(req, "index.json");
+        this.addRequest(req);
         this.runLoadQueue();
     };
 
@@ -160,7 +169,8 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     };
 
     DataLoader.prototype.addRequest = function(req) {
-        this.resolveUrl(req, "index.xml");
+        // Push onto the queue and send out a message
+        this.resolveUrl(req);
         this._queue.push(req);
         var parts = req.url.split("/");
         this.dispatchEvent({ type: "addRequest", file: parts[parts.length - 1] });
@@ -194,7 +204,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     DataLoader.prototype.workerMessage = function(event) {
         // Put worker back into the queue - if it is the time
         var req;
-        if (event.data.type === "rootLoad" || event.data.type === "shellLoad" || event.data.type === "annotationLoad") {
+        if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
             // Remove the job from the loading queue
             req = this._loading[event.data.workerID];
             this._loading[event.data.workerID] = undefined;
@@ -240,19 +250,19 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                     case "application/json":
                         data = event.data.data;
                         break;
+                    default:
+                        console.log("Blahhlal");
                 }
                 req.shell.addGeometry(data.position, data.normals, data.colors);
                 this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
             case "parseComplete":
-                this.dispatchEvent(event.data);
-                break;
             case "loadProgress":
-                // Send out the loadProgress message
+            case "loadComplete":
                 this.dispatchEvent(event.data);
                 break;
-            case "loadComplete":
-                this.dispatchEvent({ type: "loadComplete", file: event.data.file });
+            case "loadError":
+                if (req.callback) req.callback("loadError");
                 break;
         }
     };

@@ -26,9 +26,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._loader = undefined;
         this._parts = [];
         this._viewer = undefined;
-//        this._tree = undefined;
-//        this._menu = undefined;
-//        this._isSetup = false;
     }
 
     CADjs.prototype.setupPage = function() {
@@ -36,14 +33,9 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._viewer = new Viewer(this._viewContainer, this._compassContainer);
         // Create the data loader
         this._loader = new DataLoader(this, this._viewer, { autorun: false });
-        // Setup the tree
-        //...
-        // Setup the toolbar
-        //...
         // Events
         this.bindEvents();
         // Signal ready
-//        this._isSetup = true;
         $(this).trigger("pageSetup");
     };
 
@@ -173,7 +165,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     self._viewer.invalidate();
                     break;
             }
-
         }, true);
     };
 
@@ -191,7 +182,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             var node = this.tree.get_node(obj.getID());
             this.tree.select_node(node);
         }
-
         this._viewer.invalidate();
     };
 
@@ -210,6 +200,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.explode = function(distance) {
+        //console.log(this._viewer.controls.object);
         var node = this.tree.get_selected(false);
         if (node) {
             for (var i = 0; i < node.length; i++) {
