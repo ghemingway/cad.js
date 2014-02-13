@@ -223,15 +223,13 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                             id: xmlDoc.getAttribute("id"),
                             lines: this.parseAnnotationXML(xmlDoc)
                         };
-                        console.log(data);
-                        req.annotation.addGeometry(data);
                         break;
                     case "application/json":
                         data = JSON.parse(event.data.data);
-                        console.log(data);
-                        req.annotation.addGeometry(data);
                         break;
                 }
+                req.annotation.addGeometry(data);
+                this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
             case "shellLoad":
                 switch (req.contentType) {
