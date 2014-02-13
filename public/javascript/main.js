@@ -9,14 +9,14 @@
 
 
 require.config({
-    baseUrl: "/javascript",
     paths: {
         jquery: "libs/jquery.min",
         jstree: "libs/jstree.min",
         underscore: 'libs/underscore-min',
         THREE: 'libs/three.min',
         TrackballControls: "libs/TrackballControls",
-        dat: "libs/dat.gui.min"
+        dat: "libs/dat.gui.min",
+        VIS: "libs/visualize"
     },
     shim: {
         jquery: {
@@ -36,6 +36,10 @@ require.config({
         },
         dat: {
             exports: "dat"
+        },
+        VIS: {
+            exports: "VIS",
+            deps: ["jquery"]
         }
     }
 });
@@ -43,26 +47,19 @@ require.config({
 /*
   Primary application entry point
  */
-requirejs(["cad"], function(CADjs) {
-    function getQueryVariable(variable) {
-        var query = window.location.search.substring(1);
-        var vars = query.split("&");
-        for (var i=0;i<vars.length;i++) {
-            var pair = vars[i].split("=");
-            if(pair[0] == variable){return pair[1];}
-        }
-        return(false);
-    }
+requirejs(["cad", "jquery", "VIS"], function(CADjs, $, VIS) {
 
-
-    var cad = window.cadjs = new CADjs({
-        viewContainer: "steptools-view",
-        compassContainer: "steptools-compass",
-        treeContainer: ".steptools-tree",
-        downloadsContainer: ".steptools-downloads > ul"
+    $(VIS).on("ready", function(){
+        var cad = window.cadjs = new CADjs({
+            viewContainer: "steptools-view",
+            compassContainer: "steptools-compass",
+            treeContainer: ".steptools-tree",
+            downloadsContainer: ".steptools-downloads > ul"
+        });
+        cad.setupPage();
+        // What resource do we want to load
+        cad.load(VIS.getResourceUrl());
     });
-    cad.setupPage();
-    // What resource do we want to load
-    var resourceURL = getQueryVariable("resource_url");
-    cad.load(resourceURL);
+
+    VIS.init();
 });

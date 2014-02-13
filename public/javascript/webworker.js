@@ -3,7 +3,7 @@
  */
 
 // Import the XML parser
-importScripts("/javascript/libs/tinyxmldom.js");
+importScripts("libs/tinyxmldom.js");
 
 /*** Utility functions ****/
 
