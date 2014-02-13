@@ -26,25 +26,24 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._loader = undefined;
         this._parts = [];
         this._viewer = undefined;
-        this._tree = undefined;
-        this._menu = undefined;
-        this._isSetup = false;
+//        this._tree = undefined;
+//        this._menu = undefined;
+//        this._isSetup = false;
     }
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
         this._viewer = new Viewer(this._viewContainer, this._compassContainer);
         // Create the data loader
-        this._loader = new DataLoader(this, this._viewer.scene, { autorun: false });
+        this._loader = new DataLoader(this, this._viewer, { autorun: false });
         // Setup the tree
         //...
         // Setup the toolbar
         //...
         // Events
         this.bindEvents();
-
         // Signal ready
-        this._isSetup = true;
+//        this._isSetup = true;
         $(this).trigger("pageSetup");
     };
 
@@ -63,7 +62,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Update the tree
                 self.renderTree();
                 // Get the rest of the files
-                self._loader.runLoadQueue(true);
+                self._loader.runLoadQueue();
             }
         });
     };
@@ -96,6 +95,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Change the file status to 'parsing'
                 $("li#" + id).text(event.file + ": Parsing");
             }
+            // Make sure to redraw the model
+            self._viewer.invalidate();
         });
         this._loader.addEventListener("parseComplete", function(event) {
             var id = event.file.split(".")[0];
@@ -105,12 +106,13 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("shellLoad", function(event) {
             var id = event.file.split(".")[0];
-//            console.log("ShellLoad: " + id);
             // Remove the item from the list
             $("li#" + id).remove();
             // Udate the count
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
+            // Make sure to redraw the model
+            self._viewer.invalidate();
         });
         this._loader.addEventListener("queueEmpty", function() {
             var count = self._loader.queueLength(false);
@@ -134,8 +136,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             if (!_change) self.onClick(event);
             _change = false;
         }, false);
-        canvasDOM.addEventListener("mousemove", function(event) {
-            if (!_change) self.onMove(event);
+        canvasDOM.addEventListener("mousemove", function() {
+            if (!_change) self.onMove();
         }, false);
 
         // Keybased events
@@ -155,6 +157,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     self._parts[0].hideAllBoundingBoxes();
                     console.log("Got here");
                     self.tree.deselect_all();
+                    self._viewer.invalidate();
                     break;
                 // 'o' to set opacity of selected to 0.5
                 case 111:
@@ -167,8 +170,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // 'z' to zoomToFit
                 case 122:
                     self._parts[0].zoomToFit(self._viewer.camera, self._viewer.controls);
+                    self._viewer.invalidate();
                     break;
             }
+
         }, true);
     };
 
@@ -186,11 +191,13 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             var node = this.tree.get_node(obj.getID());
             this.tree.select_node(node);
         }
+
+        this._viewer.invalidate();
     };
 
-    CADjs.prototype.onMove = function(event) {
-/*        if (this._parts.length > 0) {
-            this._parts[0].clearHighlights();
+    CADjs.prototype.onMove = function() {
+        if (this._parts.length > 0) {
+/*            this._parts[0].clearHighlights();
             var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
             // Did we find an object
             if (obj) {
@@ -198,7 +205,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Yes, go highlight it in the tree
                 obj.highlight(0xffff8f);
             }
-        }*/
+            this._viewer.invalidate();*/
+        }
     };
 
     CADjs.prototype.explode = function(distance) {
@@ -210,6 +218,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     obj.explode(distance);
                 }
             }
+            this._viewer.invalidate();
         }
     };
 
@@ -222,6 +231,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     obj.setOpacity(opacity);
                 }
             }
+            this._viewer.invalidate();
         }
     };
 
