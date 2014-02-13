@@ -19,7 +19,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         var self = this;
         this._workers = [];     // List of workers
         while (this._workers.length < this._maxWorkers) {
-            var worker = new Worker("/javascript/webworker.js");
+            var worker = new Worker("javascript/webworker.js");
             worker.addEventListener("message", function(event) {
                 self.workerMessage(event);
             });
