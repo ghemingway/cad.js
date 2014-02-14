@@ -298,6 +298,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 if (obj) {
 //                    console.log(obj.getID());
                     obj.showBoundingBox();
+                    self._viewer.invalidate();
                     //obj.highlight(0xff0000);
                 }
             }
