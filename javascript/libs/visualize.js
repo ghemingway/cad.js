@@ -72,9 +72,10 @@
             return this.getParameter("processingStatus");
         },
         "getResourceUrl": function () {
-	    var alt = "?resource_url=/cad.js/data/cutter/index.json"
             var url = this.getParameter("resource_url");
-	    console.log(url);
+	    if (url === null) {
+    	        url = "/cad.js/data/cutter/index.json";
+	    }
 	    return url;
         },
         "getProcessResourceId": function () {
