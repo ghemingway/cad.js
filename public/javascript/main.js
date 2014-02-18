@@ -47,7 +47,7 @@ require.config({
 /*
   Primary application entry point
  */
-requirejs(["cad", "jquery", "VIS"], function(CADjs, $, VIS) {
+requirejs(["cad", "jquery", "THREE", "VIS"], function(CADjs, $, THREE, VIS) {
 
     $(VIS).on("ready", function(){
         var cad = window.cadjs = new CADjs({
