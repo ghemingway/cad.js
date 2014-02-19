@@ -9,6 +9,23 @@ var fs = require("fs"),
 
 /***********************************************************************/
 
+var config = {
+    indexPoints: true,
+    indexNormals: true,
+    indexColors: true,
+    roundPrecision: 3
+};
+
+
+var roundFloat = function(val, precision) {
+    if (!precision) return val;
+    var factor = Math.pow(10, precision);
+    return Math.round(val * factor) / factor;
+};
+
+/***********************************************************************/
+
+
 var translateIndex = function(doc) {
     // Return the full JSON
     return {
@@ -95,6 +112,60 @@ var translateAnnotation = function(annotation) {
     return data;
 };
 
+/***********************************************************************/
+
+var indexShellPoints = function(data) {
+    var numPoints = data.points.length;
+    data.pointsIndex = [];
+    for (var i = 0; i < numPoints; i++) {
+        var val = roundFloat(data.points[i], config.roundPrecision);
+        // See if this norm is already known
+        var index = data.values.indexOf(val);
+        if (index === -1) {
+            index = data.values.push(val) - 1;
+        }
+        data.pointsIndex.push(index);
+    }
+//    console.log("\t\tValues: " + data.values.length);
+//    console.log("\t\tPoints: " + numPoints);
+//    console.log("\t\tPoints Index: " + data.pointsIndex.length);
+    delete data.points;
+};
+
+var indexShellNormals = function(data) {
+    var numNormals = data.normals.length;
+    var indexArray = [];
+    for (var i = 0; i < numNormals; i++) {
+        var val = roundFloat(data.normals[i], config.roundPrecision);
+        // See if this norm is already known
+        var index = data.values.indexOf(val);
+        if (index === -1) {
+            index = data.values.push(val) - 1;
+        }
+        indexArray.push(index);
+    }
+    data.normalsIndex = indexArray;
+    delete data.normals;
+};
+
+var indexShellColors = function(data) {
+    var numColors = data.colors.length / 3;
+    var indexArray = [];
+    for (var i = 0; i < numColors; i += 3) {
+        var val = roundFloat(data.colors[i], config.roundPrecision);
+        // See if this norm is already known
+        var index = data.values.indexOf(val);
+        if (index === -1) {
+            index = data.values.push(val) - 1;
+        }
+        indexArray.push(index);
+    }
+    data.colorsIndex = indexArray;
+    delete data.colors;
+};
+
+/***********************************************************************/
+
 var translateShell = function(shell) {
     // Do href here
     if (shell.$.href) {
@@ -167,7 +238,24 @@ var translateShell = function(shell) {
                 data.colors.push(color.b);
             });
         });
+        // Set the point data size
         data.size = data.points.length / 9;
+        if (config.indexPoints || config.indexNormals || config.indexColors) {
+            data.values = [];
+        }
+        // Should we index the normals
+        if (config.indexPoints) {
+            indexShellPoints(data);
+        }
+        // Should we index the normals
+        if (config.indexNormals) {
+            indexShellNormals(data);
+        }
+        // Should we index the colors
+        if (config.indexColors) {
+            indexShellColors(data);
+        }
+        console.log("\tShell size: " + data.size * 3);
         return data;
     }
 };

@@ -57,18 +57,55 @@ function processShellXML(url, workerID, data) {
     self.postMessage(message);
 }
 
+function unindexPoints(data) {
+    var numPoints = data.pointsIndex.length;
+    data.points = [];
+    for (var i = 0; i < numPoints; i++) {
+        var value = data.values[data.pointsIndex[i]];
+        data.points.push(value);
+    }
+    delete data.pointsIndex;
+}
+
+function unindexNormals(data) {
+    var numNormals = data.normalsIndex.length;
+    data.normals = [];
+    for (var i = 0; i < numNormals; i++) {
+        data.normals.push(data.values[data.normalsIndex[i]]);
+    }
+    delete data.normalsIndex;
+}
+
+function unindexColors(data) {
+    var numColors = data.colorsIndex.length;
+    data.colors = [];
+    for (var i = 0; i < numColors; i++) {
+        data.colors.push(data.values[data.colorsIndex[i]]);
+    }
+    delete data.colorsIndex;
+}
+
 function processShellJSON(url, workerID, data) {
     // Parse the JSON file
     var start = Date.now();
     var dataJSON = JSON.parse(data);
     var parseTime = (Date.now() - start) / 1000.0;
-//    console.log("Parse time: " + parseTime);
     var parts = url.split("/");
     self.postMessage({
         type: "parseComplete",
         file: parts[parts.length - 1],
         duration: parseTime
     });
+
+    if (dataJSON.pointsIndex) {
+        unindexPoints(dataJSON);
+    }
+    if (dataJSON.normalsIndex) {
+        unindexNormals(dataJSON);
+    }
+    if (dataJSON.colorsIndex) {
+        unindexColors(dataJSON);
+    }
 
     // Just copy the data into arrays
     var buffers = {
