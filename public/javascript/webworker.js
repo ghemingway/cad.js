@@ -2,20 +2,6 @@
  * Asynchronous loading and parsing of CAD model information
  */
 
-// Import the XML parser
-importScripts("libs/tinyxmldom.js");
-
-/*** Utility functions ****/
-
-function parseColor(hex) {
-    var cval = parseInt(hex, 16);
-    return {
-        r: ((cval >>16) & 0xff) / 255,
-        g: ((cval >>8) & 0xff) / 255,
-        b: ((cval >>0) & 0xff) / 255
-    };
-}
-
 /*********************************************************************/
 
 function processAssembly(url, workerID, data) {
@@ -148,7 +134,7 @@ self.addEventListener("message", function(e) {
                 processAnnotation(url, workerID, xhr.responseText);
                 break;
             case "shell":
-                if (dataType === "xml") processShellXML(url, workerID, xhr.responseText, e.data.shellSize);
+                if (dataType === "xml") processShellXML(url, workerID, xhr.responseText);
                 else processShellJSON(url, workerID, xhr.responseText);
                 break;
             case "assembly":
