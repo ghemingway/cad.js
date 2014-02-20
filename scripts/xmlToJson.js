@@ -14,14 +14,14 @@ var config = {
     indexNormals: true,
     indexColors: true,
     compressColors: true,
-    roundPrecision: 3
+    roundPrecision: 2
 };
 
 
 var roundFloat = function(val, precision) {
     if (!precision) return val;
     var factor = Math.pow(10, precision);
-    return Math.round(val * factor) / factor;
+    return Math.round(val * factor);// / factor;
 };
 
 /***********************************************************************/
@@ -280,6 +280,9 @@ var translateShell = function(shell) {
         data.size = data.points.length / 9;
         if (config.indexPoints || config.indexNormals || config.indexColors) {
             data.values = [];
+            if (config.roundPrecision) {
+                data.precision = config.roundPrecision;
+            }
         }
         // Should we index the normals
         if (config.indexPoints) {
