@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<step-assembly root="id925040">
+<product id="id925040" step="part_REAR_LEFT_QUARTER_ASM.stp" name="REAR_LEFT_QUARTER_ASM" shape="id548730" children="id872750 id553680 id427480 id921880 id924190 id924190 id424750 id873330 id924990 id923230 id872420 id924540 id423220 id271800 id558410 id873000 id412100"/>
+<product id="id872750" step="part_BOLT_ONE.stp" name="BOLT_ONE" shape="id442550"/>
+<product id="id553680" step="part_FRAME.stp" name="FRAME" shape="id37970"/>
+<product id="id427480" step="part_LARGE_COVER.stp" name="LARGE_COVER" shape="id397170"/>
+<product id="id921880" step="part_LOWER_CONTROL_ARM_ASM.stp" name="LOWER_CONTROL_ARM_ASM" shape="id849340" children="id897190 id921830 id889150 id897420"/>
+<product id="id897190" step="part_CONTROL_PLATE_ASM.stp" name="CONTROL_PLATE_ASM" shape="id907650" children="id897140 id894750"/>
+<product id="id897140" step="part_CONTROL_PLATE1.stp" name="CONTROL_PLATE1" shape="id907400"/>
+<product id="id894750" step="part_COVER2_ASM.stp" name="COVER2_ASM" shape="id578770" children="id894700 id889930"/>
+<product id="id894700" step="part_COVER2.stp" name="COVER2" shape="id578520"/>
+<product id="id889930" step="part_COVER2_2.stp" name="COVER2_2" shape="id595420"/>
+<product id="id921830" step="part_LOWER_SLEEVE.stp" name="LOWER_SLEEVE" shape="id849090"/>
+<product id="id889150" step="part_MOD_LOWER_CONTROL_ASM.stp" name="MOD_LOWER_CONTROL_ASM" shape="id589730" children="id889100 id882770"/>
+<product id="id889100" step="part_CONT_PIECE22.stp" name="CONT_PIECE22" shape="id589480"/>
+<product id="id882770" step="part_MOD_COVER_ONE_ASM.stp" name="MOD_COVER_ONE_ASM" shape="id619890" children="id877770 id882720"/>
+<product id="id877770" step="part_MOD_COVER1_ONE.stp" name="MOD_COVER1_ONE" shape="id654960"/>
+<product id="id882720" step="part_MOD_COVER1_TWO.stp" name="MOD_COVER1_TWO" shape="id619640"/>
+<product id="id897420" step="part_ROD.stp" name="ROD" shape="id909320"/>
+<product id="id924190" step="part_LOWER_CONTROL_MOUNT.stp" name="LOWER_CONTROL_MOUNT" shape="id866260"/>
+<product id="id424750" step="part_LOWER_MOUNT.stp" name="LOWER_MOUNT" shape="id376880"/>
+<product id="id873330" step="part_NUT_ONE.stp" name="NUT_ONE" shape="id447090"/>
+<product id="id924990" step="part_RADIUS_ROD_BUSHING.stp" name="RADIUS_ROD_BUSHING" shape="id548660"/>
+<product id="id923230" step="part_SHOCK.stp" name="SHOCK" shape="id858730"/>
+<product id="id872420" step="part_SMALL_PLATE.stp" name="SMALL_PLATE" shape="id439620"/>
+<product id="id924540" step="part_SPRING.stp" name="SPRING" shape="id545590"/>
+<product id="id423220" step="part_TIRE_ASM.stp" name="TIRE_ASM" shape="id682010" children="id423170 id421420"/>
+<product id="id423170" step="part_RIM.stp" name="RIM" shape="id681760"/>
+<product id="id421420" step="part_TIRE.stp" name="TIRE" shape="id670690"/>
+<product id="id271800" step="part_TOP_MOUNT.stp" name="TOP_MOUNT" shape="id123160"/>
+<product id="id558410" step="part_UPPER_CONTROL_ARM.stp" name="UPPER_CONTROL_ARM" shape="id151210"/>
+<product id="id873000" step="part_WASHER_ONE.stp" name="WASHER_ONE" shape="id444220"/>
+<product id="id412100" step="part_WHEEL_HUB_ASM.stp" name="WHEEL_HUB_ASM" shape="id690580" children="id280150 id400150 id412070"/>
+<product id="id280150" step="part_CASE.stp" name="CASE" shape="id826750"/>
+<product id="id400150" step="part_LRHUB_SPINDLE_ASSEMBLY_ASM.stp" name="LRHUB_SPINDLE_ASSEMBLY_ASM" shape="id722230" children="id291310 id291910 id286190 id292200 id400100 id399170 id291660 id286540 id285740"/>
+<product id="id291310" step="part_LARGE_GEAR.stp" name="LARGE_GEAR" shape="id792780"/>
+<product id="id291910" step="part_LRHUB_BEARING_1.stp" name="LRHUB_BEARING_1" shape="id742290"/>
+<product id="id286190" step="part_LRHUB_BEARING_2.stp" name="LRHUB_BEARING_2" shape="id811270"/>
+<product id="id292200" step="part_LRHUB_KEYED_WASHER.stp" name="LRHUB_KEYED_WASHER" shape="id744560"/>
+<product id="id400100" step="part_LRHUB_LOCKNUT.stp" name="LRHUB_LOCKNUT" shape="id721980"/>
+<product id="id399170" step="part_LRHUB_LOCKWASHER.stp" name="LRHUB_LOCKWASHER" shape="id715330"/>
+<product id="id291660" step="part_LRHUB_SPACER_1.stp" name="LRHUB_SPACER_1" shape="id740620"/>
+<product id="id286540" step="part_LRHUB_SPACER_2.stp" name="LRHUB_SPACER_2" shape="id813640"/>
+<product id="id285740" step="part_LRHUB_SPINDLE.stp" name="LRHUB_SPINDLE" shape="id808660"/>
+<product id="id412070" step="part_SHAFT_ASM.stp" name="SHAFT_ASM" shape="id690330" children="id400580 id400830 id412020 id402370 id411650 id402000"/>
+<product id="id400580" step="part_LOWER_BALL_JOINT.stp" name="LOWER_BALL_JOINT" shape="id725320"/>
+<product id="id400830" step="part_SHAFT.stp" name="SHAFT" shape="id726790"/>
+<product id="id412020" step="part_SMALL_BEARING_LOWER.stp" name="SMALL_BEARING_LOWER" shape="id690080"/>
+<product id="id402370" step="part_SMALL_BEARING_TOP.stp" name="SMALL_BEARING_TOP" shape="id737170"/>
+<product id="id411650" step="part_SMALL_GEAR.stp" name="SMALL_GEAR" shape="id687650"/>
+<product id="id402000" step="part_UPPER_BALL_JOINT.stp" name="UPPER_BALL_JOINT" shape="id734740"/>
+<shape id="id548730">
+    <child ref="id123160" xform="1 -8.81571e-006 -2.35787e-005 0 -3.55635e-017 0.936672 -0.350207 0 2.51728e-005 0.350207 0.936672 0 -29.375 4.40626 10.1294 1"/>
+    <child ref="id690580" xform="0.00716875 0.999952 -0.0066154 0 -0.0195631 -0.00647406 -0.999788 0 -0.999783 0.00729665 0.0195158 0 -32.3081 -7.75595 19.0522 1"/>
+    <child ref="id682010" xform="0.920936 -0.389406 -0.0154986 0 0.0195631 0.00647406 0.999788 0 -0.389223 -0.921043 0.0135802 0 -29.3276 -4.32968 15.8211 1"/>
+    <child ref="id376880" xform="-0.999783 0.00729665 0.0195158 0 0.00059083 0.946224 -0.323511 0 -0.0208268 -0.323429 -0.946023 0 -29.4234 -8.36974 13.339 1"/>
+    <child ref="id397170" xform="0.999783 -0.00729665 -0.0195158 0 -0.0195631 -0.00647406 -0.999788 0 0.00716875 0.999952 -0.0066154 0 -29.3736 -4.3449 13.4716 1"/>
+    <child ref="id37970" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id151210" xform="1 0 0 0 0 0.995396 -0.0958458 0 0 0.0958458 0.995396 0 -33.595 1.43751 0.149068 1"/>
+    <child ref="id439620" xform="0.00716875 0.999952 -0.0066154 0 -0.0195631 -0.00647406 -0.999788 0 -0.999783 0.00729665 0.0195158 0 -29.3448 -0.322549 13.445 1"/>
+    <child ref="id442550" xform="0 1 0 0 -1 0 0 0 0 0 1 0 -32.5 -2.625 -0.625 1"/>
+    <child ref="id444220" xform="0 1 0 0 -1 0 0 0 0 0 1 0 -36.25 -2.625 -0.625 1"/>
+    <child ref="id447090" xform="0 1 0 0 -1 0 0 0 0 0 1 0 -36.3 -2.625 -0.625 1"/>
+    <child ref="id849340" xform="0.999783 -0.00729665 -0.0195158 0 0.0109251 0.981169 0.192843 0 0.0177412 -0.193014 0.981036 0 -19.2619 -8.93655 -6.20997 1"/>
+    <child ref="id858730" xform="0 0.25038 0.968148 0 0 0.968148 -0.25038 0 -1 0 0 0 -24.75 -9.57125 4.15631 1"/>
+    <child ref="id866260" xform="0.99981 0 -0.0195163 0 0 1 0 0 0.0195163 0 0.99981 0 -20.3226 -7.25207 -5.8439 1"/>
+    <child ref="id866260" xform="0.99981 0 -0.0195163 0 0 1 0 0 0.0195163 0 0.99981 0 -37.0149 -7.15675 -5.61655 1"/>
+    <child ref="id545590" xform="0 -0.25038 -0.968148 0 0 0.968148 -0.25038 0 1 0 0 0 -24.75 -5.16618 3.01708 1"/>
+    <child ref="id548660" xform="0 1 0 0 0 0 1 0 1 0 0 0 -34.33 -2.625 -0.625 1"/>
+</shape>
+<shape id="id123160" shell="id123030"/>
+<shell id="id123030" size="2942" bbox="-1.87714 -2.625 -1.3 1.87714 0.639 0.964878" href="shell_id123030.xml"/>
+<shape id="id690580">
+    <child ref="id826750" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id722230" xform="1 0 0 0 0 1 0 0 0 0 1 0 3.46885 -1.19 -3.01786 1"/>
+    <child ref="id690330" xform="1 0 0 0 0 1 0 0 0 0 1 0 7.49139 8.5025 -3.01786 1"/>
+</shape>
+<shape id="id826750" shell="id826620"/>
+<shell id="id826620" size="4566" bbox="-3.38618 0 -6.5 12 9.44675 -0.111912" href="shell_id826620.xml"/>
+<shape id="id722230">
+    <child ref="id808660" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id811270" xform="-1 0 0 0 0 -1 0 0 0 0 1 0 0 1.625 0 1"/>
+    <child ref="id813640" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 3.25 0 1"/>
+    <child ref="id792780" xform="-1 0 0 0 0 -1 0 0 0 0 1 0 0 5 0 1"/>
+    <child ref="id740620" xform="-1 0 0 0 0 -1 0 0 0 0 1 0 0 5 0 1"/>
+    <child ref="id742290" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 6.5625 0 1"/>
+    <child ref="id744560" xform="0 0 1 0 0 -1 0 0 1 0 0 0 0 6.6875 0 1"/>
+    <child ref="id715330" xform="0 0 1 0 0 1 0 0 -1 0 0 0 0 6.6875 0 1"/>
+    <child ref="id721980" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 7.2188 0 1"/>
+</shape>
+<shape id="id808660" shell="id808530"/>
+<shell id="id808530" size="3348" bbox="-3.92969 -0.875 -3.92969 3.92969 7.4375 3.92969" href="shell_id808530.xml"/>
+<shape id="id811270" shell="id811140"/>
+<shell id="id811140" size="572" bbox="-1.70114 -1.1875 -1.70114 1.70114 0 1.70114" href="shell_id811140.xml"/>
+<shape id="id813640" shell="id813510"/>
+<shell id="id813510" size="420" bbox="-1.25 -0.4375 -1.25 1.25 0 1.25" href="shell_id813510.xml"/>
+<shape id="id792780" shell="id792650"/>
+<shell id="id792650" size="6548" bbox="-2.71649 0 -2.70416 2.71649 1.75 2.71875" href="shell_id792650.xml"/>
+<shape id="id740620" shell="id740490"/>
+<shell id="id740490" size="420" bbox="-1.18625 -0.375 -1.18625 1.18625 0 1.18625" href="shell_id740490.xml"/>
+<shape id="id742290" shell="id742160"/>
+<shell id="id742160" size="352" bbox="-1.40625 -1.1875 -1.40625 1.40625 0 1.40625" href="shell_id742160.xml"/>
+<shape id="id744560" shell="id744430"/>
+<shell id="id744430" size="340" bbox="-1.09375 0 -1.09375 1.09375 0.125 1.09375" href="shell_id744430.xml"/>
+<shape id="id715330" shell="id715200"/>
+<shell id="id715200" size="1706" bbox="-1.15598 0 -1.1563 1.15598 0.316291 1.1468" href="shell_id715200.xml"/>
+<shape id="id721980" shell="id721850"/>
+<shell id="id721850" size="672" bbox="-1.02703 -0.4375 -1.02703 1.02703 0 1.02703" href="shell_id721850.xml"/>
+<shape id="id690330">
+    <child ref="id725320" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id726790" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 8.89838 0 1"/>
+    <child ref="id734740" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 17.7968 0 1"/>
+    <child ref="id737170" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 -4.6875 0 1"/>
+    <child ref="id687650" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 -6.4375 0 1"/>
+    <child ref="id690080" xform="-1 0 0 0 0 -1 0 0 0 0 1 0 0 -6.4375 0 1"/>
+</shape>
+<shape id="id725320" shell="id725190"/>
+<shell id="id725190" size="1790" bbox="-1.75 -7.875 -1.75 1.75 0 1.75" href="shell_id725190.xml"/>
+<shape id="id726790" shell="id726660"/>
+<shell id="id726660" size="1084" bbox="-1.48219 -11.3905 -1.4826 1.48219 11.3905 1.4826" href="shell_id726660.xml"/>
+<shape id="id734740" shell="id734610"/>
+<shell id="id734610" size="2778" bbox="-2.60826 0 -2.3929 1.80422 3.75 2.39292" href="shell_id734610.xml"/>
+<shape id="id737170" shell="id737040"/>
+<shell id="id737040" size="420" bbox="-1.09375 0 -1.09375 1.09375 1.6875 1.09375" href="shell_id737040.xml"/>
+<shape id="id687650" shell="id687520"/>
+<shell id="id687520" size="4390" bbox="-1.30848 0 -1.31798 1.30827 1.75 1.27947" href="shell_id687520.xml"/>
+<shape id="id690080" shell="id689950"/>
+<shell id="id689950" size="420" bbox="-1.09375 0 -1.09375 1.09375 1.4375 1.09375" href="shell_id689950.xml"/>
+<shape id="id682010">
+    <child ref="id670690" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id681760" xform="-1 0 0 0 0 -1 0 0 0 0 1 0 0 11.84 0 1"/>
+</shape>
+<shape id="id670690" shell="id670560"/>
+<shell id="id670560" size="7030" bbox="-18 0 -18 18 13.25 18" href="shell_id670560.xml"/>
+<shape id="id681760" shell="id681630"/>
+<shell id="id681630" size="1248" bbox="-8.95711 -0.957107 -8.95711 8.95711 11.4571 8.95711" href="shell_id681630.xml"/>
+<shape id="id376880" shell="id376750"/>
+<shell id="id376750" size="2624" bbox="-2.36047 -3.25 -1.3 2.36047 0.55 2.01836" href="shell_id376750.xml"/>
+<shape id="id397170" shell="id397040"/>
+<shell id="id397040" size="1684" bbox="-5.62 0 -2.25 2.5 14.25 2.75" href="shell_id397040.xml"/>
+<shape id="id37970" shell="id37840"/>
+<shell id="id37840" size="2800" bbox="-55 -4.375 -6 0 8.25 4" href="shell_id37840.xml"/>
+<shape id="id151210" shell="id151080"/>
+<shell id="id151080" size="2600" bbox="-6.03 -0.246866 -0.549844 6.47 2.24621 10.9905" href="shell_id151080.xml"/>
+<shape id="id439620" shell="id439490"/>
+<shell id="id439490" size="1232" bbox="-1.74954 0 -2.0309 1.74954 0.75 2.0309" href="shell_id439490.xml"/>
+<shape id="id442550" shell="id442420"/>
+<shell id="id442420" size="204" bbox="-0.541266 0 -0.625 0.541266 4.5 0.625" href="shell_id442420.xml"/>
+<shape id="id444220" shell="id444090"/>
+<shell id="id444090" size="280" bbox="-0.5 0 -0.5 0.5 0.05 0.5" href="shell_id444090.xml"/>
+<shape id="id447090" shell="id446960"/>
+<shell id="id446960" size="272" bbox="-0.5 0 -0.433013 0.5 0.5 0.433013" href="shell_id446960.xml"/>
+<shape id="id849340">
+    <child ref="id589730" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id907650" xform="1 0 0 0 0 0.866025 -0.5 0 0 0.5 0.866025 0 0.239985 -8.03793 3.80409 1"/>
+    <child ref="id909320" xform="0 -1 0 0 -1 0 0 0 0 0 -1 0 -8.13002 1.715 11.4136 1"/>
+    <child ref="id849090" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+</shape>
+<shape id="id589730">
+    <child ref="id619890" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id589480" xform="1 0 0 0 0 1 0 0 0 0 1 0 0.0699847 0 0.0135572 1"/>
+</shape>
+<shape id="id619890">
+    <child ref="id654960" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id619640" xform="1 0 0 0 0 0.866025 -0.5 0 0 0.5 0.866025 0 0.0499847 -8.05602 3.81453 1"/>
+</shape>
+<shape id="id654960" shell="id654830"/>
+<shell id="id654830" size="2136" bbox="-13.6706 3.08999 0.1 -0.01 4.64957 16.94" href="shell_id654830.xml"/>
+<shape id="id619640" shell="id619510"/>
+<shell id="id619510" size="2676" bbox="-14.16 1.99391 16.94 -6.58545 3.225 19.19" href="shell_id619510.xml"/>
+<shape id="id589480" shell="id589350"/>
+<shell id="id589350" size="3134" bbox="-14.18 0 -1.49994 0.2 3.21992 19.22" href="shell_id589350.xml"/>
+<shape id="id907650">
+    <child ref="id578770" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id907400" xform="1 0 0 0 0 0.866025 0.5 0 0 -0.5 0.866025 0 -9.32092 1.12315 13.8905 1"/>
+</shape>
+<shape id="id578770">
+    <child ref="id595420" xform="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>
+    <child ref="id578520" xform="1 0 0 0 0 0.866025 0.5 0 0 -0.5 0.866025 0 0.0362076 8.90207 0.65703 1"/>
+</shape>
+<shape id="id595420" shell="id595290"/>
+<shell id="id595290" size="562" bbox="-12.8727 3.225 16.94 -8.98 3.36 19.19" href="shell_id595290.xml"/>
+<shape id="id578520" shell="id578390"/>
+<shell id="id578390" size="2382" bbox="-19.565 -0.00499898 -1.67992 -9.62061 3.36 16.94" href="shell_id578390.xml"/>
+<shape id="id907400" shell="id907270"/>
+<shell id="id907270" size="1300" bbox="-9.93 0 -15 0 0.12 0" href="shell_id907270.xml"/>
+<shape id="id909320" shell="id909190"/>
+<shell id="id909190" size="152" bbox="-0.375 0 -0.375 0.375 4.85 0.375" href="shell_id909190.xml"/>
+<shape id="id849090" shell="id848960"/>
+<shell id="id848960" size="1826" bbox="-8.41647 0.175 6.30785 -3.88461 3.225 12.9436" href="shell_id848960.xml"/>
+<shape id="id858730" shell="id858600"/>
+<shell id="id858600" size="884" bbox="-1.875 -1.24534 -2.75 1.875 17.8453 2.75" href="shell_id858600.xml"/>
+<shape id="id866260" shell="id866130"/>
+<shell id="id866130" size="630" bbox="-1.4 -1.125 -2.125 1.4 2.125 1.125" href="shell_id866130.xml"/>
+<shape id="id545590" shell="id545460"/>
+<shell id="id545460" size="13170" bbox="-4.49928 -0.498813 -4.49672 5.83926 9.53357 4.68237" href="shell_id545460.xml"/>
+<shape id="id548660" shell="id548530"/>
+<shell id="id548530" size="496" bbox="-1.07 -1.07 -1.6 1.07 1.07 1.2" href="shell_id548530.xml"/>
+</step-assembly>

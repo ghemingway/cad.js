@@ -92,7 +92,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("parseComplete", function(event) {
             var id = event.file.split(".")[0];
-//            console.log("ParseComplete: " + id);
             // Change the file status to 'parsing'
             $("li#" + id).text(event.file + ": Finishing");
         });
@@ -100,7 +99,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             var id = event.file.split(".")[0];
             // Remove the item from the list
             $("li#" + id).remove();
-            // Udate the count
+            // Update the count
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
             // Make sure to redraw the model
@@ -112,8 +111,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("loadProgress", function(event) {
             var id = event.file.split(".")[0];
-            var loaded = Math.round(event.loaded * 100) / 100;
-            $("li#" + id).text(event.file + ": " + loaded + "%");
+            $("li#" + id).text(event.file + ": " + event.loaded.toFixed(2) + "%");
         });
 
         // Need to turn mouse selection on and off to not interfere with click drag view control
