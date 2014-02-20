@@ -71,6 +71,20 @@ function unindexColors(data) {
     delete data.colorsIndex;
 }
 
+function uncompressColors(data) {
+    data.colors = [];
+    var numBlocks = data.colorsData.length;
+    for (var i = 0; i < numBlocks; i++) {
+        var block = data.colorsData[i];
+        for (var j = 0; j < block.duration; j++) {
+            data.colors.push(data.values[block.data[0]]);
+            data.colors.push(data.values[block.data[1]]);
+            data.colors.push(data.values[block.data[2]]);
+        }
+    }
+    delete data.colorsData;
+}
+
 function processShellJSON(url, workerID, data) {
     // Parse the JSON file
     var start = Date.now();
@@ -91,6 +105,9 @@ function processShellJSON(url, workerID, data) {
     }
     if (dataJSON.colorsIndex) {
         unindexColors(dataJSON);
+    }
+    if (dataJSON.colorsData) {
+        uncompressColors(dataJSON);
     }
 
     // Just copy the data into arrays

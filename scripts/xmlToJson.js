@@ -13,6 +13,7 @@ var config = {
     indexPoints: true,
     indexNormals: true,
     indexColors: true,
+    compressColors: true,
     roundPrecision: 3
 };
 
@@ -126,9 +127,6 @@ var indexShellPoints = function(data) {
         }
         data.pointsIndex.push(index);
     }
-//    console.log("\t\tValues: " + data.values.length);
-//    console.log("\t\tPoints: " + numPoints);
-//    console.log("\t\tPoints Index: " + data.pointsIndex.length);
     delete data.points;
 };
 
@@ -149,9 +147,9 @@ var indexShellNormals = function(data) {
 };
 
 var indexShellColors = function(data) {
-    var numColors = data.colors.length / 3;
+    var numColors = data.colors.length;
     var indexArray = [];
-    for (var i = 0; i < numColors; i += 3) {
+    for (var i = 0; i < numColors; i++) {
         var val = roundFloat(data.colors[i], config.roundPrecision);
         // See if this norm is already known
         var index = data.values.indexOf(val);
@@ -162,6 +160,46 @@ var indexShellColors = function(data) {
     }
     data.colorsIndex = indexArray;
     delete data.colors;
+};
+
+var compressShellColors = function(data) {
+    var numTuples = data.colorsIndex.length / 3;
+    data.colorsData = [];
+    var start = 0;
+    var last = [
+        data.colorsIndex[0],
+        data.colorsIndex[1],
+        data.colorsIndex[2]
+    ];
+    // Short list comparison
+    function arraysIdentical(a, b) {
+       return (a[0] === b[0] && a[1] === b[1] && a[2] === b[2]);
+    }
+    // Compress the rest
+    for (var tuple = 1; tuple < numTuples; tuple++) {
+        var index = tuple * 3;
+        var tmp = [
+            data.colorsIndex[index],
+            data.colorsIndex[index + 1],
+            data.colorsIndex[index + 2]
+        ];
+        // Is this a new block
+        if (!arraysIdentical(last, tmp)) {
+            data.colorsData.push({
+                data: last,
+                duration: tuple - start
+            });
+            start = tuple;
+        }
+    }
+    // Push the final color block
+    data.colorsData.push({
+        data: last,
+        duration: numTuples - start
+    });
+    // Remove the colorsIndex
+    delete data.colorsIndex;
+//    console.log(JSON.stringify(data.colorsData));
 };
 
 /***********************************************************************/
@@ -254,6 +292,10 @@ var translateShell = function(shell) {
         // Should we index the colors
         if (config.indexColors) {
             indexShellColors(data);
+        }
+        // Should we hyper-compress the colors
+        if (config.compressColors) {
+            compressShellColors(data);
         }
         console.log("\tShell size: " + data.size * 3);
         return data;
