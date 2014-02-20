@@ -30,11 +30,6 @@ function processAnnotation(url, workerID, data) {
 
 /*********************************************************************/
 
-function unfloat(val, precision) {
-    var factor = Math.pow(10, precision);
-    return val / factor;
-}
-
 function processShellXML(url, workerID, data) {
     var parts = url.split("/");
     // All we really need to do is pass this back to the main thread
@@ -48,45 +43,45 @@ function processShellXML(url, workerID, data) {
     self.postMessage(message);
 }
 
-function unindexPoints(data, precision) {
+function unindexPoints(data) {
     var numPoints = data.pointsIndex.length;
     data.points = [];
     for (var i = 0; i < numPoints; i++) {
-        var value = unfloat(data.values[data.pointsIndex[i]], precision);
+        var value = data.values[data.pointsIndex[i]];
         data.points.push(value);
     }
     delete data.pointsIndex;
 }
 
-function unindexNormals(data, precision) {
+function unindexNormals(data) {
     var numNormals = data.normalsIndex.length;
     data.normals = [];
     for (var i = 0; i < numNormals; i++) {
-        var value = unfloat(data.values[data.normalsIndex[i]], precision);
+        var value = data.values[data.normalsIndex[i]];
         data.normals.push(value);
     }
     delete data.normalsIndex;
 }
 
-function unindexColors(data, precision) {
+function unindexColors(data) {
     var numColors = data.colorsIndex.length;
     data.colors = [];
     for (var i = 0; i < numColors; i++) {
-        var value = unfloat(data.values[data.colorsIndex[i]], precision);
+        var value = data.values[data.colorsIndex[i]];
         data.colors.push(value);
     }
     delete data.colorsIndex;
 }
 
-function uncompressColors(data, precision) {
+function uncompressColors(data) {
     data.colors = [];
     var numBlocks = data.colorsData.length;
     for (var i = 0; i < numBlocks; i++) {
         var block = data.colorsData[i];
         for (var j = 0; j < block.duration; j++) {
-            data.colors.push(unfloat(data.values[block.data[0]], precision));
-            data.colors.push(unfloat(data.values[block.data[1]], precision));
-            data.colors.push(unfloat(data.values[block.data[2]], precision));
+            data.colors.push(data.values[block.data[0]]);
+            data.colors.push(data.values[block.data[1]]);
+            data.colors.push(data.values[block.data[2]]);
         }
     }
     delete data.colorsData;
@@ -104,18 +99,24 @@ function processShellJSON(url, workerID, data) {
         duration: parseTime
     });
 
-    var precision = dataJSON.precision ? dataJSON.precision : 0;
+    if (dataJSON.values && dataJSON.precision) {
+        var factor = Math.pow(10, dataJSON.precision);
+        var length = dataJSON.values.length;
+        for (var i = 0; i < length; i++) {
+            dataJSON.values[i] /= factor;
+        }
+    }
     if (dataJSON.pointsIndex) {
-        unindexPoints(dataJSON, precision);
+        unindexPoints(dataJSON);
     }
     if (dataJSON.normalsIndex) {
-        unindexNormals(dataJSON, precision);
+        unindexNormals(dataJSON);
     }
     if (dataJSON.colorsIndex) {
-        unindexColors(dataJSON, precision);
+        unindexColors(dataJSON);
     }
     if (dataJSON.colorsData) {
-        uncompressColors(dataJSON, precision);
+        uncompressColors(dataJSON);
     }
 
     // Just copy the data into arrays
