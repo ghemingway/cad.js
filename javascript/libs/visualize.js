@@ -72,7 +72,11 @@
             return this.getParameter("processingStatus");
         },
         "getResourceUrl": function () {
-            return this.getParameter("resource_url");
+            var url = this.getParameter("resource_url");
+	    if (url === null) {
+	        url = "data/cutter/index.json";
+	    }
+	    return url;
         },
         "getProcessResourceId": function () {
             return getQueryParameter("processingResourceId");
