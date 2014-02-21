@@ -139,6 +139,6 @@ body {
 .steptools-compass > canvas {
     z-index: 1;
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: 16px;
+    bottom: 16px;
 }

@@ -40,6 +40,9 @@ require.config({
         VIS: {
             exports: "VIS",
             deps: ["jquery"]
+        },
+        shape: {
+            deps: ['shaders/VelvetyShader']
         }
     }
 });
