@@ -110,8 +110,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             $(".steptools-downloads-count").text(count);
         });
         this._loader.addEventListener("loadProgress", function(event) {
-            var id = event.file.split(".")[0];
-            $("li#" + id).text(event.file + ": " + event.loaded.toFixed(2) + "%");
+            if (event.loaded) {
+                var id = event.file.split(".")[0];
+                $("li#" + id).text(event.file + ": " + event.loaded.toFixed(2) + "%");
+            }
         });
 
         // Need to turn mouse selection on and off to not interfere with click drag view control

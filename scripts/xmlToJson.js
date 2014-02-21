@@ -190,6 +190,7 @@ var compressShellColors = function(data) {
                 duration: tuple - start
             });
             start = tuple;
+            last = tmp;
         }
     }
     // Push the final color block
@@ -295,10 +296,10 @@ var translateShell = function(shell) {
         // Should we index the colors
         if (config.indexColors) {
             indexShellColors(data);
-        }
-        // Should we hyper-compress the colors
-        if (config.compressColors) {
-            compressShellColors(data);
+            // Should we hyper-compress the colors
+            if (config.compressColors) {
+                compressShellColors(data);
+            }
         }
         console.log("\tShell size: " + data.size * 3);
         return data;

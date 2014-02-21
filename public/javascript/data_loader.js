@@ -176,9 +176,16 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         this.dispatchEvent({ type: "addRequest", file: parts[parts.length - 1] });
     };
 
-//    DataLoader.prototype.sortQueue = function() {
-//        console.log("DataLoader.sortQueue - not yet implemented");
-//    };
+    DataLoader.prototype.sortQueue = function() {
+        // Let's sort the req array
+//        this._queue.sort(function(a, b) {
+//            if (a.shellSize >= b.shellSize) return 1;
+//            else return -1;
+//        });
+        return this._queue.shift();
+//        console.log("DataLoader.sortQueue: " + JSON.stringify(_.pick(req, ["shellSize"] )));
+//        return req;
+    };
 
     DataLoader.prototype.queueLength = function(onlyLoad) {
         var numWorking = this._maxWorkers - this._freeWorkers.length;
@@ -190,11 +197,10 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     };
 
     DataLoader.prototype.runLoadQueue = function() {
-        //console.log("QF: " + this._queue.length + ", " + this._freeWorkers.length);
         // Keep issuing loads until no workers left
         while (this._queue.length > 0 && this._freeWorkers.length > 0) {
             var workerID = this._freeWorkers.shift();
-            var req = this._queue.shift();
+            var req = this.sortQueue();
             req.workerID = workerID;
             this._loading[workerID] = req;
             this.initRequest(req);
