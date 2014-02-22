@@ -8,74 +8,77 @@
 
 
 define(["THREE"], function(THREE) {
+    'use strict';
+
+    function setStyleTransform (element, value) {
+        var style = element.style,
+            styleNames = setStyleTransform._transformPropertyNames,
+            i;
+        for (i=0;i<styleNames.length;++i) {
+            if (typeof(style[styleNames[i]]) !== 'undefined') {
+                style[styleNames[i]] = value;
+            }
+        }
+    }
+    setStyleTransform._transformPropertyNames = [
+        'transform',
+        'webkitTransform',
+        'MozTransform'
+    ];
+
+
     function Compass(compassParent, camera, controls, config) {
         this.controls = controls;
-        this.mainCamera = camera;
+        this.camera = camera;
         this.config = {
             magnitude: config.magnitude ? config.magnitude : 100,
             width: config.width ? config.width : 200,
             height: config.height ? config.height: 200
         };
+        this.compassCube = document.getElementById('compass-cube');
+        this.compassCubeMatrix = new THREE.Matrix4();
 
-        // RENDERER
-        this.compassParent = document.getElementById(compassParent);
-        this.renderer = new THREE.WebGLRenderer({ alpha: true });
-        this.renderer.setClearColor(0x000000, 0);
-        this.renderer.setSize(200, 200);
-        // CANVAS
-        this.canvas = this.renderer.domElement;
-        this.compassParent.appendChild(this.canvas);
-        // SCENE
-        this.scene = new THREE.Scene();
-        // CAMERA
-        this.camera = new THREE.PerspectiveCamera(50, 1, 1, 1000);
-        this.build();
-
-        var self = this;
-        this.renderer.domElement.addEventListener('mousemove', function(event) { self.onMouseMove(event); }, true );
-        this.renderer.domElement.addEventListener('mousedown', function(event) { self.onMouseDown(event); }, false );
-        this.renderer.domElement.addEventListener('mouseup', function(event) { self.onMouseUp(event); }, false );
+        this.bindEvents();
     }
 
-    Compass.prototype.build = function() {
-        var geometry = new THREE.CubeGeometry( 40, 40, 40 );
-        var object = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
-
-
-        // Axes
-        var origin = new THREE.Vector3(0.0, 0.0, 0.0);
-        var xAxisArrow = new THREE.ArrowHelper(new THREE.Vector3(1.0, 0.0, 0.0), origin, 100.0, 0xff0000, 20, 10);
-        var yAxisArrow = new THREE.ArrowHelper(new THREE.Vector3(0.0, 1.0, 0.0), origin, 100.0, 0x00ff00, 20, 10);
-        var zAxisArrow = new THREE.ArrowHelper(new THREE.Vector3(0.0, 0.0, 1.0), origin, 100.0, 0x0000ff, 20, 10);
-        this.scene.add(xAxisArrow);
-        this.scene.add(yAxisArrow);
-        this.scene.add(zAxisArrow);
-        this.update();
+    Compass.prototype.bindEvents = function () {
+        var cubeButtons = document.querySelectorAll('.cube-button');
+        Array.prototype.map.call(cubeButtons, function (button) {
+            button.addEventListener('click', function () {
+                // TODO: bind these to the correct `controls`
+                console.log(button.dataset);
+                //rotation.x = button.dataset.x;
+                //rotation.y = button.dataset.y;
+                //rotation.z = button.dataset.z;
+            });
+        });
     };
 
-    Compass.prototype.update = function() {
-        this.camera.up.copy(this.mainCamera.up);
-        this.camera.position.copy(this.mainCamera.position);
-        this.camera.position.sub(this.controls.target);
-        this.camera.lookAt(this.scene.position);
-        this.camera.position.setLength(300);
-        this.renderer.render(this.scene, this.camera);
-    };
+    Compass.prototype.update = function () {
+        //var rotation = new THREE.Euler().setFromQuaternion(this.mainCamera.quaternion.clone().inverse());
+        //setStyleTransform(this.compassCube, 'perspective(500px) ' +
+        //    'rotateX('+rotation.x+'rad) ' +
+        //    'rotateY('+rotation.y+'rad) ' +
+        //    'rotateZ('+rotation.z+'rad) ');
+        //var i, matrix = this.mainCamera.matrixWorld.toArray();
+        //matrix[3] = matrix[7] = matrix[11] = matrix[12] = matrix[13] = matrix[14] = matrix[15] = 0;
+        //var s = 'perspective(500px) matrix3d('+matrix.map(function (v) {
+        //    return v.toFixed(10);
+        //}).join()+')';
+        //console.log(matrix, s);
+        //setStyleTransform(this.compassCube, s);
 
-    Compass.prototype.onMouseMove = function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-//    console.log("MouseMove");
-    };
-
-    Compass.prototype.onMouseDown = function(event) {
-        event.preventDefault();
-//    console.log("MouseDown");
-    };
-
-    Compass.prototype.onMouseUp = function(event) {
-        event.preventDefault();
-//    console.log("MouseUp");
+        var up = this.camera.up,
+            lookFrom = this.camera.position,
+            lookTarget = this.controls.target,
+            matrix = new THREE.Matrix4(),
+            roundedMatrix;
+        matrix.lookAt(lookTarget, lookFrom, up);
+        this.compassCubeMatrix.getInverse(matrix);
+        roundedMatrix = Array.prototype.map.call(this.compassCubeMatrix.elements, function (v) {
+            return v.toFixed(3);
+        });
+        setStyleTransform(this.compassCube, 'perspective(500px) matrix3d('+roundedMatrix.join()+')');
     };
 
     return Compass;

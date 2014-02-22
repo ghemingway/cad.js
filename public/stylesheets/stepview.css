@@ -135,10 +135,3 @@ body {
     overflow-y: scroll;
     height: 100%;
 }
-
-.steptools-compass > canvas {
-    z-index: 1;
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-}
