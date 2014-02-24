@@ -2,7 +2,7 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     rjs = require('gulp-requirejs');
 
-gulp.task('default', function() {
+gulp.task('build', function() {
     rjs({
         baseUrl: 'public/javascript',
         out: 'build.js',
@@ -44,3 +44,9 @@ gulp.task('default', function() {
     .pipe(uglify())
     .pipe(gulp.dest('./public/javascript/')); // pipe it to the output DIR
 });
+
+gulp.task('watch', function() {
+    gulp.watch('./public/javascript/*.js', ['build']);
+});
+
+gulp.task('default', ['build']);
