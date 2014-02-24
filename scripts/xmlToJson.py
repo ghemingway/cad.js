@@ -8,7 +8,9 @@
 
 import argparse
 import json
+import math
 from multiprocessing import cpu_count, Process, Queue
+from operator import itemgetter
 import os
 from os.path import join
 import sys
@@ -23,6 +25,24 @@ LOG = logging.getLogger(__name__)
 # defaults and constants
 DEFAULT_COLOR = "7d7d7d"
 IDENTITY_TRANSFORM = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"
+
+#------------------------------------------------------------------------------
+
+CONFIG = {
+    'indexPoints': True,
+    'indexNormals': True,
+    'indexColors': True,
+    'compressColors': True,
+    'roundPrecision': 2
+}
+
+
+def roundFloat(val, precision):
+    """floating point rounder"""
+    if not precision:
+        return val
+    factor = math.pow(10, precision)
+    return int(round(val * factor))
 
 
 #------------------------------------------------------------------------------
@@ -97,6 +117,53 @@ def translateAnnotation(annotation):
     return data
 
 
+#------------------------------------------------------------------------------
+
+def make_index(data, ikey, ranger=None):
+    """Create indexes, an abstraction of indexing functions in the original"""
+    if ranger is None:
+        ranger = xrange(len(data[ikey]))
+    indexes = data[ikey + "Index"] = []
+    values = data['values']
+    for i in ranger:
+        val = roundFloat(data[ikey][i], CONFIG['roundPrecision'])
+        if val not in values:
+            values[val] = len(values)
+        indexes.append(values[val])
+    del data[ikey]
+
+# The following functions are named indexShellxxx in the original
+# The renaming aligns them with settings in the indexing CONFIG
+indexPoints = lambda d: make_index(d, 'points')
+indexNormals = lambda d: make_index(d, 'normals')
+indexColors = lambda d: make_index(d, 'colors')
+
+
+def compressShellColors(data):
+    """Color compression"""
+    numTuples = data['colorsIndex'] / 3
+    data['colorsData'] = []
+    start = 0
+    last = [data['colorsIndex'][x] for x in xrange(3)]
+    # Short list comparison
+    arraysIdentical = lambda a, b: all([a[x] == b[x] for x in xrange(3)])
+    # Compress the rest
+    for tupl in xrange(numTuples):
+        index = tupl * 3
+        tmp = [data['colorsIndex'][index + x] for x in xrange(3)]
+        # Is this a new block?
+        if not arraysIdentical(last, tmp):
+            data['colorsData'].append(dict(data=last, duration=tupl - start))
+            start = tupl
+            last = tmp
+    # append the final color block
+    data['colorsData'].append(dict(data=last, duration=numTuples - start))
+    # remove the colors index
+    del data['colorsIndex']
+
+
+#------------------------------------------------------------------------------
+
 def translateShell(shell):
     """Translates a shell"""
     if 'href' in shell.attrib:
@@ -139,6 +206,17 @@ def translateShell(shell):
                         data['colors'].append(color[c])
 
         data['size'] = len(data['points']) / 9
+        indexing = [x for x in CONFIG if x.startswith('index') and CONFIG[x]]
+        for i in indexing:
+            data['precision'] = CONFIG['roundPrecision']
+            if 'values' not in data:
+                data['values'] = {}
+            globals()[i](data)
+        if indexing:
+            sorted_vals = sorted(data['values'].items(), key=itemgetter(1))
+            data['values'] = map(itemgetter(0), sorted_vals)
+        if CONFIG.get('indexColors') and CONFIG.get('compressColors'):
+            compressShellColors(data)
         return data
 
 
