@@ -223,8 +223,8 @@ def translateShell(shell):
 def parseColor(hex):
     """Parse color values"""
     cval = int(hex, 16)
-    x = lambda b: (cval >> b) & 0xff
-    return {k: x(v) for k, v in dict(r=16, g=8, b=0).items()}
+    x = lambda b: ((cval >> b) & 0xff) / 255.0
+    return {k: x(v) for k, v in dict(r=16, g=8, b=0).iteritems()}
 
 
 def loadPoints(verts):
