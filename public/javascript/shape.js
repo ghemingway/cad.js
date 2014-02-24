@@ -103,7 +103,7 @@ define(["THREE"], function(THREE) {
             this._instances[i].setProduct(product);
         }
     };
-
+/*
      var vshader = [
         "precision mediump float;",
         "uniform mat4 u_projMatrix;",
@@ -190,16 +190,16 @@ define(["THREE"], function(THREE) {
 
     Shape.prototype.addShellGeometry = function(geometry) {
 //        console.log("Adding Shell Geo: " + this.getID());
-        var material = new THREE.MeshPhongMaterial({
-            color: 0xaaaaaa,
-            ambient: 0xaaaaaa,
-            specular: 0xffffff,
-            shininess: 255,
-//            side: THREE.FrontSide,
-            side: THREE.DoubleSide,
-            vertexColors: THREE.VertexColors,
-            transparent: true
-        });
+//        var material = new THREE.MeshPhongMaterial({
+//            color: 0xaaaaaa,
+//            ambient: 0xaaaaaa,
+//            specular: 0xffffff,
+//            shininess: 255,
+////            side: THREE.FrontSide,
+//            side: THREE.DoubleSide,
+//            vertexColors: THREE.VertexColors,
+//            transparent: true
+//        });
 //        var material = new THREE.MeshBasicMaterial({
 //            side: THREE.DoubleSide
 //        });
@@ -214,6 +214,7 @@ define(["THREE"], function(THREE) {
 //            vertexColors: THREE.VertexColors,
 //            transparent: true
 //        });
+        var material = new THREE.ShaderMaterial(THREE.VelvetyShader);
         var mesh = new THREE.SkinnedMesh(geometry, material, false);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
