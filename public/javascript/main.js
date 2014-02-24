@@ -43,6 +43,38 @@ require.config({
         },
         shape: {
             deps: ['shaders/VelvetyShader']
+        },
+        viewer: {
+            deps: [
+                'libs/threejs/EffectComposer',
+                'libs/threejs/CopyShader',
+                'libs/threejs/FXAAShader',
+                'libs/threejs/SSAOShader',
+                'libs/threejs/RenderPass',
+                'libs/threejs/ShaderPass',
+                'libs/threejs/MaskPass'
+            ]
+        },
+        'libs/threejs/EffectComposer': {
+            deps: ['THREE']
+        },
+        'libs/threejs/CopyShader': {
+            deps: ['THREE']
+        },
+        'libs/threejs/FXAAShader': {
+            deps: ['THREE']
+        },
+        'libs/threejs/SSAOShader': {
+            deps: ['THREE']
+        },
+        'libs/threejs/RenderPass': {
+            deps: ['THREE']
+        },
+        'libs/threejs/ShaderPass': {
+            deps: ['THREE', 'libs/threejs/RenderPass']
+        },
+        'libs/threejs/MaskPass': {
+            deps: ['THREE']
         }
     }
 });
