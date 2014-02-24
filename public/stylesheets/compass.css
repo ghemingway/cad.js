@@ -1,14 +1,16 @@
-.steptools-compass {
-    z-index: 1;
-    position: absolute;
-    right: 32px;
-    bottom: 32px;
+.key-label {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    text-align: center;
+    border: 1px solid white;
+    border-radius: 3px;
 }
 
 
 .cube {
     position: absolute;
-    bottom: 0;
+    top: 0;
     right: 0;
     width: 100px;
     height: 100px;

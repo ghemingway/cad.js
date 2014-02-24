@@ -135,3 +135,19 @@ body {
     overflow-y: scroll;
     height: 100%;
 }
+
+.info-panel {
+    z-index: 1;
+    position: absolute;
+    right: 32px;
+    top: 32px;
+}
+
+.steptools-compass {
+    position: relative;
+    height: 100px;
+}
+
+.key-hints {
+    padding: 16px 0 0 0;
+}

@@ -47,32 +47,33 @@ define([
     }
 
     Compass.prototype.bindEvents = function () {
-        var cubeButtons = document.querySelectorAll('.cube-button');
+        var that = this,
+            cubeButtons = document.querySelectorAll('.cube-button'),
+            defaultUpVector = new THREE.Vector3(0,1,0);
         Array.prototype.map.call(cubeButtons, function (button) {
             button.addEventListener('click', function () {
-                // TODO: bind these to the correct `controls`
-                console.log(button.dataset);
-                //rotation.x = button.dataset.x;
-                //rotation.y = button.dataset.y;
-                //rotation.z = button.dataset.z;
+                var upVector, upValues, eulerOrder;
+                if (typeof(button.dataset.up) !== 'undefined') {
+                    upValues = button.dataset.up.split(',').map(parseFloat);
+                    upVector = new THREE.Vector3(upValues[0],upValues[1],upValues[2]);
+                } else {
+                    upVector = defaultUpVector;
+                }
+                eulerOrder = typeof(button.dataset.order) === 'undefined' ? 'XYZ' : button.dataset.order;
+
+                var conversionFactor = Math.PI / 180.0;
+                var viewAngles = new THREE.Euler(parseFloat(button.dataset.x)*conversionFactor,
+                                                 parseFloat(button.dataset.y)*conversionFactor,
+                                                 parseFloat(button.dataset.z)*conversionFactor,
+                                                 eulerOrder);
+
+                that.controls.setRotationFromEuler(viewAngles, upVector /* allowed to be undefined */);
+
             });
         });
     };
 
     Compass.prototype.update = function () {
-        //var rotation = new THREE.Euler().setFromQuaternion(this.mainCamera.quaternion.clone().inverse());
-        //setStyleTransform(this.compassCube, 'perspective(500px) ' +
-        //    'rotateX('+rotation.x+'rad) ' +
-        //    'rotateY('+rotation.y+'rad) ' +
-        //    'rotateZ('+rotation.z+'rad) ');
-        //var i, matrix = this.mainCamera.matrixWorld.toArray();
-        //matrix[3] = matrix[7] = matrix[11] = matrix[12] = matrix[13] = matrix[14] = matrix[15] = 0;
-        //var s = 'perspective(500px) matrix3d('+matrix.map(function (v) {
-        //    return v.toFixed(10);
-        //}).join()+')';
-        //console.log(matrix, s);
-        //setStyleTransform(this.compassCube, s);
-
         var up = this.camera.up,
             lookFrom = this.camera.position,
             lookTarget = this.controls.target,

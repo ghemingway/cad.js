@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>CAD Viewer</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
     <link rel="stylesheet" href="stylesheets/default.css">
     <link rel="stylesheet" href="stylesheets/visualize.css">
     <link rel="stylesheet" href="stylesheets/jstree/themes/vulcan/style.css">
@@ -11,7 +12,12 @@
 <body style="background-color:#fff; background-image: none;">
 <div class="steptools-content-container">
     <div class="steptools-view" id="steptools-view"></div>
-    <div class="steptools-compass" id="steptools-compass"></div>
+    <div class="info-panel" id="info-panel">
+        <div class="steptools-compass" id="steptools-compass"></div>
+        <div class="key-hints" id="key-hints">
+            <p><span class="key-label">x</span> / <span class="key-label">s</span> explode</p>
+        </div>
+    </div>
     <div class="steptools-tree"></div>
     <div class="steptools-downloads">
         <div>
