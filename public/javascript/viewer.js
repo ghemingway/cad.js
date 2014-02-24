@@ -13,7 +13,8 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         var shouldRender = false,
             continuousRendering = false,
             canvasParent, renderer, canvas, scene, camera,
-            light1, light2, controls, compass,
+//            light1, light2,
+            controls, compass,
             render, animate, add3DObject, invalidate,
             renderTargetParametersRGBA, depthTarget, depthPassPlugin,
             composer, renderPassSSAO, renderPassFXAA, renderPassCopy;
@@ -71,7 +72,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
         renderPassCopy.renderToScreen = true;
         // ADD RENDER PASSES
-        composer.addPass(renderPassSSAO);
+//        composer.addPass(renderPassSSAO);
         composer.addPass(renderPassFXAA);
         composer.addPass(renderPassCopy);
 
