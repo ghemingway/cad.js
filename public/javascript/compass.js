@@ -7,7 +7,10 @@
 /************************* Compass Class *********************************************/
 
 
-define(["THREE"], function(THREE) {
+define([
+    "THREE",
+    "text!templates/compass_dom.html"
+], function(THREE, compassDomText) {
     'use strict';
 
     function setStyleTransform (element, value) {
@@ -27,7 +30,8 @@ define(["THREE"], function(THREE) {
     ];
 
 
-    function Compass(compassParent, camera, controls, config) {
+    function Compass(compassParentId, camera, controls, config) {
+        this.compassParent = $('#'+compassParentId);
         this.controls = controls;
         this.camera = camera;
         this.config = {
@@ -35,6 +39,7 @@ define(["THREE"], function(THREE) {
             width: config.width ? config.width : 200,
             height: config.height ? config.height: 200
         };
+        this.compassParent.html(compassDomText);
         this.compassCube = document.getElementById('compass-cube');
         this.compassCubeMatrix = new THREE.Matrix4();
 
