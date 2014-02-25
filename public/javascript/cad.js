@@ -133,6 +133,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         }, false);
 
         // Keybased events
+        var node, obj;
         window.addEventListener("keypress", function(event) {
             //console.log(event.keyCode);
             switch(event.keyCode) {
@@ -163,6 +164,19 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 case 122:
                     self._parts[0].zoomToFit(self._viewer.camera, self._viewer.controls);
                     self._viewer.invalidate();
+                    break;
+                // 'j' hide/show element
+                case 106:
+                    node = self.tree.get_selected(false);
+                    obj = self._parts[0].getByID(node[0]);
+                    if (obj) {
+                        if (obj.toggleVisibility()) {
+                            self.tree.enable_node(node);
+                        } else {
+                            self.tree.disable_node(node);
+                        }
+                        self._viewer.invalidate();
+                    }
                     break;
             }
         }, true);
@@ -243,23 +257,23 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             contextmenu: {
                 items: function(menuItem) {
                     var menu = {
-                        showAll: {
-                            label: "Show All",
-                            action: function() {
-                                self._parts[0].showAll();
-                                // TODO: Need to update tree to make all enabled
-                                //console.log(self.tree.disabled);
-                            }
-                        },
-                        focusOn: {
-                            label: "Focus On",
-                            action: function() {
-                                var obj = self._parts[0].getByID(menuItem.id);
-                                if (obj) {
-                                    self._parts[0].focusOn(obj);
-                                }
-                            }
-                        }
+//                        showAll: {
+//                            label: "Show All",
+//                            action: function() {
+//                                self._parts[0].showAll();
+//                                // TODO: Need to update tree to make all enabled
+//                                //console.log(self.tree.disabled);
+//                            }
+//                        }//,
+//                        focusOn: {
+//                            label: "Focus On",
+//                            action: function() {
+//                                var obj = self._parts[0].getByID(menuItem.id);
+//                                if (obj) {
+//                                    self._parts[0].focusOn(obj);
+//                                }
+//                            }
+//                        }
                     };
                     if (menuItem.state.disabled) {
                         menu["show"] = {
@@ -268,6 +282,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                                 var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
                                     obj.show();
+                                    self._viewer.invalidate();
                                     self.tree.enable_node(menuItem);
                                 }
                             }
@@ -279,6 +294,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                                 var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
                                     obj.hide();
+                                    self._viewer.invalidate();
                                     self.tree.disable_node(menuItem);
                                     self.tree.deselect_node(menuItem);
                                 }

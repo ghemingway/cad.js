@@ -124,6 +124,24 @@ define(["THREE"], function(THREE) {
         });
     };
 
+    Product.prototype.toggleVisibility = function() {
+        if (this._object3D.visible) this.hide();
+        else this.show();
+        return this._object3D.visible;
+    };
+
+    Product.prototype.hide = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = false;
+        });
+    };
+
+    Product.prototype.show = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = true;
+        });
+    };
+
     Product.prototype.explode = function(distance, timeS) {
     };
 
