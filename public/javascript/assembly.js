@@ -115,6 +115,18 @@ define(["THREE"], function(THREE) {
         }
     };
 
+    Assembly.prototype.toggleVisibility = function() {
+        if (this._product) this._product.toggleVisibility();
+    };
+
+    Assembly.prototype.hide = function() {
+        if (this._product) this._product.hide();
+    };
+
+    Assembly.prototype.show = function() {
+        if (this._product) this._product.show();
+    };
+
     Assembly.prototype.hideAllBoundingBoxes = function() {
         this.dispatchEvent({ type: "_hideBounding" });
     };
