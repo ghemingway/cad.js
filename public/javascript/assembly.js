@@ -87,7 +87,7 @@ define(["THREE"], function(THREE) {
         // Special case for the root element
         if (id === "id0") {
             obj = this;
-        } else {
+        } else if (typeof(id) !== 'undefined') {
             var parts = id.split("_");
             obj = this._objects[parts[0]];
             // Looks like an instance was selected
@@ -97,6 +97,12 @@ define(["THREE"], function(THREE) {
         }
         return obj;
 
+    };
+
+    Assembly.prototype.setOpacity = function (opacity) {
+        if (this._product) {
+            this._product.setOpacity(opacity);
+        }
     };
 
     Assembly.prototype.showAll = function() {

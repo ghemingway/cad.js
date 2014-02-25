@@ -17,9 +17,11 @@ vec3 applyMinColorBrightness(vec3 color)
 
 void main()
 {
-    fColor = applyMinColorBrightness(color);
-    fNormal = normalize(normalMatrix * normal);
     vec4 pos = modelViewMatrix * vec4(position, 1.0);
-    fPosition = pos.xyz;
+    vec3 N = normalMatrix * normal;
+    vec3 I = pos.xyz;
+    fNormal = normalize(faceforward(N, I, N));
+    fColor = applyMinColorBrightness(color);
+    fPosition = I;
     gl_Position = projectionMatrix * pos;
 }

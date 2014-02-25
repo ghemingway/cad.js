@@ -214,7 +214,7 @@ define(["THREE"], function(THREE) {
 //            vertexColors: THREE.VertexColors,
 //            transparent: true
 //        });
-        var material = new THREE.ShaderMaterial(THREE.VelvetyShader);
+        var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
         var mesh = new THREE.SkinnedMesh(geometry, material, false);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -380,10 +380,10 @@ define(["THREE"], function(THREE) {
     Shape.prototype.setOpacity = function (opacity) {
         var self = this;
         this._object3D.traverse(function(object) {
-            if (object.material) {
-                object.material.opacity = opacity;
+            if (object.material && object.material.uniforms.opacity) {
+                object.material.uniforms['opacity'].value = opacity;
                 self._assembly.addEventListener("_clearOpacity", function() {
-                    object.material.opacity = 1;
+                    object.material.uniforms['opacity'].value = 1;
                 });
             }
         });
