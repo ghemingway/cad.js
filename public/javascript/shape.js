@@ -103,117 +103,8 @@ define(["THREE"], function(THREE) {
             this._instances[i].setProduct(product);
         }
     };
-/*
-     var vshader = [
-        "precision mediump float;",
-        "uniform mat4 u_projMatrix;",
-        "uniform mat4 u_modelViewMatrix;",
-        // is the light on
-        "uniform bool u_light_on;",
-        "attribute vec3 a_normal;",
-        "attribute highp vec4 a_color;",
-        "attribute vec4 a_position;",
-        "varying vec4 v_eye_loc;",
-        "varying highp vec4 v_Color;",
-        "varying vec3 v_normal;",
-        "void main() {",
-        "    v_eye_loc = u_modelViewMatrix * a_position;",
-        "    gl_Position = u_projMatrix * v_eye_loc;",
-        "    v_Color = a_color;",
-        "    v_normal = a_normal;",
-        "}"].join("\n");
-
-     var fshader = [
-        "precision mediump float;",
-        "uniform mat3 u_normalMatrix;",
-        "uniform vec3 u_ambient;",
-        "uniform bool u_light_on;",
-        "varying highp vec4 v_Color;",
-        "varying vec4 v_eye_loc;",
-        "varying vec3 v_normal;",
-        // material properties.  If we want to change these, they should
-        // be passed in as uniforms.
-        "const float mat_ambient=.15;",
-        "const float mat_diffuse=1.;",
-        "const float mat_specular=.4;",
-        "const float shine=6.;",
-         "void main() {",
-        "    if (!u_light_on) {",
-        "      gl_FragColor = v_Color;",
-        "      return;",
-        "    }",
-        // if u_normalMatrix were normalized, the call to normalize()
-        // here would not be necessary
-        "    vec3 normal = normalize(u_normalMatrix * v_normal);",
-        // ambient color generation
-        "    float color_factor = .65 * mat_ambient;",
-        "    float light_dot =  dot(normal, vec3(-.4082, .4082, .8165));",
-        "    if ( light_dot > 0.)",
-        "        color_factor += .45 * mat_diffuse * light_dot;",
-        // vector from point to light.  We are placing a point light in the
-        // scenegraph at the same level as the near clipping plane.
-        // The z value of the vector may want to be a uniform so that it can
-        // be derived from the camera_ratio.
-        "    vec3 dir = normalize(vec3(0., 1., -3.) - v_eye_loc.xyz);",
-        "    light_dot = dot(normal, dir);",
-        "    if (light_dot > 0.) {",
-        "        color_factor += .4 * mat_diffuse * light_dot;",
-        "        vec3 s = normalize(dir + vec3(0.,0.,1.));",
-        "        float ndot = dot(s,normal);",
-        "        color_factor += mat_specular * max(pow(ndot, shine), 0.);",
-        "    ",
-        "    }",
-        "    gl_FragColor = vec4(color_factor * v_Color.rgb, v_Color.a);",
-        "}"].join("\n");
-/*
-     var prog = create_program(gl, vshader, fshader);
-     gl.useProgram(prog);
-     gl.proj_mtx = gl.getUniformLocation(prog, "u_projMatrix");
-     if (!gl.proj_mtx)
-     throw new Error ("Could not get proj matrix");
-     gl.mv_mtx = gl.getUniformLocation(prog, "u_modelViewMatrix");
-     if (!gl.mv_mtx)
-         throw new Error ("Could not get model viewmatrix");
-     gl.normal_mtx = gl.getUniformLocation(prog, "u_normalMatrix");
-     gl.light_on = gl.getUniformLocation(prog, "u_light_on");
-     if (gl.light_on) {
-        gl.uniform1i(gl.light_on, true);
-        gl.light = true;
-     }
-     gl.xforms = new GLTransform(gl, gl.proj_mtx, gl.mv_mtx, gl.normal_mtx);
-     gl.pos_loc = gl.getAttribLocation(prog, "a_position");
-     gl.norm_loc = gl.getAttribLocation(prog, "a_normal");
-     gl.color_loc = gl.getAttribLocation(prog, "a_color");
-     if (gl.pos_loc < 0 || gl.norm_loc < 0 || gl.color_loc < 0)
-        throw new Error ("Could not get location");
-*/
 
     Shape.prototype.addShellGeometry = function(geometry) {
-//        console.log("Adding Shell Geo: " + this.getID());
-//        var material = new THREE.MeshPhongMaterial({
-//            color: 0xaaaaaa,
-//            ambient: 0xaaaaaa,
-//            specular: 0xffffff,
-//            shininess: 255,
-////            side: THREE.FrontSide,
-//            side: THREE.DoubleSide,
-//            vertexColors: THREE.VertexColors,
-//            transparent: true
-//        });
-//        var material = new THREE.MeshBasicMaterial({
-//            side: THREE.DoubleSide
-//        });
-//        var material = new THREE.ShaderMaterial({
-//            uniforms: uniforms,
-//            attributes: attributes,
-//            vertexShader: vshader,
-//            fragmentShader: fshader
-//        });
-//        var material = new THREE.MeshNormalMaterial({
-//            side: THREE.DoubleSide,
-//            vertexColors: THREE.VertexColors,
-//            transparent: true
-//        });
         var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
         var mesh = new THREE.SkinnedMesh(geometry, material, false);
         mesh.castShadow = true;
@@ -339,9 +230,35 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.toggleVisibility = function() {
-        if (this._object3D.visible) this.hide();
-        else this.show();
+        if (this._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
         return this._object3D.visible;
+    };
+
+    Shape.prototype.isTransparent = function () {
+        // returns true if object or any children are transparent
+        var transparent = false,
+            testObject = function(object) {
+                if (!transparent && object.material && object.material.uniforms.opacity) {
+                    transparent = object.material.uniforms.opacity.value < 1;
+                }
+            };
+        testObject(this._object3D);
+        if (!transparent) {
+            this._object3D.traverse(testObject);
+        }
+        return transparent;
+    };
+
+    Shape.prototype.toggleTransparency = function() {
+        if (this.isTransparent()) {
+            this.setOpacity(1);
+        } else {
+            this.setOpacity(0.5);
+        }
     };
 
     Shape.prototype.hide = function() {

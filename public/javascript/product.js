@@ -125,9 +125,35 @@ define(["THREE"], function(THREE) {
     };
 
     Product.prototype.toggleVisibility = function() {
-        if (this._object3D.visible) this.hide();
-        else this.show();
+        if (this._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
         return this._object3D.visible;
+    };
+
+    Product.prototype.toggleTransparency = function() {
+        if (this.isTransparent()) {
+            this.setOpacity(1);
+        } else {
+            this.setOpacity(0.5);
+        }
+    };
+
+    Product.prototype.isTransparent = function () {
+        // returns true if object or any children are transparent
+        var transparent = false,
+            testObject = function(object) {
+                if (!transparent && object.material && object.material.uniforms.opacity) {
+                    transparent = object.material.uniforms.opacity.value < 1;
+                }
+            };
+        testObject(this._object3D);
+        if (!transparent) {
+            this._object3D.traverse(testObject);
+        }
+        return transparent;
     };
 
     Product.prototype.hide = function() {
