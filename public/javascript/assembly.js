@@ -99,6 +99,12 @@ define(["THREE"], function(THREE) {
 
     };
 
+    Assembly.prototype.toggleTransparency = function () {
+        if (this._product) {
+            this._product.toggleTransparency();
+        }
+    };
+
     Assembly.prototype.setOpacity = function (opacity) {
         if (this._product) {
             this._product.setOpacity(opacity);
@@ -122,15 +128,24 @@ define(["THREE"], function(THREE) {
     };
 
     Assembly.prototype.toggleVisibility = function() {
-        if (this._product) this._product.toggleVisibility();
+        if (this._product._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+        return this._product._object3D.visible;
     };
 
     Assembly.prototype.hide = function() {
-        if (this._product) this._product.hide();
+        if (this._product) {
+            this._product.hide();
+        }
     };
 
     Assembly.prototype.show = function() {
-        if (this._product) this._product.show();
+        if (this._product) {
+            this._product.show();
+        }
     };
 
     Assembly.prototype.hideAllBoundingBoxes = function() {
