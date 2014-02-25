@@ -33,9 +33,16 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
             trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
             trackballControl.position0.multiplyScalar( -viewDistance );
             trackballControl.reset();
-            /*
             // Widgets
-            var gui = new dat.GUI();
+            //var gui = new dat.GUI();
+            //var renderSettingsFolder = gui.addFolder('Render Settings');
+            //renderSettingsFolder.add(options.renderPassSSAO, 'enabled').name('SSAO').onChange(function () {
+            //    options.viewer.invalidate();
+            //});
+            //renderSettingsFolder.add(options.renderPassFXAA, 'enabled').name('FXAA').onChange(function () {
+            //    options.viewer.invalidate();
+            //});
+            /*
             var cameraControlsFolder = gui.addFolder( 'Camera Controls' );
             var distanceController = cameraControlsFolder.add( cameraOrientation, 'distance', 0, 50000 ).listen();
             var aspectController = cameraControlsFolder.add( cameraOrientation, 'aspect', [
