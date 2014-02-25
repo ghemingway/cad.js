@@ -4,11 +4,10 @@
 
 var fs = require("fs"),
     _ = require("underscore"),
-    os = require("os"),
-    xml2js = require("xml2js");
+    xml2js = require("xml2js"),
+    libxmljs = require("libxmljs");
 
-/***********************************************************************/
-
+var parseTime = 0, translateTime = 0, writeTime = 0;
 var config = {
     indexPoints: true,
     indexNormals: true,
@@ -16,6 +15,8 @@ var config = {
     compressColors: true,
     roundPrecision: 2
 };
+
+/***********************************************************************/
 
 
 var roundFloat = function(val, precision) {
@@ -29,13 +30,28 @@ var roundFloat = function(val, precision) {
 
 var translateIndex = function(doc) {
     // Return the full JSON
-    return {
+    var startTime = Date.now();
+    var data = {
         root: doc["step-assembly"].$.root,
         products:    _.map(doc["step-assembly"].product, translateProduct),
         shapes:      _.map(doc["step-assembly"].shape, translateShape),
         shells:      _.map(doc["step-assembly"].shell, translateShell),
         annotations: _.map(doc["step-assembly"].annotation, translateAnnotation)
     };
+    var stopTime = Date.now();
+    process.stdout.write("Xlate: " + (stopTime - startTime).toString() + "ms, ");
+    return data;
+};
+
+var showIndex = function(data) {
+    var externalShells = _.pluck(data.shells, "href");
+    var externalAnnotations = _.pluck(data.annotations, "href");
+    console.log("\tProducts: " + data.products.length);
+    console.log("\tShapes: " + data.shapes.length);
+    console.log("\tAnnotations: " + data.annotations.length);
+    console.log("\tExternal Annotations: " + externalAnnotations.length);
+    console.log("\tShells: " + data.shells.length);
+    console.log("\tExternal Shells: " + externalShells.length);
 };
 
 var translateProduct = function(product) {
@@ -216,6 +232,7 @@ var translateShell = function(shell) {
         };
     // Convert XML point/vert/color to new way
     } else {
+        var startTime = Date.now();
         var points = loadPoints(shell.verts);
         var defaultColor = parseColor("7d7d7d");
         if (shell.$.color) {
@@ -301,7 +318,8 @@ var translateShell = function(shell) {
                 compressShellColors(data);
             }
         }
-        console.log("\tShell size: " + data.size * 3);
+        var stopTime = Date.now();
+        process.stdout.write("Xlate: " + (stopTime - startTime).toString() + "ms, ");
         return data;
     }
 };
@@ -331,96 +349,43 @@ function loadPoints(verts) {
 
 /*************************************************************************/
 
-// Get the workers
-var async = require("async");
-
-
 function XMLTranslator() {
-    var self = this;
     this.parser = new xml2js.Parser();
-    this.queue = [];
-    this.workers = [];
-    this.freeWorkers = [];
-    var maxWorkers = os.cpus().length;
-
-    // Spawn all of the threads we need
-    console.log("Spawning Workers: " + maxWorkers);
-    this.queue = async.queue(function(task, callback) {
-        self.exec(task, callback);
-    }, maxWorkers);
 }
 
-XMLTranslator.prototype.translate = function(dir, filename) {
+XMLTranslator.prototype.parse = function(dir, filename, callback) {
     var self = this;
     this.pathPrefix = dir + "/";
     var rootPath = this.pathPrefix + filename;
-    // Setup XML parser
     // Read the root file
+    process.stdout.write(rootPath + ": (Parse: ");
     fs.readFile(rootPath, function(err, doc) {
         if (err) {
-            console.log("Error reading index file: " + rootPath);
-        }
-        self.parser.parseString(doc, function(err, results) {
-            if (!err) {
-                var data = translateIndex(results);
-                // Get output file name
-                var indexOut = self.pathPrefix + filename.replace("xml", "json");
-                var externalShells = _.pluck(data.shells, "href");
-                var externalAnnotations = _.pluck(data.annotations, "href");
-                console.log("Writing new index file: " + indexOut);
-                console.log("\tProducts: " + data.products.length);
-                console.log("\tShapes: " + data.shapes.length);
-                console.log("\tAnnotations: " + data.annotations.length);
-                console.log("\tExternal Annotations: " + externalAnnotations.length);
-                console.log("\tShells: " + data.shells.length);
-                console.log("\tExternal Shells: " + externalShells.length);
-                // Write index to file
-                fs.writeFileSync(indexOut, JSON.stringify(data));
-
-                // Push jobs to the workers
-                _.forEach(externalAnnotations, function(annotation) {
-                    self.queue.push({
-                        type: "annotation",
-                        path: annotation,
-                        func: translateAnnotation
-                    });
-                });
-                _.forEach(externalShells, function(shell) {
-                    self.queue.push({
-                        type: "shell",
-                        path: shell,
-                        func: translateShell
-                    });
-                });
-            } else {
-                console.log("Error parsing index file: " + err);
-            }
-        });
-    });
-};
-
-XMLTranslator.prototype.exec = function(task, callback) {
-    var self = this;
-    var path = this.pathPrefix + task.path.replace("json", "xml");
-    fs.readFile(path, function(err, doc) {
-        if (err) {
-            console.log("Not able to read file: " + path);
-            console.log(err);
+            callback(err);
         } else {
+            var startTime = Date.now();
             self.parser.parseString(doc, function(err, results) {
+                var stopTime = Date.now();
+                process.stdout.write((stopTime - startTime).toString() + "ms, ");
                 if (err) {
-                    console.log("Invalid XML: " + err);
+                    console.log("Error parsing file: " + rootPath);
+                    callback(err);
                 } else {
-                    console.log("Translating: " + path);
-                    var data = task.func(results[task.type]);
-                    var outPath = self.pathPrefix + task.path.replace("xml", "json");
-                    // Write the object to file
-                    fs.writeFileSync(outPath, JSON.stringify(data));
-                    // Now done
-                    callback();
+                    callback(undefined, results);
                 }
             });
         }
+    });
+};
+
+XMLTranslator.prototype.write = function(directory, filename, data, callback) {
+    var path = directory + "/" + filename.replace("xml", "json");
+    // Write the object to file
+    var startTime = Date.now();
+    fs.writeFile(path, JSON.stringify(data), function(err) {
+        var stopTime = Date.now();
+        process.stdout.write("Write: " + (stopTime - startTime).toString() + "ms)\n");
+        if (callback) callback(err, data);
     });
 };
 
@@ -428,9 +393,40 @@ XMLTranslator.prototype.exec = function(task, callback) {
 
 
 var argv = require('optimist')
-    .demand(['i'])
+    .default('d', '.')
     .argv;
 
-// Translate the requested model file
 var translator = new XMLTranslator();
-translator.translate(argv.d, argv.i);
+// Translate the requested model file
+translator.parse(argv.d, argv.f, function(err, data) {
+    if (err) {
+        console.log(err);
+        return;
+    }
+    // Is this is an assembly
+    if (data["step-assembly"]) {
+        translator.write(argv.d, argv.f, translateIndex(data), function(err, data) {
+            showIndex(data);
+            // What is external
+            var externalShells = _.pluck(data.shells, "href");
+            var externalAnnotations = _.pluck(data.annotations, "href");
+            // Push jobs to the workers
+            _.forEach(externalShells, function(shell) {
+                shell = shell.replace("json", "xml");
+                cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", shell]);
+            });
+            _.forEach(externalAnnotations, function(annotation) {
+                annotation = annotation.replace("json", "xml");
+                cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", annotation]);
+            });
+        });
+    } else if (data["shell"]) {
+        translator.write(argv.d, argv.f, translateShell(data.shell), function(err, data) {
+        });
+    } else if (data["annotation"]) {
+        translator.write(argv.d, argv.f, translateAnnotation(data.annotation), function(err, data) {
+        });
+    } else {
+        console.log("Unknown XML file type");
+    }
+});

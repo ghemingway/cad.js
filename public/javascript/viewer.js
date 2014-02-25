@@ -28,6 +28,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         // RENDERER
         canvasParent = document.getElementById(canvasParentId);
         renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = renderer;
         renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
         //    renderer.shadowMapEnabled = true;
         //    renderer.shadowMapType = THREE.PCFShadowMap;
@@ -65,6 +66,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         renderPassSSAO.uniforms['cameraFar'].value = camera.far;
         renderPassSSAO.uniforms['aoClamp'].value = 0.9;
         renderPassSSAO.uniforms['lumInfluence'].value = 0.5;
+        renderPassSSAO.enabled = false;
         // EFFECT FXAA
         renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
         renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
@@ -72,7 +74,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
         renderPassCopy.renderToScreen = true;
         // ADD RENDER PASSES
-//        composer.addPass(renderPassSSAO);
+        composer.addPass(renderPassSSAO);
         composer.addPass(renderPassFXAA);
         composer.addPass(renderPassCopy);
 
@@ -102,8 +104,11 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // VIEW CONTROLS
         controls =  ViewerControls({
+            viewer: this,
             camera: camera,
-            canvas: canvas
+            canvas: canvas,
+            renderPassSSAO: renderPassSSAO,
+            renderPassFXAA: renderPassFXAA
         });
 
         // COMPASS
@@ -155,6 +160,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             depthTarget = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight, renderTargetParametersRGBA);
             depthPassPlugin.renderTarget = depthTarget;
             renderPassSSAO.uniforms['tDepth'].value = depthTarget;
+            renderPassSSAO.uniforms['size'].value.set(canvasParent.offsetWidth, canvasParent.offsetHeight);
             renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
             renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
             camera.aspect = canvasParent.offsetWidth / canvasParent.offsetHeight;
