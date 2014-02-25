@@ -99,6 +99,12 @@ define(["THREE"], function(THREE) {
 
     };
 
+    Assembly.prototype.setOpacity = function (opacity) {
+        if (this._product) {
+            this._product.setOpacity(opacity);
+        }
+    };
+
     Assembly.prototype.showAll = function() {
         if (this._product) {
             this._product.getObject3D().traverse(function(object) {

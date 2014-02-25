@@ -112,6 +112,18 @@ define(["THREE"], function(THREE) {
         this._object3D.remove(this.bbox);
     };
 
+    Product.prototype.setOpacity = function (opacity) {
+        var self = this;
+        this._object3D.traverse(function(object) {
+            if (object.material && object.material.uniforms.opacity) {
+                object.material.uniforms['opacity'].value = opacity;
+                self._assembly.addEventListener("_clearOpacity", function() {
+                    object.material.uniforms['opacity'].value = 1;
+                });
+            }
+        });
+    };
+
     Product.prototype.explode = function(distance, timeS) {
     };
 

@@ -12,16 +12,18 @@ define([
     'text!shaders/VelvetyShader-vertex.glsl',
     'text!shaders/VelvetyShader-fragment.glsl'
 ], function (THREE, vertexShaderCode, fragmentShaderCode) {
-    THREE.VelvetyShader = {
-        side: THREE.DoubleSide,
-        vertexColors: THREE.VertexColors,
-        transparent: true,
-        uniforms: {
-            'opacity': {type: 'f', value: 1.0},
-            'ambientFactor': {type: 'f', value: 0.3},
-            'directFactor': {type: 'f', value: 1.0}
-        },
-        vertexShader: vertexShaderCode,
-        fragmentShader: fragmentShaderCode
+    THREE.VelvetyShader = function () {
+        return {
+            side: THREE.DoubleSide,
+            vertexColors: THREE.VertexColors,
+            transparent: true,
+            uniforms: {
+                'opacity': {type: 'f', value: 1.0},
+                'ambientFactor': {type: 'f', value: 0.3},
+                'directFactor': {type: 'f', value: 1.0}
+            },
+            vertexShader: vertexShaderCode,
+            fragmentShader: fragmentShaderCode
+        };
     };
 });
