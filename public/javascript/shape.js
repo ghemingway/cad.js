@@ -341,6 +341,7 @@ define(["THREE"], function(THREE) {
     Shape.prototype.toggleVisibility = function() {
         if (this._object3D.visible) this.hide();
         else this.show();
+        return this._object3D.visible;
     };
 
     Shape.prototype.hide = function() {
