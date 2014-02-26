@@ -4,10 +4,11 @@
 
 var fs = require("fs"),
     _ = require("underscore"),
+    cp = require("child_process"),
     xml2js = require("xml2js"),
     libxmljs = require("libxmljs");
 
-var parseTime = 0, translateTime = 0, writeTime = 0;
+var readTime = 0, parseTime = 0, translateTime = 0, writeTime = 0;
 var config = {
     indexPoints: true,
     indexNormals: true,
@@ -30,16 +31,15 @@ var roundFloat = function(val, precision) {
 
 var translateIndex = function(doc) {
     // Return the full JSON
-    var startTime = Date.now();
+    translateTime = Date.now();
     var data = {
-        root: doc["step-assembly"].$.root,
-        products:    _.map(doc["step-assembly"].product, translateProduct),
-        shapes:      _.map(doc["step-assembly"].shape, translateShape),
-        shells:      _.map(doc["step-assembly"].shell, translateShell),
-        annotations: _.map(doc["step-assembly"].annotation, translateAnnotation)
+        root:       doc.root().attr("root").value(),
+        products:   _.map(doc.find("//product"), translateProduct),
+        shapes:     _.map(doc.find("//shape"), translateShape),
+        shells:     _.map(doc.find("//shell"), translateShell),
+        annotations:_.map(doc.find("//annotation"), translateAnnotation)
     };
-    var stopTime = Date.now();
-    process.stdout.write("Xlate: " + (stopTime - startTime).toString() + "ms, ");
+    translateTime = Date.now() - translateTime;
     return data;
 };
 
@@ -56,17 +56,17 @@ var showIndex = function(data) {
 
 var translateProduct = function(product) {
     var data = {
-        "id": product.$.id,
-        "step": product.$.step,
-        "name": product.$.name
+        "id": product.attr("id").value(),
+        "step": product.attr("step").value(),
+        "name": product.attr("name").value()
     };
     // Add children, if there are any
-    if (product.$.children) {
-        data.children = product.$.children.split(" ");
+    if (product.attr("children")) {
+        data.children = product.attr("children").value().split(" ");
     }
     // Add shapes, if there are any
-    if (product.$.shape) {
-        data.shapes = product.$.shape.split(" ");
+    if (product.attr("shape").value()) {
+        data.shapes = product.attr("shape").value().split(" ");
     }
     return data;
 };
@@ -83,48 +83,49 @@ var setTransform = function(transform) {
 var translateShape = function(shape) {
     // Base Shape JSON
     var data = {
-        "id": shape.$.id,
-//        "unit": shape.$.unit,
+        "id": shape.attr("id").value(),
         "shells": [],
         "annotations": [],
         "children": []
     };
     // Add children, if there are any
-    _.forEach(shape.child, function(child) {
+    _.forEach(shape.find("child"), function(child) {
         data.children.push({
-            "ref": child.$.ref,
-            "xform": setTransform(child.$.xform)
+            "ref": child.attr("ref").value(),
+            "xform": setTransform(child.attr("xform").value())
         });
     });
     // Add child annotations
-    if (shape.$.annotation) {
-        data.annotations = shape.$.annotation.split(" ");
+    if (shape.attr("annotation")) {
+        data.annotations = shape.attr("annotation").value().split(" ");
     }
     // Terminal Shape JSON
-    if (shape.$.shell) {
-        data.shells = shape.$.shell.split(" ");
+    if (shape.attr("shell")) {
+        data.shells = shape.attr("shell").value().split(" ");
     }
     return data;
 };
 
 var translateAnnotation = function(annotation) {
     var data = {
-        "id": annotation.$.id
+        "id": annotation.attr("id").value()
     };
     // Is this a non-terminal annotation
-    if (annotation.$.href) {
-        data.href = annotation.$.href.replace("xml", "json");
+    if (annotation.attr("href")) {
+        data.href = annotation.attr("href").value().replace("xml", "json");
     // Otherwise, add all those lines
     } else {
-        data.lines = _.map(annotation.polyline, function(polyline) {
+        translateTime = Date.now();
+        data.lines = _.map(annotation.find("polyline"), function(polyline) {
             var points = [];
-            _.forEach(polyline.p, function(line) {
-                _.forEach(line.$.l.split(" "), function(val) {
+            _.forEach(polyline.find("p"), function(line) {
+                _.forEach(line.attr("l").value().split(" "), function(val) {
                     points.push(parseFloat(val));
                 });
             });
             return points;
         });
+        translateTime = Date.now() - translateTime;
     }
     return data;
 };
@@ -223,36 +224,36 @@ var compressShellColors = function(data) {
 
 var translateShell = function(shell) {
     // Do href here
-    if (shell.$.href) {
+    if (shell.attr("href")) {
         return {
-            "id": shell.$.id,
-            "size": parseInt(shell.$.size),
-            "bbox": shell.$.bbox.split(" ").map(function(val) { return parseFloat(val); }),
-            "href":  shell.$.href.replace("xml", "json")
+            "id": shell.attr("id").value(),
+            "size": parseInt(shell.attr("size").value()),
+            "bbox": shell.attr("bbox").value().split(" ").map(function(val) { return parseFloat(val); }),
+            "href":  shell.attr("href").value().replace("xml", "json")
         };
     // Convert XML point/vert/color to new way
     } else {
-        var startTime = Date.now();
-        var points = loadPoints(shell.verts);
+        translateTime = Date.now();
+        var points = loadPoints(shell.find("verts"));
         var defaultColor = parseColor("7d7d7d");
-        if (shell.$.color) {
-            defaultColor = parseColor(shell.$.color);
+        if (shell.attr("color")) {
+            defaultColor = parseColor(shell.attr("color").value());
         }
         var data = {
-            "id": shell.$.id,
+            "id": shell.attr("id").value(),
             "size": 0,
             "points": [],
             "normals": [],
             "colors": []
         };
-        _.forEach(shell.facets, function(facet) {
+        _.forEach(shell.find("facets"), function(facet) {
             var color = _.clone(defaultColor);
-            if (facet.$ && facet.$.color) {
-                color = parseColor(facet.$.color);
+            if (facet.attr("color")) {
+                color = parseColor(facet.attr("color").value());
             }
-            _.forEach(facet.f, function(f) {
+            _.forEach(facet.find("f"), function(f) {
                 // Get every vertex index and convert using points array
-                var indexVals = f.$.v.split(" ");
+                var indexVals = f.attr("v").value().split(" ");
                 var index0 = parseInt(indexVals[0]) * 3;
                 var index1 = parseInt(indexVals[1]) * 3;
                 var index2 = parseInt(indexVals[2]) * 3;
@@ -268,16 +269,16 @@ var translateShell = function(shell) {
                 data.points.push(parseFloat(points[index2 + 2]));
 
                 // Get the vertex normals
-                var norms = f.n;
-                var normCoordinates = norms[0].$.d.split(" ");
+                var norms = f.find("n");
+                var normCoordinates = norms[0].attr("d").value().split(" ");
                 data.normals.push(parseFloat(normCoordinates[0]));
                 data.normals.push(parseFloat(normCoordinates[1]));
                 data.normals.push(parseFloat(normCoordinates[2]));
-                normCoordinates = norms[1].$.d.split(" ");
+                normCoordinates = norms[1].attr("d").value().split(" ");
                 data.normals.push(parseFloat(normCoordinates[0]));
                 data.normals.push(parseFloat(normCoordinates[1]));
                 data.normals.push(parseFloat(normCoordinates[2]));
-                normCoordinates = norms[2].$.d.split(" ");
+                normCoordinates = norms[2].attr("d").value().split(" ");
                 data.normals.push(parseFloat(normCoordinates[0]));
                 data.normals.push(parseFloat(normCoordinates[1]));
                 data.normals.push(parseFloat(normCoordinates[2]));
@@ -318,8 +319,7 @@ var translateShell = function(shell) {
                 compressShellColors(data);
             }
         }
-        var stopTime = Date.now();
-        process.stdout.write("Xlate: " + (stopTime - startTime).toString() + "ms, ");
+        translateTime = Date.now() - translateTime;
         return data;
     }
 };
@@ -337,8 +337,8 @@ function loadPoints(verts) {
     // Load all of the point information
     var points = [];
     _.forEach(verts, function(vert) {
-        _.forEach(vert.v, function(v) {
-            var coords = v.$.p.split(" ");
+        _.forEach(vert.find("v"), function(v) {
+            var coords = v.attr("p").value().split(" ");
             points.push(coords[0]);
             points.push(coords[1]);
             points.push(coords[2]);
@@ -358,22 +358,16 @@ XMLTranslator.prototype.parse = function(dir, filename, callback) {
     this.pathPrefix = dir + "/";
     var rootPath = this.pathPrefix + filename;
     // Read the root file
-    process.stdout.write(rootPath + ": (Parse: ");
+    readTime = Date.now();
     fs.readFile(rootPath, function(err, doc) {
         if (err) {
             callback(err);
         } else {
-            var startTime = Date.now();
-            self.parser.parseString(doc, function(err, results) {
-                var stopTime = Date.now();
-                process.stdout.write((stopTime - startTime).toString() + "ms, ");
-                if (err) {
-                    console.log("Error parsing file: " + rootPath);
-                    callback(err);
-                } else {
-                    callback(undefined, results);
-                }
-            });
+            parseTime = Date.now();
+            readTime = parseTime - readTime;
+            var results = libxmljs.parseXmlString(doc);
+            parseTime = Date.now() - parseTime;
+            callback(results.errors[0], results);
         }
     });
 };
@@ -381,16 +375,22 @@ XMLTranslator.prototype.parse = function(dir, filename, callback) {
 XMLTranslator.prototype.write = function(directory, filename, data, callback) {
     var path = directory + "/" + filename.replace("xml", "json");
     // Write the object to file
-    var startTime = Date.now();
+    writeTime = Date.now();
     fs.writeFile(path, JSON.stringify(data), function(err) {
-        var stopTime = Date.now();
-        process.stdout.write("Write: " + (stopTime - startTime).toString() + "ms)\n");
+        writeTime = Date.now() - writeTime;
         if (callback) callback(err, data);
     });
 };
 
 /*************************************************************************/
 
+function showTimes() {
+    console.log(argv.f + ": " +
+        "(R: " + readTime + ", " +
+        "P: " + parseTime + ", " +
+        "T: " + translateTime + ", " +
+        "W: " + writeTime + ")");
+}
 
 var argv = require('optimist')
     .default('d', '.')
@@ -403,30 +403,39 @@ translator.parse(argv.d, argv.f, function(err, data) {
         console.log(err);
         return;
     }
+    var root = data.root();
     // Is this is an assembly
-    if (data["step-assembly"]) {
-        translator.write(argv.d, argv.f, translateIndex(data), function(err, data) {
-            showIndex(data);
-            // What is external
-            var externalShells = _.pluck(data.shells, "href");
-            var externalAnnotations = _.pluck(data.annotations, "href");
-            // Push jobs to the workers
-            _.forEach(externalShells, function(shell) {
-                shell = shell.replace("json", "xml");
-                cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", shell]);
+    switch (root.name()) {
+        case "step-assembly":
+        case "assembly":
+            translator.write(argv.d, argv.f, translateIndex(data), function(err, data) {
+//                showIndex(data);
+                // What is external
+                var externalShells = _.pluck(data.shells, "href");
+                var externalAnnotations = _.pluck(data.annotations, "href");
+                // Push jobs to the workers
+                _.forEach(externalShells, function(shell) {
+                    shell = shell.replace("json", "xml");
+                    cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", shell]);
+                });
+                _.forEach(externalAnnotations, function(annotation) {
+                    annotation = annotation.replace("json", "xml");
+                    cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", annotation]);
+                });
+                showTimes();
             });
-            _.forEach(externalAnnotations, function(annotation) {
-                annotation = annotation.replace("json", "xml");
-                cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", annotation]);
+            break;
+        case "shell":
+            translator.write(argv.d, argv.f, translateShell(data.root()), function(err, data) {
+                showTimes();
             });
-        });
-    } else if (data["shell"]) {
-        translator.write(argv.d, argv.f, translateShell(data.shell), function(err, data) {
-        });
-    } else if (data["annotation"]) {
-        translator.write(argv.d, argv.f, translateAnnotation(data.annotation), function(err, data) {
-        });
-    } else {
-        console.log("Unknown XML file type");
+            break;
+        case "annotation":
+            translator.write(argv.d, argv.f, translateAnnotation(data.root()), function(err, data) {
+                showTimes();
+            });
+            break;
+        default:
+            console.log("Unknown XML file type");
     }
 });
