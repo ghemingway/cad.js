@@ -133,8 +133,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         }, false);
 
         // Keybased events
-        var node, obj;
         window.addEventListener("keypress", function(event) {
+            var node, obj;
             //console.log(event.keyCode);
             switch(event.keyCode) {
                 // Explode on 'x' key pressed
@@ -152,13 +152,12 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     self.tree.deselect_all();
                     self._viewer.invalidate();
                     break;
-                // 'o' to set opacity of selected to 0.5
+                // 'o' to toggle transparency
                 case 111:
-                    self.setSelectedOpacity(0.5);
-                    break;
-                // 'p' to set opacity of selected back to 1
-                case 112:
-                    self.setSelectedOpacity(1.0);
+                    node = self.tree.get_selected(false);
+                    obj = self._parts[0].getByID(node[0]);
+                    obj.toggleTransparency();
+                    self._viewer.invalidate();
                     break;
                 // 'z' to zoomToFit
                 case 122:
