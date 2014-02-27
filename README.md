@@ -26,3 +26,12 @@ gulp
 ```javascript
 <script data-main="javascript/build" src="javascript/libs/require.min.js"></script>
 ```
+
+Snazzy Demos
+==============
+
+http://ghemingway.github.io/cad.js/?resource_url=/cad.js/data/cutter/index.json
+
+http://ghemingway.github.io/cad.js/?resource_url=/cad.js/data/rear/index.json
+
+http://ghemingway.github.io/cad.js/?resource_url=/cad.js/data/rccar/index.json

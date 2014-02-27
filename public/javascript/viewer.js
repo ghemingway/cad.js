@@ -116,7 +116,6 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             width: 200,
             height: 200
         });
-        scene.add(compass.object3D);
 
         // PRIVATE FUNCTIONS
         render = function() {

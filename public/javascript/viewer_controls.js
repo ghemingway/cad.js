@@ -17,7 +17,7 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
             viewDistance = options.viewDistance || 13000,
             viewAngles = options.viewAngles || new THREE.Euler( 0, 0 ,0),
         //viewAngles = options.viewAngles || new THREE.Euler( 0, 0, 0 ),
-            referenceOrientation = new THREE.Vector3( 0, 1, 0 );
+            referenceOrientation = new THREE.Vector3( 0, 0, 1 );
 
         function init() {
             trackballControl = new THREE.TrackballControls( camera, canvas );
@@ -29,13 +29,20 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
             trackballControl.staticMoving = true;
             trackballControl.dynamicDampingFactor = 0.3;
             // Initial position
-            trackballControl.up0.set( 0, 0, 1 );
+            trackballControl.up0.set( 0, 1, 0 );
             trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
             trackballControl.position0.multiplyScalar( -viewDistance );
             trackballControl.reset();
             // Widgets
-            var cameraOrientation = new CameraOrientationHelper( viewAngles, viewDistance, trackballControl );
-            var gui = new dat.GUI();
+            //var gui = new dat.GUI();
+            //var renderSettingsFolder = gui.addFolder('Render Settings');
+            //renderSettingsFolder.add(options.renderPassSSAO, 'enabled').name('SSAO').onChange(function () {
+            //    options.viewer.invalidate();
+            //});
+            //renderSettingsFolder.add(options.renderPassFXAA, 'enabled').name('FXAA').onChange(function () {
+            //    options.viewer.invalidate();
+            //});
+            /*
             var cameraControlsFolder = gui.addFolder( 'Camera Controls' );
             var distanceController = cameraControlsFolder.add( cameraOrientation, 'distance', 0, 50000 ).listen();
             var aspectController = cameraControlsFolder.add( cameraOrientation, 'aspect', [
@@ -67,45 +74,52 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
                 switch ( val ) {
 
                     case 'back':
-                        viewAngles = new THREE.Euler( 0, 0, Math.PI);
-                        trackballControl.up0.set( 0, 0, 1 );
+                        viewAngles = new THREE.Euler( 0, Math.PI, 0);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
                     case 'left':
-                        viewAngles = new THREE.Euler( 0, 0, -Math.PI / 2);
-                        trackballControl.up0.set( 0, 0, 1 );
+                        viewAngles = new THREE.Euler( 0, -Math.PI / 2, 0);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
                     case 'right':
-                        viewAngles = new THREE.Euler( 0, 0, Math.PI / 2);
-                        trackballControl.up0.set( 0, 0, 1 );
+                        viewAngles = new THREE.Euler( 0, Math.PI / 2, 0);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
                     case 'top':
-                        viewAngles = new THREE.Euler( -Math.PI / 2 , 0, 0);
-                        trackballControl.up0.set( 0, 1, 0 );
+                        viewAngles = new THREE.Euler( Math.PI / 2 , 0, 0);
+                        trackballControl.up0.set( 0, 0, 1 );
                         break;
                     case 'bottom':
-                        viewAngles = new THREE.Euler( Math.PI / 2, 0, 0);
-                        trackballControl.up0.set( 0, 1, 0 );
+                        viewAngles = new THREE.Euler( -Math.PI / 2, 0, 0);
+                        trackballControl.up0.set( 0, 0, -1 );
                         break;
 
                     default :
                     case 'front':
                         viewAngles = new THREE.Euler( 0, 0, 0);
-                        trackballControl.up0.set( 0, 0, 1);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
 
                 }
 
                 var distance = trackballControl.object.position.length();
 
-                trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
+                trackballControl.position0 = trackballControl.referenceOrientation.clone().applyEuler( viewAngles );
                 trackballControl.position0.multiplyScalar( -distance );
                 trackballControl.reset();
 
                 cameraOrientation.aspect = val;
 
             } );
-
-
+            */
+            trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
+                var distance = trackballControl.object.position.length(),
+                    upVector = typeof(opt_upVector) === 'undefined' ? trackballControl.up0 : opt_upVector;
+                trackballControl.position0 = referenceOrientation.clone().applyEuler(euler);
+                trackballControl.up0.set(upVector.x, upVector.y, upVector.z);
+                trackballControl.position0.multiplyScalar(-distance);
+                trackballControl.reset();
+            };
         }
         if ( camera !== undefined && camera !== null ) {
             init();
