@@ -31,6 +31,7 @@ define([
 
 
     function Compass(compassParentId, camera, controls, config) {
+        var that = this;
         this.compassParent = $('#'+compassParentId);
         this.controls = controls;
         this.camera = camera;
@@ -40,37 +41,43 @@ define([
             height: config.height ? config.height: 200
         };
         this.compassParent.html(compassDomText);
+        this.$cubeButtons = $('.cube-button', this.compassParent);
         this.compassCube = document.getElementById('compass-cube');
         this.compassCubeMatrix = new THREE.Matrix4();
-
         this.bindEvents();
     }
 
     Compass.prototype.bindEvents = function () {
         var that = this,
-            cubeButtons = document.querySelectorAll('.cube-button'),
             defaultUpVector = new THREE.Vector3(0,1,0);
-        Array.prototype.map.call(cubeButtons, function (button) {
-            button.addEventListener('click', function () {
+        this.$cubeButtons.
+            on('mouseenter', function (e) {
+                that.$cubeButtons.
+                    removeClass('hover').
+                    filter('[data-group="'+$(this).attr('data-group')+'"]').
+                    addClass('hover');
+            }).
+            on('mouseleave', function (e) {
+                that.$cubeButtons.removeClass('hover');
+            }).
+            on('click', function (e) {
                 var upVector, upValues, eulerOrder;
-                if (typeof(button.dataset.up) !== 'undefined') {
-                    upValues = button.dataset.up.split(',').map(parseFloat);
+                if (typeof(this.dataset.up) !== 'undefined') {
+                    upValues = this.dataset.up.split(',').map(parseFloat);
                     upVector = new THREE.Vector3(upValues[0],upValues[1],upValues[2]);
                 } else {
                     upVector = defaultUpVector;
                 }
-                eulerOrder = typeof(button.dataset.order) === 'undefined' ? 'XYZ' : button.dataset.order;
+                eulerOrder = typeof(this.dataset.order) === 'undefined' ? 'XYZ' : this.dataset.order;
 
                 var conversionFactor = Math.PI / 180.0;
-                var viewAngles = new THREE.Euler(parseFloat(button.dataset.x)*conversionFactor,
-                                                 parseFloat(button.dataset.y)*conversionFactor,
-                                                 parseFloat(button.dataset.z)*conversionFactor,
+                var viewAngles = new THREE.Euler(parseFloat(this.dataset.x)*conversionFactor,
+                                                 parseFloat(this.dataset.y)*conversionFactor,
+                                                 parseFloat(this.dataset.z)*conversionFactor,
                                                  eulerOrder);
 
                 that.controls.setRotationFromEuler(viewAngles, upVector /* allowed to be undefined */);
-
             });
-        });
     };
 
     Compass.prototype.update = function () {

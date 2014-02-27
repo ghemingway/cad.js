@@ -145,9 +145,17 @@ body {
 
 .steptools-compass {
     position: relative;
-    height: 100px;
 }
 
 .key-hints {
     padding: 16px 0 0 0;
+}
+
+.key-label {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    text-align: center;
+    border: 1px solid white;
+    border-radius: 3px;
 }
