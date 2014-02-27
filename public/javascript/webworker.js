@@ -6,26 +6,24 @@
 
 function processAssembly(url, workerID, data) {
     // All we really need to do is pass this back to the main thread
-    var message = {
+    self.postMessage({
         type: "rootLoad",
         url: url,
         data: data,
         workerID: workerID
-    };
-    self.postMessage(message);
+    });
 }
 
 function processAnnotation(url, workerID, data) {
     var parts = url.split("/");
     // All we really need to do is pass this back to the main thread
-    var message = {
+    self.postMessage({
         type: "annotationLoad",
         url: url,
         file: parts[parts.length - 1],
         data: data,
         workerID: workerID
-    };
-    self.postMessage(message);
+    });
 }
 
 /*********************************************************************/
@@ -33,14 +31,18 @@ function processAnnotation(url, workerID, data) {
 function processShellXML(url, workerID, data) {
     var parts = url.split("/");
     // All we really need to do is pass this back to the main thread
-    var message = {
+    self.postMessage({
         type: "shellLoad",
         url: url,
         file: parts[parts.length - 1],
         data: data,
         workerID: workerID
-    };
-    self.postMessage(message);
+    });
+    // Signal that this worker is done
+    self.postMessage({
+        type: "workerFinish",
+        workerID: workerID
+    });
 }
 
 function unindexPoints(data) {
@@ -79,24 +81,19 @@ function uncompressColors(data) {
     for (var i = 0; i < numBlocks; i++) {
         var block = data.colorsData[i];
         for (var j = 0; j < block.duration; j++) {
-            data.colors.push(data.values[block.data[0]]);
-            data.colors.push(data.values[block.data[1]]);
-            data.colors.push(data.values[block.data[2]]);
+            data.colors.push(block.data[0]);
+            data.colors.push(block.data[1]);
+            data.colors.push(block.data[2]);
         }
     }
     delete data.colorsData;
 }
 
-function processShellJSON(url, workerID, data) {
-    // Parse the JSON file
-    var start = Date.now();
-    var dataJSON = JSON.parse(data);
-    var parseTime = (Date.now() - start) / 1000.0;
+function processShellJSON(url, workerID, dataJSON, signalFinish) {
     var parts = url.split("/");
     self.postMessage({
         type: "parseComplete",
-        file: parts[parts.length - 1],
-        duration: parseTime
+        file: parts[parts.length - 1]
     });
 
     if (dataJSON.values && dataJSON.precision) {
@@ -128,10 +125,28 @@ function processShellJSON(url, workerID, data) {
     self.postMessage({
         type: "shellLoad",
         data: buffers,
-        url: url,
+        id: dataJSON.id,
         workerID: workerID,
         file: parts[parts.length - 1]
     }, [buffers.position.buffer, buffers.normals.buffer, buffers.colors.buffer]);
+    // Do we signal that we are all done
+    if (signalFinish) {
+        self.postMessage({
+            type: "workerFinish",
+            workerID: workerID
+        });
+    }
+}
+
+function processBatchJSON(url, workerID, data) {
+    var dataJSON = JSON.parse(data);
+    for (var i = 0; i < dataJSON.shells.length; i++) {
+        processShellJSON(url, workerID, dataJSON.shells[i], false);
+    }
+    self.postMessage({
+        type: "workerFinish",
+        workerID: workerID
+    });
 }
 
 /*********************************************************************/
@@ -161,7 +176,16 @@ self.addEventListener("message", function(e) {
                 break;
             case "shell":
                 if (dataType === "xml") processShellXML(url, workerID, xhr.responseText);
-                else processShellJSON(url, workerID, xhr.responseText);
+                else {
+                    // Parse the JSON file
+                    var dataJSON = JSON.parse(xhr.responseText);
+                    // Process the Shell data
+                    processShellJSON(url, workerID, dataJSON, true);
+                }
+                break;
+            case "batch":
+                if (dataType === "xml") console.log("You can't batch XML fool!");
+                else processBatchJSON(url, workerID, xhr.responseText);
                 break;
             case "assembly":
                 processAssembly(url, workerID, xhr.responseText);

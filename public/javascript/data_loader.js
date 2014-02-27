@@ -15,6 +15,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
+        this._shells = {};
 
         var self = this;
         this._workers = [];     // List of workers
@@ -208,11 +209,13 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     };
 
     DataLoader.prototype.workerMessage = function(event) {
-        // Put worker back into the queue - if it is the time
-        var req;
+        var req, shell;
+        // Find the request this message corresponds to
         if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
-            // Remove the job from the loading queue
             req = this._loading[event.data.workerID];
+        }
+        // Put worker back into the queue - if it is the time
+        if (_.indexOf(["rootLoad", "workerFinish", "annotationLoad", "loadError"], event.data.type) != -1) {
             this._loading[event.data.workerID] = undefined;
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
@@ -250,16 +253,22 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             case "shellLoad":
                 switch (req.contentType) {
                     case "application/xml":
+//                        console.log("WARNING: XML Load broken - cant find shell or shell size");
                         xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
+                        shell = req.shell;
                         data = this.parseShellXML(xmlDoc, req.shellSize);
                         break;
                     case "application/json":
+//                        console.log("Loading: " + event.data.id);
+                        shell = this._shells[event.data.id];
                         data = event.data.data;
                         break;
                     default:
-                        console.log("Blahhlal");
+                        console.log("Blahhlal - What the hell is this?");
                 }
-                req.shell.addGeometry(data.position, data.normals, data.colors);
+                // Remove the reference to the shell
+                delete this._shells[event.data.id];
+                shell.addGeometry(data.position, data.normals, data.colors);
                 this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
             case "parseComplete":
@@ -532,6 +541,15 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
         this._viewer.add3DObject(rootProduct.getObject3D());
+        // Do we have batches
+        if (doc.batches && doc.batches > 0) {
+            for (var i = 0; i < doc.batches; i++) {
+                this.addRequest({
+                    url: req.base + "batch" + i + ".json",
+                    validateType: "batch"
+                });
+            }
+        }
         req.callback(undefined, assembly);
     };
 
@@ -619,12 +637,15 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             var shell = new Shell(id, assembly, parent, shellJSON.size, color, boundingBox);
             // Have we already loaded this Shell - if not, request the shell be loaded?
             if (!alreadyLoaded) {
-                this.addRequest({
-                    url: req.base + shellJSON.href,
-                    validateType: "shell",
-                    shell: shell,
-                    shellSize: shellJSON.size
-                });
+                // Push the shell for later completion
+                this._shells[id] = shell;
+//                console.log(this._shells);
+                if (!doc.batches || doc.batches === 0) {
+                    this.addRequest({
+                        url: req.base + shellJSON.href,
+                        validateType: "shell"
+                    });
+                }
             }
             return shell;
         } else {
