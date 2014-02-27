@@ -289,7 +289,7 @@ class BatchWorker(BaseWorker):
                             idx = item + 'Index'
                             if idx in shell:
                                 shell[idx] = [imap[x] for x in shell[idx]]
-                    batch['shells'].append(shell)
+                    batch['shells'].insert(0, shell)
                 except Exception as e:
                     reason = "Error batching shell '{}': {}".format(s, e)
                     self.report_exception(job, reason)
@@ -402,7 +402,13 @@ class XMLTranslator(object):
             LOG.error(msg.format(info['path'], info['reason']))
 
         if not has_errors:
-            # report achieved compression
+            # report statistics
+            msg = "Batch sizes.  Smallest: {} Largest: {} Avg: {}"
+            sz = [x['total_size'] for x in batches.values()]
+            LOG.debug(msg.format(min(sz), max(sz), sum(sz) / len(batches)))
+            c = [len(x['shells']) for x in batches.values()]
+            msg = "Batch shells.  Smallest: {} Largest: {} Avg: {}"
+            LOG.debug(msg.format(min(c), max(c), sum(c) / len(batches)))
             shells_size = sum([size for name, size in shells])
             msg = "Shells.  Count: {} Total Size: {} bytes."
             LOG.debug(msg.format(len(shells), shells_size))
@@ -449,9 +455,10 @@ class XMLTranslator(object):
         LOG.debug("\tAnnotations: %s" % len(data.get('annotations', [])))
         LOG.debug("\tExternal Annotations: %s" % len(externalAnnotations))
         LOG.debug("\tShells: %s" % len(data.get('shells', [])))
-        LOG.debug("\tExternal Shells: %s" % len(externalShells))
-        if self.batches and len(externalShells):
-            if len(externalShells) < self.batches:
+        num_shells = len(externalShells)
+        LOG.debug("\tExternal Shells: %s" % num_shells)
+        if self.batches and num_shells:
+            if num_shells < self.batches:
                 self.batches = 1
             LOG.debug("\tBatches: %s" % self.batches)
             data['batches'] = self.batches
