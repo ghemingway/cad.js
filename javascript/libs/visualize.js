@@ -73,9 +73,8 @@
         },
         "getResourceUrl": function () {
 	    var url = this.getParameter("resource_url");
-	    console.log(url);
 	    if (url === null) {
-	        url = "/data/cutter/index.json";
+	        url = "data/cutter/index.json";
 	    }
             return url;
         },
