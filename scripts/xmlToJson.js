@@ -4,6 +4,7 @@
 
 var fs = require("fs"),
     _ = require("underscore"),
+    async = require("async"),
     cp = require("child_process"),
     xml2js = require("xml2js"),
     libxmljs = require("libxmljs");
@@ -29,7 +30,68 @@ var roundFloat = function(val, precision) {
 /***********************************************************************/
 
 
-var translateIndex = function(doc) {
+var calculateNumberOfBatches = function(data, desired) {
+    // Easiest means, either 1 or number desired
+    return data.shells.length < desired ? 1 : desired;
+};
+
+
+function smallestBatch(batches) {
+    var index = 0;
+    var value = batches[0];
+    for (var i = 1; i < batches.length; i++) {
+        if (batches[i] < value) {
+            value = batches[i];
+            index = i;
+        }
+    }
+    return index;
+}
+
+function batchShells(data, directory, translator) {
+    // Setup batch sizes
+    var batchSizes = [];
+    var batches = [];
+    for (var i = 0; i < data.batches; i++) {
+        batchSizes.push(0);
+        batches[i] = [];
+    }
+    // Sort the shells based on size - decreasing
+    data.shells.sort(function(a, b) {
+        return a.size < b.size;
+    });
+    // Pack that batch!!!
+    data.shells.forEach(function(shell) {
+        // Find the batch with the smallest size
+        var batchID = smallestBatch(batches);
+        // Push the shell into that batch
+        batches[batchID].push(shell.id);
+        // Update the batch size
+        batchSizes[batchID] += shell.size;
+    });
+    var batchID = 0;
+    batches.forEach(function(batch) {
+        var output = {
+            shells: []
+        };
+        batch.forEach(function(shell) {
+            var path = directory + "/shell_" + shell + ".json";
+            var shellData = fs.readFileSync(path);
+            var json = JSON.parse(shellData);
+            output.shells.push(json);
+        });
+
+        var batchName = "batch" + batchID + ".json";
+        translator.write(directory, batchName, output, function() {
+            console.log("Wrote batch: " + batchName);
+        });
+        batchID++;
+    });
+}
+
+/*************************************************************************/
+
+var translateIndex = function(doc, numBatches) {
     // Return the full JSON
     translateTime = Date.now();
     var data = {
@@ -39,6 +101,10 @@ var translateIndex = function(doc) {
         shells:     _.map(doc.find("//shell"), translateShell),
         annotations:_.map(doc.find("//annotation"), translateAnnotation)
     };
+    // Are we going to be batching?
+    if (numBatches != 0) {
+        data.batches = calculateNumberOfBatches(data, numBatches);
+    }
     translateTime = Date.now() - translateTime;
     return data;
 };
@@ -375,9 +441,7 @@ XMLTranslator.prototype.parse = function(dir, filename, callback) {
 XMLTranslator.prototype.write = function(directory, filename, data, callback) {
     var path = directory + "/" + filename.replace("xml", "json");
     // Write the object to file
-    writeTime = Date.now();
     fs.writeFile(path, JSON.stringify(data), function(err) {
-        writeTime = Date.now() - writeTime;
         if (callback) callback(err, data);
     });
 };
@@ -392,8 +456,13 @@ function showTimes() {
         "W: " + writeTime + ")");
 }
 
+
+
+
 var argv = require('optimist')
     .default('d', '.')
+    .default('f', 'index.xml')
+    .default('b', 0)
     .argv;
 
 var translator = new XMLTranslator();
@@ -408,30 +477,42 @@ translator.parse(argv.d, argv.f, function(err, data) {
     switch (root.name()) {
         case "step-assembly":
         case "assembly":
-            translator.write(argv.d, argv.f, translateIndex(data), function(err, data) {
-//                showIndex(data);
+            writeTime = Date.now();
+            translator.write(argv.d, argv.f, translateIndex(data, argv.b), function(err, data) {
+                writeTime = Date.now() - writeTime;
+                showTimes();
                 // What is external
                 var externalShells = _.pluck(data.shells, "href");
                 var externalAnnotations = _.pluck(data.annotations, "href");
                 // Push jobs to the workers
-                _.forEach(externalShells, function(shell) {
+                async.eachLimit(externalShells, 8, function(shell, callback) {
                     shell = shell.replace("json", "xml");
-                    cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", shell]);
-                });
+                    var child = cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", shell]);
+                    child.on("exit", function(event) {
+                        callback();
+                    });
+                }, function(err) {
+                        console.log("Ready to batch");
+                        batchShells(data, argv.d, translator);
+                    }
+                );
                 _.forEach(externalAnnotations, function(annotation) {
                     annotation = annotation.replace("json", "xml");
                     cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", annotation]);
                 });
-                showTimes();
             });
             break;
         case "shell":
+            writeTime = Date.now();
             translator.write(argv.d, argv.f, translateShell(data.root()), function(err, data) {
+                writeTime = Date.now() - writeTime;
                 showTimes();
             });
             break;
         case "annotation":
+            writeTime = Date.now();
             translator.write(argv.d, argv.f, translateAnnotation(data.root()), function(err, data) {
+                writeTime = Date.now() - writeTime;
                 showTimes();
             });
             break;
