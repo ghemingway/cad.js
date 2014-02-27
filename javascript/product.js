@@ -112,6 +112,62 @@ define(["THREE"], function(THREE) {
         this._object3D.remove(this.bbox);
     };
 
+    Product.prototype.setOpacity = function (opacity) {
+        var self = this;
+        this._object3D.traverse(function(object) {
+            if (object.material && object.material.uniforms.opacity) {
+                object.material.uniforms['opacity'].value = opacity;
+                self._assembly.addEventListener("_clearOpacity", function() {
+                    object.material.uniforms['opacity'].value = 1;
+                });
+            }
+        });
+    };
+
+    Product.prototype.toggleVisibility = function() {
+        if (this._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+        return this._object3D.visible;
+    };
+
+    Product.prototype.toggleTransparency = function() {
+        if (this.isTransparent()) {
+            this.setOpacity(1);
+        } else {
+            this.setOpacity(0.5);
+        }
+    };
+
+    Product.prototype.isTransparent = function () {
+        // returns true if object or any children are transparent
+        var transparent = false,
+            testObject = function(object) {
+                if (!transparent && object.material && object.material.uniforms.opacity) {
+                    transparent = object.material.uniforms.opacity.value < 1;
+                }
+            };
+        testObject(this._object3D);
+        if (!transparent) {
+            this._object3D.traverse(testObject);
+        }
+        return transparent;
+    };
+
+    Product.prototype.hide = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = false;
+        });
+    };
+
+    Product.prototype.show = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = true;
+        });
+    };
+
     Product.prototype.explode = function(distance, timeS) {
     };
 

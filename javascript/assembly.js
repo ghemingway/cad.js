@@ -87,7 +87,7 @@ define(["THREE"], function(THREE) {
         // Special case for the root element
         if (id === "id0") {
             obj = this;
-        } else {
+        } else if (typeof(id) !== 'undefined') {
             var parts = id.split("_");
             obj = this._objects[parts[0]];
             // Looks like an instance was selected
@@ -97,6 +97,18 @@ define(["THREE"], function(THREE) {
         }
         return obj;
 
+    };
+
+    Assembly.prototype.toggleTransparency = function () {
+        if (this._product) {
+            this._product.toggleTransparency();
+        }
+    };
+
+    Assembly.prototype.setOpacity = function (opacity) {
+        if (this._product) {
+            this._product.setOpacity(opacity);
+        }
     };
 
     Assembly.prototype.showAll = function() {
@@ -112,6 +124,27 @@ define(["THREE"], function(THREE) {
             this._product.getObject3D().traverse(function(object) {
                 object.visible = false;
             });
+        }
+    };
+
+    Assembly.prototype.toggleVisibility = function() {
+        if (this._product._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+        return this._product._object3D.visible;
+    };
+
+    Assembly.prototype.hide = function() {
+        if (this._product) {
+            this._product.hide();
+        }
+    };
+
+    Assembly.prototype.show = function() {
+        if (this._product) {
+            this._product.show();
         }
     };
 

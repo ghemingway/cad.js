@@ -13,16 +13,32 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         var shouldRender = false,
             continuousRendering = false,
             canvasParent, renderer, canvas, scene, camera,
-            light1, light2, controls, compass,
-            render, animate, add3DObject, invalidate;
+//            light1, light2,
+            controls, compass,
+            render, animate, add3DObject, invalidate,
+            renderTargetParametersRGBA, depthTarget, depthPassPlugin,
+            composer, renderPassSSAO, renderPassFXAA, renderPassCopy;
+
+        renderTargetParametersRGBA = {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat
+        };
 
         // RENDERER
         canvasParent = document.getElementById(canvasParentId);
         renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = renderer;
         renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
         //    renderer.shadowMapEnabled = true;
         //    renderer.shadowMapType = THREE.PCFShadowMap;
         renderer.sortObjects = true;
+        renderer.autoClear = false;
+        // DEPTH PASS
+        depthTarget = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight, renderTargetParametersRGBA);
+        depthPassPlugin = new THREE.DepthPassPlugin();
+        depthPassPlugin.renderTarget = depthTarget;
+        renderer.addPrePlugin(depthPassPlugin);
         // CANVAS
         canvas = renderer.domElement;
         canvasParent.appendChild(canvas);
@@ -33,13 +49,36 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             75,
             canvasParent.offsetWidth / canvasParent.offsetHeight,
             0.1,
-            1000000
+            10000
         );
         camera.position.x = -5000;
         camera.position.y = -5000;
         camera.position.z = 0;
         camera.lookAt(scene.position);
 
+        // EFFECTS
+        composer = new THREE.EffectComposer(renderer);
+        // EFFECT SSAO
+        renderPassSSAO = new THREE.ShaderPass(THREE.SSAOShader);
+        renderPassSSAO.uniforms['tDepth'].value = depthTarget;
+        renderPassSSAO.uniforms['size'].value.set(canvasParent.offsetWidth, canvasParent.offsetHeight);
+        renderPassSSAO.uniforms['cameraNear'].value = camera.near;
+        renderPassSSAO.uniforms['cameraFar'].value = camera.far;
+        renderPassSSAO.uniforms['aoClamp'].value = 0.9;
+        renderPassSSAO.uniforms['lumInfluence'].value = 0.5;
+        renderPassSSAO.enabled = false;
+        // EFFECT FXAA
+        renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+        renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
+        // EFFECTS COPY
+        renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
+        renderPassCopy.renderToScreen = true;
+        // ADD RENDER PASSES
+        composer.addPass(renderPassSSAO);
+        composer.addPass(renderPassFXAA);
+        composer.addPass(renderPassCopy);
+
+        /* Lights are no longer needed since we use a simplified lighting shader
         // LIGHTS
         scene.add(new THREE.AmbientLight(0xdddddd));
         light1 = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -65,8 +104,11 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // VIEW CONTROLS
         controls =  ViewerControls({
+            viewer: this,
             camera: camera,
-            canvas: canvas
+            canvas: canvas,
+            renderPassSSAO: renderPassSSAO,
+            renderPassFXAA: renderPassFXAA
         });
 
         // COMPASS
@@ -78,7 +120,10 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // PRIVATE FUNCTIONS
         render = function() {
-            renderer.render(scene,  camera);
+            depthPassPlugin.enabled = true;
+            renderer.render(scene, camera, composer.renderTarget2, true);
+            depthPassPlugin.enabled = false;
+            composer.render(0.5);
         };
         animate = function(forceRendering) {
             requestAnimationFrame(function() {
@@ -113,10 +158,16 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // SCREEN RESIZE
         window.addEventListener("resize", function() {
+            depthTarget = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight, renderTargetParametersRGBA);
+            depthPassPlugin.renderTarget = depthTarget;
+            renderPassSSAO.uniforms['tDepth'].value = depthTarget;
+            renderPassSSAO.uniforms['size'].value.set(canvasParent.offsetWidth, canvasParent.offsetHeight);
+            renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
             renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
             camera.aspect = canvasParent.offsetWidth / canvasParent.offsetHeight;
             camera.updateProjectionMatrix();
             camera.lookAt(scene.position);
+            composer.reset();
             controls.handleResize();
             render();
         });
