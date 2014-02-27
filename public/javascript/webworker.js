@@ -139,9 +139,7 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
 }
 
 function processBatchJSON(url, workerID, data) {
-    var start = Date.now();
     var dataJSON = JSON.parse(data);
-    var parseTime = (Date.now() - start) / 1000.0;
     for (var i = 0; i < dataJSON.shells.length; i++) {
         processShellJSON(url, workerID, dataJSON.shells[i], false);
     }
@@ -180,9 +178,7 @@ self.addEventListener("message", function(e) {
                 if (dataType === "xml") processShellXML(url, workerID, xhr.responseText);
                 else {
                     // Parse the JSON file
-                    var start = Date.now();
                     var dataJSON = JSON.parse(xhr.responseText);
-                    var parseTime = (Date.now() - start) / 1000.0;
                     // Process the Shell data
                     processShellJSON(url, workerID, dataJSON, true);
                 }

@@ -108,7 +108,7 @@ var translateIndex = function(doc, numBatches) {
     translateTime = Date.now() - translateTime;
     return data;
 };
-
+/*
 var showIndex = function(data) {
     var externalShells = _.pluck(data.shells, "href");
     var externalAnnotations = _.pluck(data.annotations, "href");
@@ -119,7 +119,7 @@ var showIndex = function(data) {
     console.log("\tShells: " + data.shells.length);
     console.log("\tExternal Shells: " + externalShells.length);
 };
-
+*/
 var translateProduct = function(product) {
     var data = {
         "id": product.attr("id").value(),
@@ -420,7 +420,6 @@ function XMLTranslator() {
 }
 
 XMLTranslator.prototype.parse = function(dir, filename, callback) {
-    var self = this;
     this.pathPrefix = dir + "/";
     var rootPath = this.pathPrefix + filename;
     // Read the root file
@@ -488,10 +487,10 @@ translator.parse(argv.d, argv.f, function(err, data) {
                 async.eachLimit(externalShells, 8, function(shell, callback) {
                     shell = shell.replace("json", "xml");
                     var child = cp.fork("scripts/xmlToJson.js", ["-d", argv.d, "-f", shell]);
-                    child.on("exit", function(event) {
+                    child.on("exit", function() {
                         callback();
                     });
-                }, function(err) {
+                }, function() {
                         console.log("Ready to batch");
                         batchShells(data, argv.d, translator);
                     }
@@ -504,14 +503,14 @@ translator.parse(argv.d, argv.f, function(err, data) {
             break;
         case "shell":
             writeTime = Date.now();
-            translator.write(argv.d, argv.f, translateShell(data.root()), function(err, data) {
+            translator.write(argv.d, argv.f, translateShell(data.root()), function() {
                 writeTime = Date.now() - writeTime;
                 showTimes();
             });
             break;
         case "annotation":
             writeTime = Date.now();
-            translator.write(argv.d, argv.f, translateAnnotation(data.root()), function(err, data) {
+            translator.write(argv.d, argv.f, translateAnnotation(data.root()), function() {
                 writeTime = Date.now() - writeTime;
                 showTimes();
             });
