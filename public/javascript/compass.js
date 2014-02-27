@@ -91,7 +91,7 @@ define([
         roundedMatrix = Array.prototype.map.call(this.compassCubeMatrix.elements, function (v) {
             return v.toFixed(3);
         });
-        setStyleTransform(this.compassCube, 'perspective(500px) matrix3d('+roundedMatrix.join()+')');
+        setStyleTransform(this.compassCube, 'perspective(300px) matrix3d('+roundedMatrix.join()+')');
     };
 
     return Compass;
