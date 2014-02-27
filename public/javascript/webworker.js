@@ -40,9 +40,9 @@ function processShellXML(url, workerID, data) {
     });
     // Signal that this worker is done
     self.postMessage({
-        type: "batchLoad",
+        type: "workerFinish",
         workerID: workerID
-    })
+    });
 }
 
 function unindexPoints(data) {
@@ -81,9 +81,9 @@ function uncompressColors(data) {
     for (var i = 0; i < numBlocks; i++) {
         var block = data.colorsData[i];
         for (var j = 0; j < block.duration; j++) {
-            data.colors.push(data.values[block.data[0]]);
-            data.colors.push(data.values[block.data[1]]);
-            data.colors.push(data.values[block.data[2]]);
+            data.colors.push(block.data[0]);
+            data.colors.push(block.data[1]);
+            data.colors.push(block.data[2]);
         }
     }
     delete data.colorsData;

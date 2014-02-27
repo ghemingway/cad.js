@@ -209,14 +209,13 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
     };
 
     DataLoader.prototype.workerMessage = function(event) {
-        // Put worker back into the queue - if it is the time
         var req, shell;
+        // Find the request this message corresponds to
         if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
-            // Find the request this message corresponds to
             req = this._loading[event.data.workerID];
         }
+        // Put worker back into the queue - if it is the time
         if (_.indexOf(["rootLoad", "workerFinish", "annotationLoad", "loadError"], event.data.type) != -1) {
-            // Remove the job from the loading queue
             this._loading[event.data.workerID] = undefined;
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
@@ -254,7 +253,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             case "shellLoad":
                 switch (req.contentType) {
                     case "application/xml":
-                        console.log("WARNING: XML Load broken - cant find shell or shell size");
+//                        console.log("WARNING: XML Load broken - cant find shell or shell size");
                         xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
                         shell = req.shell;
                         data = this.parseShellXML(xmlDoc, req.shellSize);
@@ -543,7 +542,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         // Add the assembly to the scene
         this._viewer.add3DObject(rootProduct.getObject3D());
         // Do we have batches
-        if (doc.batches) {
+        if (doc.batches && doc.batches > 0) {
             for (var i = 0; i < doc.batches; i++) {
                 this.addRequest({
                     url: req.base + "batch" + i + ".json",
@@ -641,7 +640,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 // Push the shell for later completion
                 this._shells[id] = shell;
 //                console.log(this._shells);
-                if (!doc.batches) {
+                if (!doc.batches || doc.batches === 0) {
                     this.addRequest({
                         url: req.base + shellJSON.href,
                         validateType: "shell"

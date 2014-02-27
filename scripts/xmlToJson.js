@@ -13,7 +13,6 @@ var readTime = 0, parseTime = 0, translateTime = 0, writeTime = 0;
 var config = {
     indexPoints: true,
     indexNormals: true,
-    indexColors: true,
     compressColors: true,
     roundPrecision: 2
 };
@@ -21,10 +20,12 @@ var config = {
 /***********************************************************************/
 
 
-var roundFloat = function(val, precision) {
+var roundFloat = function(val, precision, toFloat) {
+    if (typeof toFloat === 'undefined') toFloat = false;
     if (!precision) return val;
     var factor = Math.pow(10, precision);
-    return Math.round(val * factor);// / factor;
+    if (toFloat) return Math.round(val * factor) / factor;
+    else return Math.round(val * factor);
 };
 
 /***********************************************************************/
@@ -229,30 +230,14 @@ var indexShellNormals = function(data) {
     delete data.normals;
 };
 
-var indexShellColors = function(data) {
-    var numColors = data.colors.length;
-    var indexArray = [];
-    for (var i = 0; i < numColors; i++) {
-        var val = roundFloat(data.colors[i], config.roundPrecision);
-        // See if this norm is already known
-        var index = data.values.indexOf(val);
-        if (index === -1) {
-            index = data.values.push(val) - 1;
-        }
-        indexArray.push(index);
-    }
-    data.colorsIndex = indexArray;
-    delete data.colors;
-};
-
 var compressShellColors = function(data) {
-    var numTuples = data.colorsIndex.length / 3;
+    var numTuples = data.colors.length / 3;
     data.colorsData = [];
     var start = 0;
     var last = [
-        data.colorsIndex[0],
-        data.colorsIndex[1],
-        data.colorsIndex[2]
+        data.colors[0],
+        data.colors[1],
+        data.colors[2]
     ];
     // Short list comparison
     function arraysIdentical(a, b) {
@@ -262,9 +247,9 @@ var compressShellColors = function(data) {
     for (var tuple = 1; tuple < numTuples; tuple++) {
         var index = tuple * 3;
         var tmp = [
-            data.colorsIndex[index],
-            data.colorsIndex[index + 1],
-            data.colorsIndex[index + 2]
+            data.colors[index],
+            data.colors[index + 1],
+            data.colors[index + 2]
         ];
         // Is this a new block
         if (!arraysIdentical(last, tmp)) {
@@ -281,8 +266,8 @@ var compressShellColors = function(data) {
         data: last,
         duration: numTuples - start
     });
-    // Remove the colorsIndex
-    delete data.colorsIndex;
+    // Remove the colors array
+    delete data.colors;
 //    console.log(JSON.stringify(data.colorsData));
 };
 
@@ -378,12 +363,8 @@ var translateShell = function(shell) {
             indexShellNormals(data);
         }
         // Should we index the colors
-        if (config.indexColors) {
-            indexShellColors(data);
-            // Should we hyper-compress the colors
-            if (config.compressColors) {
-                compressShellColors(data);
-            }
+        if (config.compressColors) {
+            compressShellColors(data);
         }
         translateTime = Date.now() - translateTime;
         return data;
@@ -491,8 +472,10 @@ translator.parse(argv.d, argv.f, function(err, data) {
                         callback();
                     });
                 }, function() {
-                        console.log("Ready to batch");
-                        batchShells(data, argv.d, translator);
+                        if (data.batches && data.batches > 0) {
+                            console.log("Ready to batch");
+                            batchShells(data, argv.d, translator);
+                        }
                     }
                 );
                 _.forEach(externalAnnotations, function(annotation) {
