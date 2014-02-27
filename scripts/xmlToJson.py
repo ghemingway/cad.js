@@ -141,7 +141,7 @@ indexColors = lambda d: make_index(d, 'colors')
 
 def compressShellColors(data):
     """Color compression"""
-    numTuples = data['colorsIndex'] / 3
+    numTuples = len(data['colorsIndex']) / 3
     data['colorsData'] = []
     start = 0
     last = [data['colorsIndex'][x] for x in xrange(3)]
