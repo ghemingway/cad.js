@@ -115,9 +115,8 @@ define(["THREE", "TrackballControls", "dat"], function(THREE, TrackballControls,
             trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
                 var distance = trackballControl.object.position.length(),
                     upVector = typeof(opt_upVector) === 'undefined' ? trackballControl.up0 : opt_upVector;
-                trackballControl.position0 = referenceOrientation.clone().applyEuler(euler);
+                trackballControl.position0 = referenceOrientation.clone().applyEuler(euler).multiplyScalar(-distance);
                 trackballControl.up0.set(upVector.x, upVector.y, upVector.z);
-                trackballControl.position0.multiplyScalar(-distance);
                 trackballControl.reset();
             };
         }
