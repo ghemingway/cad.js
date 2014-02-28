@@ -28,6 +28,7 @@ LOG = logging.getLogger(__name__)
 DEFAULT_COLOR = "7d7d7d"
 IDENTITY_TRANSFORM = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"
 SHELL_REGEX = re.compile("shell_(.*?).json")
+ALT_ENCODINGS = ['latin-1']
 
 #------------------------------------------------------------------------------
 
@@ -45,6 +46,18 @@ def round_float(val, precision):
         return val
     factor = math.pow(10, precision)
     return int(round(val * factor))
+
+
+def parse_xml(path):
+    """XML parsing with fail back to alternate encodings"""
+    encodings = [None] + ALT_ENCODINGS[:]
+    for e in encodings:
+        p = ET.XMLParser(encoding=e)
+        try:
+            return ET.parse(path, parser=p)
+        except ET.ParseError:
+            pass
+    return None
 
 
 #------------------------------------------------------------------------------
@@ -317,15 +330,13 @@ class TranslationWorker(WorkerBase):
             job = self.queue.get()
             if job is None:
                 break
-            try:
-                path = job['path']
-                tree = ET.parse(path)
-                root = tree.getroot()
-            except Exception as e:
-                fpath = job.get('path', '?')
-                reason = "Unable to parse XML file '{}': {}.".format(fpath, e)
+            path = job['path']
+            tree = parse_xml(path)
+            if not tree:
+                reason = "Unable to parse XML file '{}'.".format(path)
                 self.report_exception(job, reason)
                 continue
+            root = tree.getroot()
             try:
                 data = job['translator'](root)
             except Exception as e:
@@ -347,6 +358,7 @@ class XMLTranslator(object):
     def __init__(self, batches=None, reindex=None):
         self.batches = batches
         self.reindex = reindex
+        self.parser = None
 
     @staticmethod
     def assign(batches, shell):
@@ -434,12 +446,11 @@ class XMLTranslator(object):
         if not os.path.isfile(index_path):
             LOG.error("Unable to locate index file '{}'.".format(index_path))
             return True
-        try:
-            tree = ET.parse(index_path)
-            root = tree.getroot()
-        except Exception as e:
-            LOG.exception("Unable to parse '{}'.".format(index_path))
+        tree = parse_xml(index_path)
+        if not tree:
+            LOG.error("Unable to parse index file '{}'.".format(index_path))
             return True
+        root = tree.getroot()
         try:
             data = translate_index(root)
         except Exception as e:
