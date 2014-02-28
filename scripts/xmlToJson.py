@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # L. Howard Copyright @2014
-# Convert a CAD model (per the STEPTOOLS defined XML spec)
+# Convert a CAD model (per the STEPtools defined XML spec)
 # into a JSON spec model
 # Derived from Javascript version at
 # https://github.com/ghemingway/cad.js/blob/master/scripts/xmlToJson.js
@@ -20,8 +20,8 @@ import time
 import xml.etree.cElementTree as ET
 
 import logging
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
-                    level=logging.DEBUG)
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG)
 LOG = logging.getLogger(__name__)
 
 # defaults and constants
@@ -39,7 +39,7 @@ CONFIG = {
 }
 
 
-def roundFloat(val, precision):
+def round_float(val, precision):
     """floating point rounder"""
     if not precision:
         return val
@@ -49,18 +49,18 @@ def roundFloat(val, precision):
 
 #------------------------------------------------------------------------------
 
-def translateIndex(doc):
+def translate_index(doc):
     """Returns the full JSON"""
     return {
         'root': doc.attrib['root'],
-        'products': [translateProduct(x) for x in doc.iter('product')],
-        'shapes': [translateShape(x) for x in doc.iter('shape')],
-        'shells': [translateShell(x) for x in doc.iter('shell')],
-        'annotations': [translateAnnotation(x) for x in doc.iter('annotation')]
+        'products': [translate_product(x) for x in doc.iter('product')],
+        'shapes': [translate_shape(x) for x in doc.iter('shape')],
+        'shells': [translate_shell(x) for x in doc.iter('shell')],
+        'annotations': [translate_annotation(x) for x in doc.iter('annotation')]
     }
 
 
-def translateProduct(product):
+def translate_product(product):
     """Translates a product"""
     data = {
         'id': product.attrib['id'],
@@ -76,13 +76,13 @@ def translateProduct(product):
     return data
 
 
-def setTransform(transform):
+def set_transform(transform):
     """Sets a transform"""
     return ("I" if transform == IDENTITY_TRANSFORM else
             [float(x) for x in transform.split(" ")])
 
 
-def translateShape(shape):
+def translate_shape(shape):
     """Translates a shape"""
     data = {
         'id': shape.attrib['id'],
@@ -93,7 +93,7 @@ def translateShape(shape):
         # Add children, if there are any
         data['children'].append({
             'ref': child.attrib['ref'],
-            'xform': setTransform(child.attrib['xform'])
+            'xform': set_transform(child.attrib['xform'])
         })
     # Add child annotations
     if shape.attrib.get('annotation'):
@@ -104,7 +104,7 @@ def translateShape(shape):
     return data
 
 
-def translateAnnotation(annotation):
+def translate_annotation(annotation):
     """Translates an annotation"""
     data = dict(id=annotation.attrib['id'])
     if 'href' in annotation.attrib:
@@ -128,7 +128,7 @@ def make_index(data, ikey, ranger=None):
     indexes = data[ikey + "Index"] = []
     values = data['values']
     for i in ranger:
-        val = roundFloat(data[ikey][i], CONFIG['roundPrecision'])
+        val = round_float(data[ikey][i], CONFIG['roundPrecision'])
         if val not in values:
             values[val] = len(values)
         indexes.append(values[val])
@@ -140,32 +140,32 @@ indexPoints = lambda d: make_index(d, 'points')
 indexNormals = lambda d: make_index(d, 'normals')
 
 
-def compressShellColors(data):
+def compress_shell_colors(data):
     """Color compression"""
-    numTuples = len(data['colors']) / 3
+    num_tuples = len(data['colors']) / 3
     data['colorsData'] = []
     start = 0
     last = [data['colors'][x] for x in xrange(3)]
     # Short list comparison
-    arraysIdentical = lambda a, b: all([a[x] == b[x] for x in xrange(3)])
+    arrays_identical = lambda a, b: all([a[x] == b[x] for x in xrange(3)])
     # Compress the rest
-    for tupl in xrange(numTuples):
+    for tupl in xrange(num_tuples):
         index = tupl * 3
         tmp = [data['colors'][index + x] for x in xrange(3)]
         # Is this a new block?
-        if not arraysIdentical(last, tmp):
+        if not arrays_identical(last, tmp):
             data['colorsData'].append(dict(data=last, duration=tupl - start))
             start = tupl
             last = tmp
     # append the final color block
-    data['colorsData'].append(dict(data=last, duration=numTuples - start))
+    data['colorsData'].append(dict(data=last, duration=num_tuples - start))
     # remove the colors index
     del data['colors']
 
 
 #------------------------------------------------------------------------------
 
-def translateShell(shell):
+def translate_shell(shell):
     """Translates a shell"""
     if 'href' in shell.attrib:
         # Do href here
@@ -177,19 +177,19 @@ def translateShell(shell):
         }
     else:
         # Convert XML point/vert/color to new way
-        points = loadPoints(shell.iter("verts"))
-        defaultColor = parseColor(shell.attrib.get('color', DEFAULT_COLOR))
+        points = load_points(shell.iter("verts"))
+        default_color = parse_color(shell.attrib.get('color', DEFAULT_COLOR))
         data = dict(id=shell.attrib['id'], size=0)
         data.update({x: [] for x in ('points', 'normals', 'colors')})
         for facet in shell.iter('facets'):
-            color = defaultColor
+            color = default_color
             if 'color' in facet.attrib:
-                color = parseColor(facet.attrib['color'])
+                color = parse_color(facet.attrib['color'])
             for f in facet.iter('f'):
                 # Get every vertex index and convert using points array
-                indexVals = f.attrib['v'].split(" ")
+                index_vals = f.attrib['v'].split(" ")
                 for i in range(3):
-                    ival = int(indexVals[i]) * 3
+                    ival = int(index_vals[i]) * 3
                     data['points'].append(float(points[ival]))
                     data['points'].append(float(points[ival + 1]))
                     data['points'].append(float(points[ival + 2]))
@@ -197,9 +197,9 @@ def translateShell(shell):
                 # Get the vertex normals
                 norms = [x for x in f.iter('n')]
                 for i in range(3):
-                    normCoordinates = norms[i].attrib['d'].split(" ")
+                    norm_coordinates = norms[i].attrib['d'].split(" ")
                     for j in range(3):
-                        data['normals'].append(float(normCoordinates[j]))
+                        data['normals'].append(float(norm_coordinates[j]))
 
                 # Get the vertex colors
                 for i in range(3):
@@ -217,18 +217,18 @@ def translateShell(shell):
             sorted_vals = sorted(data['values'].items(), key=itemgetter(1))
             data['values'] = map(itemgetter(0), sorted_vals)
         if CONFIG.get('compressColors'):
-            compressShellColors(data)
+            compress_shell_colors(data)
         return data
 
 
-def parseColor(hex):
+def parse_color(hex_color):
     """Parse color values"""
-    cval = int(hex, 16)
+    cval = int(hex_color, 16)
     x = lambda b: ((cval >> b) & 0xff) / 255.0
     return {k: x(v) for k, v in dict(r=16, g=8, b=0).iteritems()}
 
 
-def loadPoints(verts):
+def load_points(verts):
     """Load all of the point information"""
     points = []
     for vert in verts:
@@ -239,7 +239,7 @@ def loadPoints(verts):
 
 #------------------------------------------------------------------------------
 
-class BaseWorker(Process):
+class WorkerBase(Process):
     """Base class for Workers"""
 
     def __init__(self, queue, exceptions):
@@ -257,7 +257,7 @@ class BaseWorker(Process):
         raise NotImplementedError
 
 
-class BatchWorker(BaseWorker):
+class BatchWorker(WorkerBase):
     """Worker process for parallelized shell batching"""
 
     def run(self):
@@ -308,7 +308,7 @@ class BatchWorker(BaseWorker):
                 self.report_exception(job, reason)
 
 
-class TranslationWorker(BaseWorker):
+class TranslationWorker(WorkerBase):
     """Worker process for parallelized translation"""
 
     def run(self):
@@ -322,7 +322,8 @@ class TranslationWorker(BaseWorker):
                 tree = ET.parse(path)
                 root = tree.getroot()
             except Exception as e:
-                reason = "Unable to parse XML file '{}'.".format(path)
+                fpath = job.get('path', '?')
+                reason = "Unable to parse XML file '{}': {}.".format(fpath, e)
                 self.report_exception(job, reason)
                 continue
             try:
@@ -347,7 +348,8 @@ class XMLTranslator(object):
         self.batches = batches
         self.reindex = reindex
 
-    def assign(self, batches, shell):
+    @staticmethod
+    def assign(batches, shell):
         """simple bin packing"""
         name, size = shell
         blist = batches.values()
@@ -364,7 +366,7 @@ class XMLTranslator(object):
             self.assign(batches, shell)
         return batches
 
-    def batch(self, xml_dir):
+    def batch_shells(self, xml_dir):
         """Generates batched shell files"""
         is_shell = lambda x: SHELL_REGEX.match(x)
         size_of = lambda x: os.path.getsize(join(xml_dir, x))
@@ -376,7 +378,7 @@ class XMLTranslator(object):
         queue = Queue()
         exceptions = Queue()
         count = min(cpu_count(), self.batches)
-        workers = [BatchWorker(queue, exceptions) for w in xrange(count)]
+        workers = [BatchWorker(queue, exceptions) for _ in xrange(count)]
         for w in workers:
             w.start()
 
@@ -387,7 +389,7 @@ class XMLTranslator(object):
             queue.put(job)
 
         # add worker termination cues
-        for w in workers:
+        for _ in workers:
             queue.put(None)
 
         # wait for completion
@@ -439,23 +441,23 @@ class XMLTranslator(object):
             LOG.exception("Unable to parse '{}'.".format(index_path))
             return True
         try:
-            data = translateIndex(root)
+            data = translate_index(root)
         except Exception as e:
             LOG.exception("Unable to translate index file.")
             return True
 
         pluck = lambda e, a: [x for x in data.get(e, []) if a in x]
-        externalShells = pluck('shells', 'href')
-        externalAnnotations = pluck('annotations', 'href')
-        indexOut = join(xml_dir, os.path.splitext(xml_index)[0] + ".json")
+        external_shells = pluck('shells', 'href')
+        external_annotations = pluck('annotations', 'href')
+        index_out = join(xml_dir, os.path.splitext(xml_index)[0] + ".json")
 
-        LOG.debug("Writing new index file: " + indexOut)
+        LOG.debug("Writing new index file: " + index_out)
         LOG.debug("\tProducts: %s" % len(data.get('projects', [])))
         LOG.debug("\tShapes: %s" % len(data.get('shapes', [])))
         LOG.debug("\tAnnotations: %s" % len(data.get('annotations', [])))
-        LOG.debug("\tExternal Annotations: %s" % len(externalAnnotations))
+        LOG.debug("\tExternal Annotations: %s" % len(external_annotations))
         LOG.debug("\tShells: %s" % len(data.get('shells', [])))
-        num_shells = len(externalShells)
+        num_shells = len(external_shells)
         LOG.debug("\tExternal Shells: %s" % num_shells)
         if self.batches and num_shells:
             if num_shells < self.batches:
@@ -466,37 +468,37 @@ class XMLTranslator(object):
             self.batches = 0
 
         try:
-            with open(indexOut, "w") as f:
+            with open(index_out, "w") as f:
                 json.dump(data, f)
         except Exception as e:
-            LOG.exception("Unable to write JSON file '{}'.".format(indexOut))
+            LOG.exception("Unable to write JSON file '{}'.".format(index_out))
             return True
 
         # start workers and queue jobs
         queue = Queue()
         exceptions = Queue()
         count = cpu_count()
-        workers = [TranslationWorker(queue, exceptions) for w in xrange(count)]
+        workers = [TranslationWorker(queue, exceptions) for _ in xrange(count)]
         for w in workers:
             w.start()
 
         xml_path = lambda p: join(xml_dir, os.path.splitext(p)[0] + ".xml")
-        for annotation in externalAnnotations:
+        for annotation in external_annotations:
             queue.put({
                 'type': "annotation",
                 'path': xml_path(annotation['href']),
-                'translator': translateAnnotation
+                'translator': translate_annotation
             })
 
-        for shell in externalShells:
+        for shell in external_shells:
             queue.put({
                 'type': "shell",
                 'path': xml_path(shell['href']),
-                'translator': translateShell
+                'translator': translate_shell
             })
 
         # add worker termination cues
-        for w in workers:
+        for _ in workers:
             queue.put(None)
 
         # wait for completion
@@ -513,7 +515,7 @@ class XMLTranslator(object):
         if has_errors or not self.batches:
             return has_errors
 
-        return self.batch(xml_dir)
+        return self.batch_shells(xml_dir)
 
 #------------------------------------------------------------------------------
 
@@ -529,9 +531,9 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--reindex", action="store_true", help=h)
     args = parser.parse_args()
 
-    start = datetime.now()
+    start_time = datetime.now()
     translator = XMLTranslator(args.batches, args.reindex)
-    has_errors = translator.translate(args.dir, args.index)
-    dt = datetime.now() - start
+    errors_in_translation = translator.translate(args.dir, args.index)
+    dt = datetime.now() - start_time
     LOG.info("xmlToJson Elapsed time: {} secs".format(dt.seconds))
-    sys.exit(1 if has_errors else 0)
+    sys.exit(1 if errors_in_translation else 0)
