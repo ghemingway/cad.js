@@ -26,8 +26,6 @@ function processAnnotation(url, workerID, data) {
     });
 }
 
-/*********************************************************************/
-
 function processShellXML(url, workerID, data) {
     var parts = url.split("/");
     // All we really need to do is pass this back to the main thread
@@ -45,6 +43,8 @@ function processShellXML(url, workerID, data) {
     });
 }
 
+/*********************************************************************/
+
 function unindexValues(data, buffers) {
     var numValues = data.pointsIndex.length;
     for (var i = 0; i < numValues; i++) {
@@ -54,7 +54,6 @@ function unindexValues(data, buffers) {
     //delete data.pointsIndex;
     //delete data.normalsIndex;
 }
-
 
 function uncompressColors(data, colorsBuffer) {
     var index = 0;
@@ -71,12 +70,6 @@ function uncompressColors(data, colorsBuffer) {
 }
 
 function processShellJSON(url, workerID, dataJSON, signalFinish) {
-    var parts = url.split("/");
-    self.postMessage({
-        type: "parseComplete",
-        file: parts[parts.length - 1]
-    });
-
     // Just copy the data into arrays
     var buffers = {
         position: new Float32Array(dataJSON.pointsIndex.length),
@@ -98,6 +91,7 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
         uncompressColors(dataJSON, buffers.colors);
     }
 
+    var parts = url.split("/");
     self.postMessage({
         type: "shellLoad",
         data: buffers,
@@ -116,6 +110,11 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
 
 function processBatchJSON(url, workerID, data) {
     var dataJSON = JSON.parse(data);
+    var parts = url.split("/");
+    self.postMessage({
+        type: "parseComplete",
+        file: parts[parts.length - 1]
+    });
     for (var i = 0; i < dataJSON.shells.length; i++) {
         processShellJSON(url, workerID, dataJSON.shells[i], false);
     }
@@ -129,18 +128,14 @@ function processBatchJSON(url, workerID, data) {
 
 
 self.addEventListener("message", function(e) {
-    // event is a new file to request and process
-//    console.log("Worker " + e.data.workerID + ": " + e.data.url);
     // Get the request URL info
     var url = e.data.url;
     var workerID = e.data.workerID;
     var xhr = new XMLHttpRequest();
-
     // Determine data type
     var parts = url.split('.');
     var dataType = parts[parts.length-1].toLowerCase();
     parts = url.split("/");
-
     xhr.addEventListener("load", function() {
         // Handle 404 in loadend
         if (xhr.status === 404) return;
@@ -155,6 +150,10 @@ self.addEventListener("message", function(e) {
                 else {
                     // Parse the JSON file
                     var dataJSON = JSON.parse(xhr.responseText);
+                    self.postMessage({
+                        type: "parseComplete",
+                        file: parts[parts.length - 1]
+                    });
                     // Process the Shell data
                     processShellJSON(url, workerID, dataJSON, true);
                 }
