@@ -49,7 +49,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             75,
             canvasParent.offsetWidth / canvasParent.offsetHeight,
             0.1,
-            10000
+            1000000
         );
         camera.position.x = -5000;
         camera.position.y = -5000;
@@ -116,7 +116,6 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             width: 200,
             height: 200
         });
-        scene.add(compass.object3D);
 
         // PRIVATE FUNCTIONS
         render = function() {

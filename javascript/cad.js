@@ -156,8 +156,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 case 111:
                     node = self.tree.get_selected(false);
                     obj = self._parts[0].getByID(node[0]);
-                    obj.toggleTransparency();
-                    self._viewer.invalidate();
+                    if (obj) {
+                        obj.toggleTransparency();
+                        self._viewer.invalidate();
+                    }
                     break;
                 // 'z' to zoomToFit
                 case 122:

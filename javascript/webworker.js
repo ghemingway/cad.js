@@ -26,8 +26,6 @@ function processAnnotation(url, workerID, data) {
     });
 }
 
-/*********************************************************************/
-
 function processShellXML(url, workerID, data) {
     var parts = url.split("/");
     // All we really need to do is pass this back to the main thread
@@ -45,83 +43,55 @@ function processShellXML(url, workerID, data) {
     });
 }
 
-function unindexPoints(data) {
-    var numPoints = data.pointsIndex.length;
-    data.points = [];
-    for (var i = 0; i < numPoints; i++) {
-        var value = data.values[data.pointsIndex[i]];
-        data.points.push(value);
+/*********************************************************************/
+
+function unindexValues(data, buffers) {
+    var numValues = data.pointsIndex.length;
+    for (var i = 0; i < numValues; i++) {
+        buffers.position[i] = data.values[data.pointsIndex[i]];
+        buffers.normals[i] = data.values[data.normalsIndex[i]];
     }
-    delete data.pointsIndex;
+    //delete data.pointsIndex;
+    //delete data.normalsIndex;
 }
 
-function unindexNormals(data) {
-    var numNormals = data.normalsIndex.length;
-    data.normals = [];
-    for (var i = 0; i < numNormals; i++) {
-        var value = data.values[data.normalsIndex[i]];
-        data.normals.push(value);
-    }
-    delete data.normalsIndex;
-}
-
-function unindexColors(data) {
-    var numColors = data.colorsIndex.length;
-    data.colors = [];
-    for (var i = 0; i < numColors; i++) {
-        var value = data.values[data.colorsIndex[i]];
-        data.colors.push(value);
-    }
-    delete data.colorsIndex;
-}
-
-function uncompressColors(data) {
-    data.colors = [];
+function uncompressColors(data, colorsBuffer) {
+    var index = 0;
     var numBlocks = data.colorsData.length;
     for (var i = 0; i < numBlocks; i++) {
         var block = data.colorsData[i];
         for (var j = 0; j < block.duration; j++) {
-            data.colors.push(block.data[0]);
-            data.colors.push(block.data[1]);
-            data.colors.push(block.data[2]);
+            colorsBuffer[index++] = block.data[0];
+            colorsBuffer[index++] = block.data[1];
+            colorsBuffer[index++] = block.data[2];
         }
     }
-    delete data.colorsData;
+    //delete data.colorsData;
 }
 
 function processShellJSON(url, workerID, dataJSON, signalFinish) {
-    var parts = url.split("/");
-    self.postMessage({
-        type: "parseComplete",
-        file: parts[parts.length - 1]
-    });
-
-    if (dataJSON.values && dataJSON.precision) {
-        var factor = Math.pow(10, dataJSON.precision);
-        var length = dataJSON.values.length;
-        for (var i = 0; i < length; i++) {
-            dataJSON.values[i] /= factor;
-        }
-    }
-    if (dataJSON.pointsIndex) {
-        unindexPoints(dataJSON);
-    }
-    if (dataJSON.normalsIndex) {
-        unindexNormals(dataJSON);
-    }
-    if (dataJSON.colorsIndex) {
-        unindexColors(dataJSON);
-    }
-    if (dataJSON.colorsData) {
-        uncompressColors(dataJSON);
-    }
-
     // Just copy the data into arrays
     var buffers = {
-        position: new Float32Array(dataJSON.points),
-        normals: new Float32Array(dataJSON.normals),
-        colors: new Float32Array(dataJSON.colors)
+        position: new Float32Array(dataJSON.pointsIndex.length),
+        normals: new Float32Array(dataJSON.pointsIndex.length),
+        colors: new Float32Array(dataJSON.pointsIndex.length)
     };
+
+    if (dataJSON.values) {
+        if (dataJSON.precision) {
+            var factor = Math.pow(10, dataJSON.precision);
+            var length = dataJSON.values.length;
+            for (var i = 0; i < length; i++) {
+                dataJSON.values[i] /= factor;
+            }
+        }
+        unindexValues(dataJSON, buffers);
+    }
+    if (dataJSON.colorsData) {
+        uncompressColors(dataJSON, buffers.colors);
+    }
+
+    var parts = url.split("/");
     self.postMessage({
         type: "shellLoad",
         data: buffers,
@@ -140,6 +110,11 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
 
 function processBatchJSON(url, workerID, data) {
     var dataJSON = JSON.parse(data);
+    var parts = url.split("/");
+    self.postMessage({
+        type: "parseComplete",
+        file: parts[parts.length - 1]
+    });
     for (var i = 0; i < dataJSON.shells.length; i++) {
         processShellJSON(url, workerID, dataJSON.shells[i], false);
     }
@@ -153,18 +128,14 @@ function processBatchJSON(url, workerID, data) {
 
 
 self.addEventListener("message", function(e) {
-    // event is a new file to request and process
-//    console.log("Worker " + e.data.workerID + ": " + e.data.url);
     // Get the request URL info
     var url = e.data.url;
     var workerID = e.data.workerID;
     var xhr = new XMLHttpRequest();
-
     // Determine data type
     var parts = url.split('.');
     var dataType = parts[parts.length-1].toLowerCase();
     parts = url.split("/");
-
     xhr.addEventListener("load", function() {
         // Handle 404 in loadend
         if (xhr.status === 404) return;
@@ -179,6 +150,10 @@ self.addEventListener("message", function(e) {
                 else {
                     // Parse the JSON file
                     var dataJSON = JSON.parse(xhr.responseText);
+                    self.postMessage({
+                        type: "parseComplete",
+                        file: parts[parts.length - 1]
+                    });
                     // Process the Shell data
                     processShellJSON(url, workerID, dataJSON, true);
                 }
