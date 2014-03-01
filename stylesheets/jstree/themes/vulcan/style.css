@@ -739,12 +739,10 @@
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAACAQMAAAAD0EyKAAAABlBMVEUAAAAdHRvEkCwcAAAAAXRSTlMAQObYZgAAAAxJREFUCNdjgIIGBgABCgCBvVLXcAAAAABJRU5ErkJggg==");
   background-position: 100% 1px;
 }
-@media (max-width: 768px) {
+/*@media (max-width: 768px) {
   .jstree-default {
-    /*
 		.jstree-open > .jstree-ocl,
 		.jstree-closed > .jstree-ocl { border-radius:20px; background-color:white; }
-		*/
   }
   .jstree-default .jstree-icon {
     background-image: url("32px.png");
@@ -867,7 +865,7 @@
     background-color: transparent;
     background-image: none;
   }
-}
+}*/
 .jstree-default > .jstree-container-ul > .jstree-node {
   margin-left: 0;
   margin-right: 0;

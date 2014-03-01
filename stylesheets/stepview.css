@@ -136,9 +136,26 @@ body {
     height: 100%;
 }
 
-.steptools-compass > canvas {
+.info-panel {
     z-index: 1;
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: 32px;
+    top: 32px;
+}
+
+.steptools-compass {
+    position: relative;
+}
+
+.key-hints {
+    padding: 16px 0 0 0;
+}
+
+.key-label {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    text-align: center;
+    border: 1px solid white;
+    border-radius: 3px;
 }
