@@ -24,6 +24,11 @@ function processAnnotation(url, workerID, data) {
         data: data,
         workerID: workerID
     });
+    self.postMessage({
+        type: "workerFinish",
+        workerID: workerID,
+        file: parts[parts.length - 1]
+    });
 }
 
 function processShellXML(url, workerID, data) {
@@ -96,14 +101,14 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
         type: "shellLoad",
         data: buffers,
         id: dataJSON.id,
-        workerID: workerID,
-        file: parts[parts.length - 1]
+        workerID: workerID
     }, [buffers.position.buffer, buffers.normals.buffer, buffers.colors.buffer]);
     // Do we signal that we are all done
     if (signalFinish) {
         self.postMessage({
             type: "workerFinish",
-            workerID: workerID
+            workerID: workerID,
+            file: parts[parts.length - 1]
         });
     }
 }
@@ -120,7 +125,8 @@ function processBatchJSON(url, workerID, data) {
     }
     self.postMessage({
         type: "workerFinish",
-        workerID: workerID
+        workerID: workerID,
+        file: parts[parts.length - 1]
     });
 }
 

@@ -215,7 +215,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             req = this._loading[event.data.workerID];
         }
         // Put worker back into the queue - if it is the time
-        if (_.indexOf(["rootLoad", "workerFinish", "annotationLoad", "loadError"], event.data.type) != -1) {
+        if (_.indexOf(["rootLoad", "workerFinish", "loadError"], event.data.type) != -1) {
             this._loading[event.data.workerID] = undefined;
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
@@ -253,13 +253,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             case "shellLoad":
                 switch (req.contentType) {
                     case "application/xml":
-//                        console.log("WARNING: XML Load broken - cant find shell or shell size");
                         xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
                         shell = req.shell;
                         data = this.parseShellXML(xmlDoc, req.shellSize);
                         break;
                     case "application/json":
-//                        console.log("Loading: " + event.data.id);
                         shell = this._shells[event.data.id];
                         data = event.data.data;
                         break;
@@ -270,6 +268,9 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 delete this._shells[event.data.id];
                 shell.addGeometry(data.position, data.normals, data.colors);
                 this.dispatchEvent({ type: "shellLoad", file: event.data.file });
+                break;
+            case "workerFinish":
+                this.dispatchEvent({ type: "workerFinish", file: event.data.file });
                 break;
             case "parseComplete":
             case "loadProgress":

@@ -77,9 +77,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
-            // Update the download count
-            var count = self._loader.queueLength(false);
-            $(".steptools-downloads-count").text(count);
             // Is this the index file
             if (id === "index") {
                 $("li#index").remove();
@@ -87,8 +84,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Change the file status to 'parsing'
                 $("li#" + id).text(event.file + ": Parsing");
             }
-            // Make sure to redraw the model
-            self._viewer.invalidate();
         });
         this._loader.addEventListener("parseComplete", function(event) {
             var id = event.file.split(".")[0];
@@ -96,16 +91,14 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             $("li#" + id).text(event.file + ": Finishing");
         });
         this._loader.addEventListener("shellLoad", function(event) {
+            // Make sure to redraw the model
+            self._viewer.invalidate();
+        });
+        this._loader.addEventListener("workerFinish", function(event) {
             var id = event.file.split(".")[0];
             // Remove the item from the list
             $("li#" + id).remove();
             // Update the count
-            var count = self._loader.queueLength(false);
-            $(".steptools-downloads-count").text(count);
-            // Make sure to redraw the model
-            self._viewer.invalidate();
-        });
-        this._loader.addEventListener("queueEmpty", function() {
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
         });
