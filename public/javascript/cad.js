@@ -90,7 +90,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             // Change the file status to 'parsing'
             $("li#" + id).text(event.file + ": Finishing");
         });
-        this._loader.addEventListener("shellLoad", function(event) {
+        this._loader.addEventListener("shellLoad", function() {
             // Make sure to redraw the model
             self._viewer.invalidate();
         });
