@@ -23,9 +23,16 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._compassContainer = config.compassContainer;
         this._treeContainer = config.treeContainer;
         this._downloadsContainer = config.downloadsContainer;
+
+        this._isCompact = false;
         this._loader = undefined;
         this._parts = [];
         this._viewer = undefined;
+
+        if ( config.isCompact !== undefined ) {
+            this.setCompactMode( config.isCompact );
+        }
+
     }
 
     CADjs.prototype.setupPage = function() {
@@ -37,6 +44,19 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this.bindEvents();
         // Signal ready
         $(this).trigger("pageSetup");
+    };
+
+    CADjs.prototype.setCompactMode = function( isCompact ) {
+
+        if ( this._isCompact !== isCompact ) {
+
+            if ( isCompact ) {
+                $( this._treeContainer).hide();
+            }
+
+            this._isCompact = isCompact;
+
+        }
     };
 
     CADjs.prototype.load = function(resourceURL) {

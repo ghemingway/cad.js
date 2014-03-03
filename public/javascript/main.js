@@ -1,3 +1,5 @@
+/* global require, console */
+
 /* G. Hemingway Copyright @2014
  * Primary RequireJS entry point
  */
@@ -6,7 +8,6 @@
 
 
 /*************************************************************************/
-
 
 require.config({
     paths: {
@@ -86,11 +87,14 @@ requirejs(["cad", "jquery", "THREE", "VIS"], function(CADjs, $, THREE, VIS) {
             viewContainer: "steptools-view",
             compassContainer: "steptools-compass",
             treeContainer: ".steptools-tree",
-            downloadsContainer: ".steptools-downloads > ul"
+            downloadsContainer: ".steptools-downloads > ul",
+            isCompact: VIS.getParameter( "compact" ) === "true"
         });
+
         cad.setupPage();
+
         // What resource do we want to load
-        cad.load(VIS.getResourceUrl());
+        cad.load( VIS.getResourceUrl() );
     });
 
     VIS.init();
