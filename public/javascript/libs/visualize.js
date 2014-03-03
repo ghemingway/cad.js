@@ -155,10 +155,11 @@
                 dataType: 'json',
                 data: {"unique_id": that.getProcessResourceId()},
                 success: function (response) {
-                    var param;
-                    for (param in response.parameters) {
+
+                    $.each(response.parameters, function(param) {
                         that.parameters[param] = response.parameters[param];
-                    }
+                    });
+                    
                     $(that).trigger("ready");
                 },
                 "error": function() {
