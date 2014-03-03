@@ -159,7 +159,7 @@
                     $.each(response.parameters, function(param) {
                         that.parameters[param] = response.parameters[param];
                     });
-                    
+
                     $(that).trigger("ready");
                 },
                 "error": function() {

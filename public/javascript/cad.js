@@ -1,14 +1,14 @@
+/* global define, console */
+
 /* G. Hemingway Copyright @2014
  * Context for the visualization of a set of CAD models
  */
-
-"use strict";
-
-
 /*************************************************************************/
 
 
 define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLoader, Viewer) {
+
+    "use strict";
     /* config:
         viewContainer
         compassContainer
@@ -118,11 +118,15 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             _change = false;
         });
         canvasDOM.addEventListener("mouseup", function(event) {
-            if (!_change) self.onClick(event);
+            if (!_change) {
+                self.onClick(event);
+            }
             _change = false;
         }, false);
         canvasDOM.addEventListener("mousemove", function() {
-            if (!_change) self.onMove();
+            if (!_change) {
+                self.onMove();
+            }
         }, false);
 
         // Keybased events
@@ -238,7 +242,9 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         var self = this;
         var geometryOnly = false;
         var treeData = this._parts[0].getTree(geometryOnly);
-        if (this.tree) this.tree.destroy();
+        if (this.tree) {
+            this.tree.destroy();
+        }
         this.tree = $.jstree.create(this._treeContainer, {
             plugins : [ 'contextmenu' ],
             core: {
@@ -270,7 +276,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 //                        }
                     };
                     if (menuItem.state.disabled) {
-                        menu["show"] = {
+                        menu.show = {
                             label: "Show",
                             action: function() {
                                 var obj = self._parts[0].getByID(menuItem.id);
@@ -282,7 +288,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                             }
                         };
                     } else {
-                        menu["hide"] = {
+                        menu.hide = {
                             label: "Hide",
                             action: function() {
                                 var obj = self._parts[0].getByID(menuItem.id);
