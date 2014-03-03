@@ -10,11 +10,12 @@ gulp.task('build', function() {
         paths: {
             jquery:             'libs/jquery.min',
             jstree:             'libs/jstree.min',
-            THREE:              'libs/three.min',
             underscore:         'libs/underscore-min',
+            THREE:              'libs/three.min',
             TrackballControls:  'libs/TrackballControls',
             dat:                'libs/dat.gui.min',
-            VIS:                'libs/visualize'
+            VIS:                'libs/visualize',
+            Velvety:            "shaders/VelvetyShader"
         },
         shim: {
             jquery: {
@@ -38,9 +39,6 @@ gulp.task('build', function() {
             VIS: {
                 exports: "VIS",
                 deps: ["jquery"]
-            },
-            shape: {
-                deps: ['shaders/VelvetyShader']
             },
             viewer: {
                 deps: [
@@ -76,8 +74,8 @@ gulp.task('build', function() {
             }
         }
     })
-//    .pipe(uglify())
-    .pipe(gulp.dest('./public/javascript/')); // pipe it to the output DIR
+    //.pipe(uglify())
+    .pipe(gulp.dest('./public/javascript')); // pipe it to the output DIR
 });
 
 gulp.task('watch', function() {

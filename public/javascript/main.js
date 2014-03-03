@@ -10,13 +10,14 @@
 
 require.config({
     paths: {
-        jquery: "libs/jquery.min",
-        jstree: "libs/jstree.min",
-        underscore: 'libs/underscore-min',
-        THREE: 'libs/three.min',
-        TrackballControls: "libs/TrackballControls",
-        dat: "libs/dat.gui.min",
-        VIS: "libs/visualize"
+        jquery:             'libs/jquery.min',
+        jstree:             'libs/jstree.min',
+        underscore:         'libs/underscore-min',
+        THREE:              'libs/three.min',
+        TrackballControls:  'libs/TrackballControls',
+        dat:                'libs/dat.gui.min',
+        VIS:                'libs/visualize',
+        Velvety:            'shaders/VelvetyShader'
     },
     shim: {
         jquery: {
@@ -40,9 +41,6 @@ require.config({
         VIS: {
             exports: "VIS",
             deps: ["jquery"]
-        },
-        shape: {
-            deps: ['shaders/VelvetyShader']
         },
         viewer: {
             deps: [
@@ -83,7 +81,6 @@ require.config({
   Primary application entry point
  */
 requirejs(["cad", "jquery", "THREE", "VIS"], function(CADjs, $, THREE, VIS) {
-
     $(VIS).on("ready", function(){
         var cad = window.cadjs = new CADjs({
             viewContainer: "steptools-view",

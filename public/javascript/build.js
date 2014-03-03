@@ -821,7 +821,7 @@ define('assembly',["THREE"], function(THREE) {
         // Special case for the root element
         if (id === "id0") {
             obj = this;
-        } else {
+        } else if (typeof(id) !== 'undefined') {
             var parts = id.split("_");
             obj = this._objects[parts[0]];
             // Looks like an instance was selected
@@ -831,6 +831,18 @@ define('assembly',["THREE"], function(THREE) {
         }
         return obj;
 
+    };
+
+    Assembly.prototype.toggleTransparency = function () {
+        if (this._product) {
+            this._product.toggleTransparency();
+        }
+    };
+
+    Assembly.prototype.setOpacity = function (opacity) {
+        if (this._product) {
+            this._product.setOpacity(opacity);
+        }
     };
 
     Assembly.prototype.showAll = function() {
@@ -846,6 +858,27 @@ define('assembly',["THREE"], function(THREE) {
             this._product.getObject3D().traverse(function(object) {
                 object.visible = false;
             });
+        }
+    };
+
+    Assembly.prototype.toggleVisibility = function() {
+        if (this._product._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+        return this._product._object3D.visible;
+    };
+
+    Assembly.prototype.hide = function() {
+        if (this._product) {
+            this._product.hide();
+        }
+    };
+
+    Assembly.prototype.show = function() {
+        if (this._product) {
+            this._product.show();
         }
     };
 
@@ -891,17 +924,20 @@ define('assembly',["THREE"], function(THREE) {
     };
 
     Assembly.prototype.zoomToFit = function(camera, controls) {
-        var bbox = this._product.getBoundingBox();
-        var min = this._product.getObject3D().localToWorld(bbox.min);
-        var max = this._product.getObject3D().localToWorld(bbox.max);
-        var projector = new THREE.Projector();
-        min = projector.projectVector(min, camera);
-        max = projector.projectVector(max, camera);
-        var factor = Math.max(
-            Math.abs(max.x - min.x),
-            Math.abs(max.y - min.y)
-        );
-        controls.object.position.multiplyScalar(factor);
+        var boundingBox = this._product.getBoundingBox(),
+            radius = boundingBox.size().length() * 0.5,
+            horizontalFOV = 2 * Math.atan(THREE.Math.degToRad(camera.fov * 0.5) * camera.aspect),
+            fov = Math.min(THREE.Math.degToRad(camera.fov), horizontalFOV),
+            dist = radius / Math.sin(fov * 0.5),
+            newTargetPosition = new THREE.Vector3(),
+            newCameraPosition = camera.position.clone().
+                sub(controls.target).
+                normalize().
+                multiplyScalar(dist);
+        controls.target0.copy(newTargetPosition.clone());
+        controls.position0.copy(newCameraPosition.clone());
+        controls.up0.copy(camera.up.clone());
+        controls.reset();
     };
     Assembly.prototype.select = function(camera, mouseX, mouseY) {
         if (!this._product) return undefined;
@@ -1049,6 +1085,7 @@ define('assembly',["THREE"], function(THREE) {
     THREE.EventDispatcher.prototype.apply(Assembly.prototype);
     return Assembly;
 });
+
 /* G. Hemingway Copyright @2014
  * Product class for the CAD models
  */
@@ -1163,6 +1200,62 @@ define('product',["THREE"], function(THREE) {
         this._object3D.remove(this.bbox);
     };
 
+    Product.prototype.setOpacity = function (opacity) {
+        var self = this;
+        this._object3D.traverse(function(object) {
+            if (object.material && object.material.uniforms.opacity) {
+                object.material.uniforms['opacity'].value = opacity;
+                self._assembly.addEventListener("_clearOpacity", function() {
+                    object.material.uniforms['opacity'].value = 1;
+                });
+            }
+        });
+    };
+
+    Product.prototype.toggleVisibility = function() {
+        if (this._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+        return this._object3D.visible;
+    };
+
+    Product.prototype.toggleTransparency = function() {
+        if (this.isTransparent()) {
+            this.setOpacity(1);
+        } else {
+            this.setOpacity(0.5);
+        }
+    };
+
+    Product.prototype.isTransparent = function () {
+        // returns true if object or any children are transparent
+        var transparent = false,
+            testObject = function(object) {
+                if (!transparent && object.material && object.material.uniforms.opacity) {
+                    transparent = object.material.uniforms.opacity.value < 1;
+                }
+            };
+        testObject(this._object3D);
+        if (!transparent) {
+            this._object3D.traverse(testObject);
+        }
+        return transparent;
+    };
+
+    Product.prototype.hide = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = false;
+        });
+    };
+
+    Product.prototype.show = function() {
+        this._object3D.traverse(function(object) {
+            object.visible = true;
+        });
+    };
+
     Product.prototype.explode = function(distance, timeS) {
     };
 
@@ -1170,6 +1263,7 @@ define('product',["THREE"], function(THREE) {
     THREE.EventDispatcher.prototype.apply(Product.prototype);
     return Product;
 });
+
 /**
  * @license RequireJS text 2.0.10 Copyright (c) 2010-2012, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
@@ -1557,7 +1651,7 @@ define('text',['module'], function (module) {
     return text;
 });
 
-define('text!shaders/VelvetyShader-vertex.glsl',[],function () { return 'varying vec3 fNormal;\nvarying vec3 fPosition;\nvarying vec3 fColor;\n\nconst float minColorBrightness = 0.15;\n\n// This ensures that black colored shapes are not rendered as solid black by\n// effectively making dark colors slightly lighter.\nvec3 applyMinColorBrightness(vec3 color)\n{\n    if (length(color) < minColorBrightness * 3.0) {\n        return color + minColorBrightness;\n    } else {\n        return color;\n    }\n}\n\nvoid main()\n{\n    fColor = applyMinColorBrightness(color);\n    fNormal = normalize(normalMatrix * normal);\n    vec4 pos = modelViewMatrix * vec4(position, 1.0);\n    fPosition = pos.xyz;\n    gl_Position = projectionMatrix * pos;\n}\n';});
+define('text!shaders/VelvetyShader-vertex.glsl',[],function () { return 'varying vec3 fNormal;\nvarying vec3 fPosition;\nvarying vec3 fColor;\n\nconst float minColorBrightness = 0.15;\n\n// This ensures that black colored shapes are not rendered as solid black by\n// effectively making dark colors slightly lighter.\nvec3 applyMinColorBrightness(vec3 color)\n{\n    if (length(color) < minColorBrightness * 3.0) {\n        return color + minColorBrightness;\n    } else {\n        return color;\n    }\n}\n\nvoid main()\n{\n    vec4 pos = modelViewMatrix * vec4(position, 1.0);\n    vec3 N = normalMatrix * normal;\n    vec3 I = pos.xyz;\n    fNormal = normalize(faceforward(N, I, N));\n    fColor = applyMinColorBrightness(color);\n    fPosition = I;\n    gl_Position = projectionMatrix * pos;\n}\n';});
 
 define('text!shaders/VelvetyShader-fragment.glsl',[],function () { return 'uniform float opacity;\nuniform float ambientFactor;     // the brightness of edge lighting (suggested defualt: 0.3, prefer 0.0 to 1.0)\nuniform float directFactor;  // the brightness of front lighting (suggested defualt: 1.0, prefer 0.0 to 1.0)\n\nvarying vec3 fPosition;\nvarying vec3 fNormal;\nvarying vec3 fColor;\n\nvoid main()\n{\n    float lightAmount = smoothstep(-ambientFactor, directFactor, dot(fNormal, normalize(-fPosition)));\n    gl_FragColor = vec4(fColor * lightAmount, opacity);\n}\n';});
 
@@ -1570,22 +1664,24 @@ define('text!shaders/VelvetyShader-fragment.glsl',[],function () { return 'unifo
  * A THREE.js Shader
  */
 
-define('shaders/VelvetyShader',[
+define('Velvety',[
     'THREE',
     'text!shaders/VelvetyShader-vertex.glsl',
     'text!shaders/VelvetyShader-fragment.glsl'
 ], function (THREE, vertexShaderCode, fragmentShaderCode) {
-    THREE.VelvetyShader = {
-        side: THREE.DoubleSide,
-        vertexColors: THREE.VertexColors,
-        transparent: true,
-        uniforms: {
-            'opacity': {type: 'f', value: 1.0},
-            'ambientFactor': {type: 'f', value: 0.3},
-            'directFactor': {type: 'f', value: 1.0}
-        },
-        vertexShader: vertexShaderCode,
-        fragmentShader: fragmentShaderCode
+    THREE.VelvetyShader = function () {
+        return {
+            side: THREE.DoubleSide,
+            vertexColors: THREE.VertexColors,
+            transparent: true,
+            uniforms: {
+                'opacity': {type: 'f', value: 1.0},
+                'ambientFactor': {type: 'f', value: 0.3},
+                'directFactor': {type: 'f', value: 1.0}
+            },
+            vertexShader: vertexShaderCode,
+            fragmentShader: fragmentShaderCode
+        };
     };
 });
 
@@ -1598,7 +1694,7 @@ define('shaders/VelvetyShader',[
 
 /********************************* Shape Class ********************************/
 
-define('shape',["THREE"], function(THREE) {
+define('shape',["THREE", "Velvety"], function(THREE) {
     function Shape(id, assembly, parent, transform, unit) {
         var ret = assembly.makeChild(id, this);
         this._id = id;
@@ -1694,118 +1790,9 @@ define('shape',["THREE"], function(THREE) {
             this._instances[i].setProduct(product);
         }
     };
-/*
-     var vshader = [
-        "precision mediump float;",
-        "uniform mat4 u_projMatrix;",
-        "uniform mat4 u_modelViewMatrix;",
-        // is the light on
-        "uniform bool u_light_on;",
-        "attribute vec3 a_normal;",
-        "attribute highp vec4 a_color;",
-        "attribute vec4 a_position;",
-        "varying vec4 v_eye_loc;",
-        "varying highp vec4 v_Color;",
-        "varying vec3 v_normal;",
-        "void main() {",
-        "    v_eye_loc = u_modelViewMatrix * a_position;",
-        "    gl_Position = u_projMatrix * v_eye_loc;",
-        "    v_Color = a_color;",
-        "    v_normal = a_normal;",
-        "}"].join("\n");
-
-     var fshader = [
-        "precision mediump float;",
-        "uniform mat3 u_normalMatrix;",
-        "uniform vec3 u_ambient;",
-        "uniform bool u_light_on;",
-        "varying highp vec4 v_Color;",
-        "varying vec4 v_eye_loc;",
-        "varying vec3 v_normal;",
-        // material properties.  If we want to change these, they should
-        // be passed in as uniforms.
-        "const float mat_ambient=.15;",
-        "const float mat_diffuse=1.;",
-        "const float mat_specular=.4;",
-        "const float shine=6.;",
-         "void main() {",
-        "    if (!u_light_on) {",
-        "      gl_FragColor = v_Color;",
-        "      return;",
-        "    }",
-        // if u_normalMatrix were normalized, the call to normalize()
-        // here would not be necessary
-        "    vec3 normal = normalize(u_normalMatrix * v_normal);",
-        // ambient color generation
-        "    float color_factor = .65 * mat_ambient;",
-        "    float light_dot =  dot(normal, vec3(-.4082, .4082, .8165));",
-        "    if ( light_dot > 0.)",
-        "        color_factor += .45 * mat_diffuse * light_dot;",
-        // vector from point to light.  We are placing a point light in the
-        // scenegraph at the same level as the near clipping plane.
-        // The z value of the vector may want to be a uniform so that it can
-        // be derived from the camera_ratio.
-        "    vec3 dir = normalize(vec3(0., 1., -3.) - v_eye_loc.xyz);",
-        "    light_dot = dot(normal, dir);",
-        "    if (light_dot > 0.) {",
-        "        color_factor += .4 * mat_diffuse * light_dot;",
-        "        vec3 s = normalize(dir + vec3(0.,0.,1.));",
-        "        float ndot = dot(s,normal);",
-        "        color_factor += mat_specular * max(pow(ndot, shine), 0.);",
-        "    ",
-        "    }",
-        "    gl_FragColor = vec4(color_factor * v_Color.rgb, v_Color.a);",
-        "}"].join("\n");
-/*
-     var prog = create_program(gl, vshader, fshader);
-     gl.useProgram(prog);
-     gl.proj_mtx = gl.getUniformLocation(prog, "u_projMatrix");
-     if (!gl.proj_mtx)
-     throw new Error ("Could not get proj matrix");
-     gl.mv_mtx = gl.getUniformLocation(prog, "u_modelViewMatrix");
-     if (!gl.mv_mtx)
-         throw new Error ("Could not get model viewmatrix");
-     gl.normal_mtx = gl.getUniformLocation(prog, "u_normalMatrix");
-     gl.light_on = gl.getUniformLocation(prog, "u_light_on");
-     if (gl.light_on) {
-        gl.uniform1i(gl.light_on, true);
-        gl.light = true;
-     }
-     gl.xforms = new GLTransform(gl, gl.proj_mtx, gl.mv_mtx, gl.normal_mtx);
-     gl.pos_loc = gl.getAttribLocation(prog, "a_position");
-     gl.norm_loc = gl.getAttribLocation(prog, "a_normal");
-     gl.color_loc = gl.getAttribLocation(prog, "a_color");
-     if (gl.pos_loc < 0 || gl.norm_loc < 0 || gl.color_loc < 0)
-        throw new Error ("Could not get location");
-*/
 
     Shape.prototype.addShellGeometry = function(geometry) {
-//        console.log("Adding Shell Geo: " + this.getID());
-//        var material = new THREE.MeshPhongMaterial({
-//            color: 0xaaaaaa,
-//            ambient: 0xaaaaaa,
-//            specular: 0xffffff,
-//            shininess: 255,
-////            side: THREE.FrontSide,
-//            side: THREE.DoubleSide,
-//            vertexColors: THREE.VertexColors,
-//            transparent: true
-//        });
-//        var material = new THREE.MeshBasicMaterial({
-//            side: THREE.DoubleSide
-//        });
-//        var material = new THREE.ShaderMaterial({
-//            uniforms: uniforms,
-//            attributes: attributes,
-//            vertexShader: vshader,
-//            fragmentShader: fshader
-//        });
-//        var material = new THREE.MeshNormalMaterial({
-//            side: THREE.DoubleSide,
-//            vertexColors: THREE.VertexColors,
-//            transparent: true
-//        });
-        var material = new THREE.ShaderMaterial(THREE.VelvetyShader);
+        var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
         var mesh = new THREE.SkinnedMesh(geometry, material, false);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -1930,9 +1917,35 @@ define('shape',["THREE"], function(THREE) {
     };
 
     Shape.prototype.toggleVisibility = function() {
-        if (this._object3D.visible) this.hide();
-        else this.show();
+        if (this._object3D.visible) {
+            this.hide();
+        } else {
+            this.show();
+        }
         return this._object3D.visible;
+    };
+
+    Shape.prototype.isTransparent = function () {
+        // returns true if object or any children are transparent
+        var transparent = false,
+            testObject = function(object) {
+                if (!transparent && object.material && object.material.uniforms.opacity) {
+                    transparent = object.material.uniforms.opacity.value < 1;
+                }
+            };
+        testObject(this._object3D);
+        if (!transparent) {
+            this._object3D.traverse(testObject);
+        }
+        return transparent;
+    };
+
+    Shape.prototype.toggleTransparency = function() {
+        if (this.isTransparent()) {
+            this.setOpacity(1);
+        } else {
+            this.setOpacity(0.5);
+        }
     };
 
     Shape.prototype.hide = function() {
@@ -1971,10 +1984,10 @@ define('shape',["THREE"], function(THREE) {
     Shape.prototype.setOpacity = function (opacity) {
         var self = this;
         this._object3D.traverse(function(object) {
-            if (object.material) {
-                object.material.opacity = opacity;
+            if (object.material && object.material.uniforms.opacity) {
+                object.material.uniforms['opacity'].value = opacity;
                 self._assembly.addEventListener("_clearOpacity", function() {
-                    object.material.opacity = 1;
+                    object.material.uniforms['opacity'].value = 1;
                 });
             }
         });
@@ -2081,6 +2094,7 @@ define('shape',["THREE"], function(THREE) {
     THREE.EventDispatcher.prototype.apply(Shape.prototype);
     return Shape;
 });
+
 /* G. Hemingway Copyright @2014
  * Annotation object
  */
@@ -2228,6 +2242,7 @@ define('data_loader',["THREE", "underscore", "assembly", "product", "shape", "an
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
+        this._shells = {};
 
         var self = this;
         this._workers = [];     // List of workers
@@ -2421,11 +2436,13 @@ define('data_loader',["THREE", "underscore", "assembly", "product", "shape", "an
     };
 
     DataLoader.prototype.workerMessage = function(event) {
-        // Put worker back into the queue - if it is the time
-        var req;
+        var req, shell;
+        // Find the request this message corresponds to
         if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
-            // Remove the job from the loading queue
             req = this._loading[event.data.workerID];
+        }
+        // Put worker back into the queue - if it is the time
+        if (_.indexOf(["rootLoad", "workerFinish", "loadError"], event.data.type) != -1) {
             this._loading[event.data.workerID] = undefined;
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
@@ -2464,16 +2481,23 @@ define('data_loader',["THREE", "underscore", "assembly", "product", "shape", "an
                 switch (req.contentType) {
                     case "application/xml":
                         xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
+                        shell = req.shell;
                         data = this.parseShellXML(xmlDoc, req.shellSize);
                         break;
                     case "application/json":
+                        shell = this._shells[event.data.id];
                         data = event.data.data;
                         break;
                     default:
-                        console.log("Blahhlal");
+                        console.log("Blahhlal - What the hell is this?");
                 }
-                req.shell.addGeometry(data.position, data.normals, data.colors);
+                // Remove the reference to the shell
+                delete this._shells[event.data.id];
+                shell.addGeometry(data.position, data.normals, data.colors);
                 this.dispatchEvent({ type: "shellLoad", file: event.data.file });
+                break;
+            case "workerFinish":
+                this.dispatchEvent({ type: "workerFinish", file: event.data.file });
                 break;
             case "parseComplete":
             case "loadProgress":
@@ -2745,6 +2769,15 @@ define('data_loader',["THREE", "underscore", "assembly", "product", "shape", "an
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
         this._viewer.add3DObject(rootProduct.getObject3D());
+        // Do we have batches
+        if (doc.batches && doc.batches > 0) {
+            for (var i = 0; i < doc.batches; i++) {
+                this.addRequest({
+                    url: req.base + "batch" + i + ".json",
+                    validateType: "batch"
+                });
+            }
+        }
         req.callback(undefined, assembly);
     };
 
@@ -2832,12 +2865,15 @@ define('data_loader',["THREE", "underscore", "assembly", "product", "shape", "an
             var shell = new Shell(id, assembly, parent, shellJSON.size, color, boundingBox);
             // Have we already loaded this Shell - if not, request the shell be loaded?
             if (!alreadyLoaded) {
-                this.addRequest({
-                    url: req.base + shellJSON.href,
-                    validateType: "shell",
-                    shell: shell,
-                    shellSize: shellJSON.size
-                });
+                // Push the shell for later completion
+                this._shells[id] = shell;
+//                console.log(this._shells);
+                if (!doc.batches || doc.batches === 0) {
+                    this.addRequest({
+                        url: req.base + shellJSON.href,
+                        validateType: "shell"
+                    });
+                }
             }
             return shell;
         } else {
@@ -3607,6 +3643,8 @@ THREE.ClearMaskPass.prototype = {
 
 define("libs/threejs/MaskPass", ["THREE"], function(){});
 
+define('text!templates/compass_dom.html',[],function () { return '<div id="compass-cube" class="cube">\n    <div class="cube-face cube-face-front">\n        <span class="cube-face-label">Front</span>\n        <div class="cube-button cube-face-button" data-x="0" data-y="0" data-z="0"></div>\n\n        <div class="cube-face-edge cube-face-edge-top cube-button cube-button-face-edge" data-group="front-top" data-x="45" data-y="0" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-right cube-button cube-button-face-edge" data-group="front-right" data-x="0" data-y="45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-bottom cube-button cube-button-face-edge" data-group="front-bottom" data-x="-45" data-y="0" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-left cube-button cube-button-face-edge" data-group="front-left" data-x="0" data-y="-45" data-z="0" data-order="YXZ"></div>\n\n        <div class="cube-face-corner cube-face-corner-top-right cube-button cube-button-face-corner" data-group="front-top-right" data-x="45" data-y="45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-right cube-button cube-button-face-corner" data-group="front-bottom-right" data-x="-45" data-y="45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-left cube-button cube-button-face-corner" data-group="front-bottom-left" data-x="-45" data-y="-45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-top-left cube-button cube-button-face-corner" data-group="front-top-left" data-x="45" data-y="-45" data-z="0" data-order="YXZ"></div>\n    </div>\n    <div class="cube-face cube-face-back">\n        <span class="cube-face-label">Back</span>\n        <div class="cube-button cube-face-button" data-x="0" data-y="180" data-z="0"></div>\n\n        <div class="cube-face-edge cube-face-edge-top cube-button cube-button-face-edge" data-group="back-top" data-x="45" data-y="180" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-right cube-button cube-button-face-edge" data-group="back-left" data-x="0" data-y="225" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-bottom cube-button cube-button-face-edge" data-group="back-bottom" data-x="-45" data-y="180" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-left cube-button cube-button-face-edge" data-group="back-right" data-x="0" data-y="135" data-z="0" data-order="YXZ"></div>\n\n        <div class="cube-face-corner cube-face-corner-top-right cube-button cube-button-face-corner" data-group="back-top-left" data-x="45" data-y="225" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-right cube-button cube-button-face-corner" data-group="back-bottom-left" data-x="-45" data-y="225" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-left cube-button cube-button-face-corner" data-group="back-bottom-right" data-x="-45" data-y="135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-top-left cube-button cube-button-face-corner" data-group="back-top-right" data-x="45" data-y="135" data-z="0" data-order="YXZ"></div>\n    </div>\n    <div class="cube-face cube-face-right">\n        <span class="cube-face-label">Right</span>\n        <div class="cube-button cube-face-button" data-x="0" data-y="90" data-z="0"></div>\n\n        <div class="cube-face-edge cube-face-edge-top cube-button cube-button-face-edge" data-group="top-right" data-x="45" data-y="90" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-right cube-button cube-button-face-edge" data-group="back-right" data-x="0" data-y="135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-bottom cube-button cube-button-face-edge" data-group="bottom-right" data-x="-45" data-y="90" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-left cube-button cube-button-face-edge" data-group="front-right" data-x="0" data-y="45" data-z="0" data-order="YXZ"></div>\n\n        <div class="cube-face-corner cube-face-corner-top-right cube-button cube-button-face-corner" data-group="back-top-right" data-x="45" data-y="135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-right cube-button cube-button-face-corner" data-group="back-bottom-right" data-x="-45" data-y="135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-left cube-button cube-button-face-corner" data-group="front-bottom-right" data-x="-45" data-y="45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-top-left cube-button cube-button-face-corner" data-group="front-top-right" data-x="45" data-y="45" data-z="0" data-order="YXZ"></div>\n    </div>\n    <div class="cube-face cube-face-left">\n        <span class="cube-face-label">Left</span>\n        <div class="cube-button cube-face-button" data-x="0" data-y="-90" data-z="0"></div>\n\n        <div class="cube-face-edge cube-face-edge-top cube-button cube-button-face-edge" data-group="top-left" data-x="45" data-y="-90" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-right cube-button cube-button-face-edge" data-group="front-left" data-x="0" data-y="-45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-bottom cube-button cube-button-face-edge" data-group="bottom-left" data-x="-45" data-y="-90" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-left cube-button cube-button-face-edge" data-group="back-left" data-x="0" data-y="-135" data-z="0" data-order="YXZ"></div>\n\n        <div class="cube-face-corner cube-face-corner-top-right cube-button cube-button-face-corner" data-group="front-top-left" data-x="45" data-y="-45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-right cube-button cube-button-face-corner" data-group="front-bottom-left" data-x="-45" data-y="-45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-left cube-button cube-button-face-corner" data-group="back-bottom-left" data-x="-45" data-y="-135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-top-left cube-button cube-button-face-corner" data-group="back-top-left" data-x="45" data-y="-135" data-z="0" data-order="YXZ"></div>\n    </div>\n    <div class="cube-face cube-face-top">\n        <span class="cube-face-label">Top</span>\n        <div class="cube-button cube-face-button" data-x="90" data-y="0" data-z="0" data-up="0,0,1"></div>\n\n        <div class="cube-face-edge cube-face-edge-top cube-button cube-button-face-edge" data-group="back-top" data-x="45" data-y="180" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-right cube-button cube-button-face-edge" data-group="top-right" data-x="45" data-y="90" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-bottom cube-button cube-button-face-edge" data-group="front-top" data-x="45" data-y="0" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-left cube-button cube-button-face-edge" data-group="top-left" data-x="45" data-y="-90" data-z="0" data-order="YXZ"></div>\n\n        <div class="cube-face-corner cube-face-corner-top-right cube-button cube-button-face-corner" data-group="back-top-right" data-x="45" data-y="135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-right cube-button cube-button-face-corner" data-group="front-top-right" data-x="45" data-y="45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-left cube-button cube-button-face-corner" data-group="front-top-left" data-x="45" data-y="-45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-top-left cube-button cube-button-face-corner" data-group="back-top-left" data-x="45" data-y="-135" data-z="0" data-order="YXZ"></div>\n    </div>\n    <div class="cube-face cube-face-bottom">\n        <span class="cube-face-label">Bottom</span>\n        <div class="cube-button cube-face-button" data-x="-90" data-y="0" data-z="0" data-up="0,0,-1"></div>\n\n        <div class="cube-face-edge cube-face-edge-top cube-button cube-button-face-edge" data-group="front-bottom" data-x="-45" data-y="0" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-right cube-button cube-button-face-edge" data-group="bottom-right" data-x="-45" data-y="90" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-bottom cube-button cube-button-face-edge" data-group="back-bottom" data-x="-45" data-y="180" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-edge cube-face-edge-left cube-button cube-button-face-edge" data-group="bottom-left" data-x="-45" data-y="-90" data-z="0" data-order="YXZ"></div>\n\n        <div class="cube-face-corner cube-face-corner-top-right cube-button cube-button-face-corner" data-group="front-bottom-right" data-x="-45" data-y="45" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-right cube-button cube-button-face-corner" data-group="back-bottom-right" data-x="-45" data-y="135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-bottom-left cube-button cube-button-face-corner" data-group="back-bottom-left" data-x="-45" data-y="-135" data-z="0" data-order="YXZ"></div>\n        <div class="cube-face-corner cube-face-corner-top-left cube-button cube-button-face-corner" data-group="front-bottom-left" data-x="-45" data-y="-45" data-z="0" data-order="YXZ"></div>\n    </div>\n</div>\n';});
+
 /* G. Hemingway Copyright @2014
  * Visual model navigator - Helps with orientation and viewing aspects
  */
@@ -3616,79 +3654,96 @@ define("libs/threejs/MaskPass", ["THREE"], function(){});
 /************************* Compass Class *********************************************/
 
 
-define('compass',["THREE"], function(THREE) {
-    function Compass(compassParent, camera, controls, config) {
+define('compass',[
+    "THREE",
+    "text!templates/compass_dom.html"
+], function(THREE, compassDomText) {
+    
+
+    function setStyleTransform (element, value) {
+        var style = element.style,
+            styleNames = setStyleTransform._transformPropertyNames,
+            i;
+        for (i=0;i<styleNames.length;++i) {
+            if (typeof(style[styleNames[i]]) !== 'undefined') {
+                style[styleNames[i]] = value;
+            }
+        }
+    }
+    setStyleTransform._transformPropertyNames = [
+        'transform',
+        'webkitTransform',
+        'MozTransform'
+    ];
+
+
+    function Compass(compassParentId, camera, controls, config) {
+        var that = this;
+        this.compassParent = $('#'+compassParentId);
         this.controls = controls;
-        this.mainCamera = camera;
+        this.camera = camera;
         this.config = {
             magnitude: config.magnitude ? config.magnitude : 100,
             width: config.width ? config.width : 200,
             height: config.height ? config.height: 200
         };
-
-        // RENDERER
-        this.compassParent = document.getElementById(compassParent);
-        this.renderer = new THREE.WebGLRenderer({ alpha: true });
-        this.renderer.setClearColor(0x000000, 0);
-        this.renderer.setSize(200, 200);
-        // CANVAS
-        this.canvas = this.renderer.domElement;
-        this.compassParent.appendChild(this.canvas);
-        // SCENE
-        this.scene = new THREE.Scene();
-        // CAMERA
-        this.camera = new THREE.PerspectiveCamera(50, 1, 1, 1000);
-        this.build();
-
-        var self = this;
-        this.renderer.domElement.addEventListener('mousemove', function(event) { self.onMouseMove(event); }, true );
-        this.renderer.domElement.addEventListener('mousedown', function(event) { self.onMouseDown(event); }, false );
-        this.renderer.domElement.addEventListener('mouseup', function(event) { self.onMouseUp(event); }, false );
+        this.compassParent.html(compassDomText);
+        this.$cubeButtons = $('.cube-button', this.compassParent);
+        this.compassCube = document.getElementById('compass-cube');
+        this.compassCubeMatrix = new THREE.Matrix4();
+        this.bindEvents();
     }
 
-    Compass.prototype.build = function() {
-        var geometry = new THREE.CubeGeometry( 40, 40, 40 );
-        var object = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
+    Compass.prototype.bindEvents = function () {
+        var that = this,
+            defaultUpVector = new THREE.Vector3(0,1,0);
+        this.$cubeButtons.
+            on('mouseenter', function (e) {
+                that.$cubeButtons.
+                    removeClass('hover').
+                    filter('[data-group="'+$(this).attr('data-group')+'"]').
+                    addClass('hover');
+            }).
+            on('mouseleave', function (e) {
+                that.$cubeButtons.removeClass('hover');
+            }).
+            on('click', function (e) {
+                var upVector, upValues, eulerOrder;
+                if (typeof(this.dataset.up) !== 'undefined') {
+                    upValues = this.dataset.up.split(',').map(parseFloat);
+                    upVector = new THREE.Vector3(upValues[0],upValues[1],upValues[2]);
+                } else {
+                    upVector = defaultUpVector;
+                }
+                eulerOrder = typeof(this.dataset.order) === 'undefined' ? 'XYZ' : this.dataset.order;
 
+                var conversionFactor = Math.PI / 180.0;
+                var viewAngles = new THREE.Euler(parseFloat(this.dataset.x)*conversionFactor,
+                                                 parseFloat(this.dataset.y)*conversionFactor,
+                                                 parseFloat(this.dataset.z)*conversionFactor,
+                                                 eulerOrder);
 
-        // Axes
-        var origin = new THREE.Vector3(0.0, 0.0, 0.0);
-        var xAxisArrow = new THREE.ArrowHelper(new THREE.Vector3(1.0, 0.0, 0.0), origin, 100.0, 0xff0000, 20, 10);
-        var yAxisArrow = new THREE.ArrowHelper(new THREE.Vector3(0.0, 1.0, 0.0), origin, 100.0, 0x00ff00, 20, 10);
-        var zAxisArrow = new THREE.ArrowHelper(new THREE.Vector3(0.0, 0.0, 1.0), origin, 100.0, 0x0000ff, 20, 10);
-        this.scene.add(xAxisArrow);
-        this.scene.add(yAxisArrow);
-        this.scene.add(zAxisArrow);
-        this.update();
+                that.controls.setRotationFromEuler(viewAngles, upVector /* allowed to be undefined */);
+            });
     };
 
-    Compass.prototype.update = function() {
-        this.camera.up.copy(this.mainCamera.up);
-        this.camera.position.copy(this.mainCamera.position);
-        this.camera.position.sub(this.controls.target);
-        this.camera.lookAt(this.scene.position);
-        this.camera.position.setLength(300);
-        this.renderer.render(this.scene, this.camera);
-    };
-
-    Compass.prototype.onMouseMove = function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-//    console.log("MouseMove");
-    };
-
-    Compass.prototype.onMouseDown = function(event) {
-        event.preventDefault();
-//    console.log("MouseDown");
-    };
-
-    Compass.prototype.onMouseUp = function(event) {
-        event.preventDefault();
-//    console.log("MouseUp");
+    Compass.prototype.update = function () {
+        var up = this.camera.up,
+            lookFrom = this.camera.position,
+            lookTarget = this.controls.target,
+            matrix = new THREE.Matrix4(),
+            roundedMatrix;
+        matrix.lookAt(lookTarget, lookFrom, up);
+        this.compassCubeMatrix.getInverse(matrix);
+        roundedMatrix = Array.prototype.map.call(this.compassCubeMatrix.elements, function (v) {
+            return v.toFixed(3);
+        });
+        setStyleTransform(this.compassCube, 'perspective(300px) matrix3d('+roundedMatrix.join()+')');
     };
 
     return Compass;
 });
+
 /**
  * @author Eberhard Graether / http://egraether.com/
  * @author Mark Lundin 		 / http://mark-lundin.com
@@ -4180,7 +4235,7 @@ define('viewer_controls',["THREE", "TrackballControls", "dat"], function(THREE, 
             viewDistance = options.viewDistance || 13000,
             viewAngles = options.viewAngles || new THREE.Euler( 0, 0 ,0),
         //viewAngles = options.viewAngles || new THREE.Euler( 0, 0, 0 ),
-            referenceOrientation = new THREE.Vector3( 0, 1, 0 );
+            referenceOrientation = new THREE.Vector3( 0, 0, 1 );
 
         function init() {
             trackballControl = new THREE.TrackballControls( camera, canvas );
@@ -4192,13 +4247,20 @@ define('viewer_controls',["THREE", "TrackballControls", "dat"], function(THREE, 
             trackballControl.staticMoving = true;
             trackballControl.dynamicDampingFactor = 0.3;
             // Initial position
-            trackballControl.up0.set( 0, 0, 1 );
+            trackballControl.up0.set( 0, 1, 0 );
             trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
             trackballControl.position0.multiplyScalar( -viewDistance );
             trackballControl.reset();
             // Widgets
-            var cameraOrientation = new CameraOrientationHelper( viewAngles, viewDistance, trackballControl );
-            var gui = new dat.GUI();
+            //var gui = new dat.GUI();
+            //var renderSettingsFolder = gui.addFolder('Render Settings');
+            //renderSettingsFolder.add(options.renderPassSSAO, 'enabled').name('SSAO').onChange(function () {
+            //    options.viewer.invalidate();
+            //});
+            //renderSettingsFolder.add(options.renderPassFXAA, 'enabled').name('FXAA').onChange(function () {
+            //    options.viewer.invalidate();
+            //});
+            /*
             var cameraControlsFolder = gui.addFolder( 'Camera Controls' );
             var distanceController = cameraControlsFolder.add( cameraOrientation, 'distance', 0, 50000 ).listen();
             var aspectController = cameraControlsFolder.add( cameraOrientation, 'aspect', [
@@ -4230,45 +4292,51 @@ define('viewer_controls',["THREE", "TrackballControls", "dat"], function(THREE, 
                 switch ( val ) {
 
                     case 'back':
-                        viewAngles = new THREE.Euler( 0, 0, Math.PI);
-                        trackballControl.up0.set( 0, 0, 1 );
+                        viewAngles = new THREE.Euler( 0, Math.PI, 0);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
                     case 'left':
-                        viewAngles = new THREE.Euler( 0, 0, -Math.PI / 2);
-                        trackballControl.up0.set( 0, 0, 1 );
+                        viewAngles = new THREE.Euler( 0, -Math.PI / 2, 0);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
                     case 'right':
-                        viewAngles = new THREE.Euler( 0, 0, Math.PI / 2);
-                        trackballControl.up0.set( 0, 0, 1 );
+                        viewAngles = new THREE.Euler( 0, Math.PI / 2, 0);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
                     case 'top':
-                        viewAngles = new THREE.Euler( -Math.PI / 2 , 0, 0);
-                        trackballControl.up0.set( 0, 1, 0 );
+                        viewAngles = new THREE.Euler( Math.PI / 2 , 0, 0);
+                        trackballControl.up0.set( 0, 0, 1 );
                         break;
                     case 'bottom':
-                        viewAngles = new THREE.Euler( Math.PI / 2, 0, 0);
-                        trackballControl.up0.set( 0, 1, 0 );
+                        viewAngles = new THREE.Euler( -Math.PI / 2, 0, 0);
+                        trackballControl.up0.set( 0, 0, -1 );
                         break;
 
                     default :
                     case 'front':
                         viewAngles = new THREE.Euler( 0, 0, 0);
-                        trackballControl.up0.set( 0, 0, 1);
+                        trackballControl.up0.set( 0, 1, 0 );
                         break;
 
                 }
 
                 var distance = trackballControl.object.position.length();
 
-                trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
+                trackballControl.position0 = trackballControl.referenceOrientation.clone().applyEuler( viewAngles );
                 trackballControl.position0.multiplyScalar( -distance );
                 trackballControl.reset();
 
                 cameraOrientation.aspect = val;
 
             } );
-
-
+            */
+            trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
+                var distance = trackballControl.object.position.length(),
+                    upVector = typeof(opt_upVector) === 'undefined' ? trackballControl.up0 : opt_upVector;
+                trackballControl.position0 = referenceOrientation.clone().applyEuler(euler).multiplyScalar(-distance);
+                trackballControl.up0.set(upVector.x, upVector.y, upVector.z);
+                trackballControl.reset();
+            };
         }
         if ( camera !== undefined && camera !== null ) {
             init();
@@ -4353,6 +4421,7 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
         // RENDERER
         canvasParent = document.getElementById(canvasParentId);
         renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = renderer;
         renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
         //    renderer.shadowMapEnabled = true;
         //    renderer.shadowMapType = THREE.PCFShadowMap;
@@ -4373,7 +4442,7 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
             75,
             canvasParent.offsetWidth / canvasParent.offsetHeight,
             0.1,
-            10000
+            1000000
         );
         camera.position.x = -5000;
         camera.position.y = -5000;
@@ -4390,6 +4459,7 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
         renderPassSSAO.uniforms['cameraFar'].value = camera.far;
         renderPassSSAO.uniforms['aoClamp'].value = 0.9;
         renderPassSSAO.uniforms['lumInfluence'].value = 0.5;
+        renderPassSSAO.enabled = false;
         // EFFECT FXAA
         renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
         renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
@@ -4397,7 +4467,7 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
         renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
         renderPassCopy.renderToScreen = true;
         // ADD RENDER PASSES
-//        composer.addPass(renderPassSSAO);
+        composer.addPass(renderPassSSAO);
         composer.addPass(renderPassFXAA);
         composer.addPass(renderPassCopy);
 
@@ -4427,8 +4497,11 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
 
         // VIEW CONTROLS
         controls =  ViewerControls({
+            viewer: this,
             camera: camera,
-            canvas: canvas
+            canvas: canvas,
+            renderPassSSAO: renderPassSSAO,
+            renderPassFXAA: renderPassFXAA
         });
 
         // COMPASS
@@ -4436,7 +4509,6 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
             width: 200,
             height: 200
         });
-        scene.add(compass.object3D);
 
         // PRIVATE FUNCTIONS
         render = function() {
@@ -4481,6 +4553,7 @@ define('viewer',["THREE", "compass", "viewer_controls"], function(THREE, Compass
             depthTarget = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight, renderTargetParametersRGBA);
             depthPassPlugin.renderTarget = depthTarget;
             renderPassSSAO.uniforms['tDepth'].value = depthTarget;
+            renderPassSSAO.uniforms['size'].value.set(canvasParent.offsetWidth, canvasParent.offsetHeight);
             renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
             renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
             camera.aspect = canvasParent.offsetWidth / canvasParent.offsetHeight;
@@ -4583,9 +4656,6 @@ define('cad',["jquery", "jstree", "data_loader", "viewer"], function($, jstree, 
         });
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
-            // Update the download count
-            var count = self._loader.queueLength(false);
-            $(".steptools-downloads-count").text(count);
             // Is this the index file
             if (id === "index") {
                 $("li#index").remove();
@@ -4593,25 +4663,21 @@ define('cad',["jquery", "jstree", "data_loader", "viewer"], function($, jstree, 
                 // Change the file status to 'parsing'
                 $("li#" + id).text(event.file + ": Parsing");
             }
-            // Make sure to redraw the model
-            self._viewer.invalidate();
         });
         this._loader.addEventListener("parseComplete", function(event) {
             var id = event.file.split(".")[0];
             // Change the file status to 'parsing'
             $("li#" + id).text(event.file + ": Finishing");
         });
-        this._loader.addEventListener("shellLoad", function(event) {
+        this._loader.addEventListener("shellLoad", function() {
+            // Make sure to redraw the model
+            self._viewer.invalidate();
+        });
+        this._loader.addEventListener("workerFinish", function(event) {
             var id = event.file.split(".")[0];
             // Remove the item from the list
             $("li#" + id).remove();
             // Update the count
-            var count = self._loader.queueLength(false);
-            $(".steptools-downloads-count").text(count);
-            // Make sure to redraw the model
-            self._viewer.invalidate();
-        });
-        this._loader.addEventListener("queueEmpty", function() {
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
         });
@@ -4639,8 +4705,8 @@ define('cad',["jquery", "jstree", "data_loader", "viewer"], function($, jstree, 
         }, false);
 
         // Keybased events
-        var node, obj;
         window.addEventListener("keypress", function(event) {
+            var node, obj;
             //console.log(event.keyCode);
             switch(event.keyCode) {
                 // Explode on 'x' key pressed
@@ -4658,13 +4724,14 @@ define('cad',["jquery", "jstree", "data_loader", "viewer"], function($, jstree, 
                     self.tree.deselect_all();
                     self._viewer.invalidate();
                     break;
-                // 'o' to set opacity of selected to 0.5
+                // 'o' to toggle transparency
                 case 111:
-                    self.setSelectedOpacity(0.5);
-                    break;
-                // 'p' to set opacity of selected back to 1
-                case 112:
-                    self.setSelectedOpacity(1.0);
+                    node = self.tree.get_selected(false);
+                    obj = self._parts[0].getByID(node[0]);
+                    if (obj) {
+                        obj.toggleTransparency();
+                        self._viewer.invalidate();
+                    }
                     break;
                 // 'z' to zoomToFit
                 case 122:
@@ -4829,6 +4896,7 @@ define('cad',["jquery", "jstree", "data_loader", "viewer"], function($, jstree, 
 
     return CADjs;
 });
+
 (function (global) {
     
     var VIS,
@@ -5040,13 +5108,14 @@ define("VIS", ["jquery"], (function (global) {
 
 require.config({
     paths: {
-        jquery: "libs/jquery.min",
-        jstree: "libs/jstree.min",
-        underscore: 'libs/underscore-min',
-        THREE: 'libs/three.min',
-        TrackballControls: "libs/TrackballControls",
-        dat: "libs/dat.gui.min",
-        VIS: "libs/visualize"
+        jquery:             'libs/jquery.min',
+        jstree:             'libs/jstree.min',
+        underscore:         'libs/underscore-min',
+        THREE:              'libs/three.min',
+        TrackballControls:  'libs/TrackballControls',
+        dat:                'libs/dat.gui.min',
+        VIS:                'libs/visualize',
+        Velvety:            'shaders/VelvetyShader'
     },
     shim: {
         jquery: {
@@ -5070,9 +5139,6 @@ require.config({
         VIS: {
             exports: "VIS",
             deps: ["jquery"]
-        },
-        shape: {
-            deps: ['shaders/VelvetyShader']
         },
         viewer: {
             deps: [
@@ -5113,7 +5179,6 @@ require.config({
   Primary application entry point
  */
 requirejs(["cad", "jquery", "THREE", "VIS"], function(CADjs, $, THREE, VIS) {
-
     $(VIS).on("ready", function(){
         var cad = window.cadjs = new CADjs({
             viewContainer: "steptools-view",

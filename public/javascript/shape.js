@@ -7,7 +7,7 @@
 
 /********************************* Shape Class ********************************/
 
-define(["THREE"], function(THREE) {
+define(["THREE", "Velvety"], function(THREE) {
     function Shape(id, assembly, parent, transform, unit) {
         var ret = assembly.makeChild(id, this);
         this._id = id;
@@ -339,7 +339,7 @@ define(["THREE"], function(THREE) {
     };
 
     Shape.prototype.explode = function(distance, timeS) {
-        var i, child, self = this;
+        var i, child;
         // Do we need to determine explosion direction
         if (!this._explodeDistance) {
             this._explodeStates = {};
