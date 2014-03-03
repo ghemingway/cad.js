@@ -105,7 +105,12 @@ body {
     width: 270px;
     max-height: 20em;
 
-    transition: opacity .2s;
+    transition: opacity .4s, bottom .4s;
+}
+
+.steptools-downloads.out {
+    bottom: -25px;
+    opacity: 0;
 }
 
 .steptools-downloads:hover {

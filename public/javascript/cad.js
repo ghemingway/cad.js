@@ -94,6 +94,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             $downloads.append("<li id='" + id + "'>" + event.file + "</li>");
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
+
+            // Maming sure it is visble
+            $( ".steptools-downloads" ).removeClass( "out" );
+
         });
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
@@ -121,6 +125,12 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             // Update the count
             var count = self._loader.queueLength(false);
             $(".steptools-downloads-count").text(count);
+
+            // Hiding when empty
+            if ( count === 0 ) {
+                $( ".steptools-downloads" ).addClass( "out" );
+            }
+
         });
         this._loader.addEventListener("loadProgress", function(event) {
             if (event.loaded) {
