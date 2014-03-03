@@ -74,7 +74,7 @@ gulp.task('build', function() {
             }
         }
     })
-    //.pipe(uglify())
+    .pipe(uglify())
     .pipe(gulp.dest('./public/javascript')); // pipe it to the output DIR
 });
 
