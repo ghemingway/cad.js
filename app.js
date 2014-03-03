@@ -46,6 +46,10 @@ if (cluster.isMaster) {
         res.sendfile('public/viewer.html');
     });
 
+    app.get("/cad.prod", function(req, res) {
+        res.sendfile('public/index.html');
+    });
+
     app.get("/data/:modelname/:file", function(req, res) {
         res.sendfile("./data/" + req.params.modelname + "/" + req.params.file);
     });
