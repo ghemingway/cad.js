@@ -9,6 +9,7 @@ gulp.task('build', function() {
         out: 'build.js',
         paths: {
             jquery:             'libs/jquery.min',
+            jqueryui:           'libs/jquery-ui.min',
             jstree:             'libs/jstree.min',
             underscore:         'libs/underscore-min',
             THREE:              'libs/three.min',
@@ -22,7 +23,7 @@ gulp.task('build', function() {
                 exports: "$"
             },
             jstree: {
-                deps: ["jquery"]
+                deps: ["jquery","jqueryui"]
             },
             underscore: {
                 exports: "_"
@@ -38,7 +39,7 @@ gulp.task('build', function() {
             },
             VIS: {
                 exports: "VIS",
-                deps: ["jquery"]
+                deps: ["jquery","jqueryui"]
             },
             viewer: {
                 deps: [

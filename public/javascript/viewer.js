@@ -38,6 +38,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         depthTarget = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight, renderTargetParametersRGBA);
         depthPassPlugin = new THREE.DepthPassPlugin();
         depthPassPlugin.renderTarget = depthTarget;
+        depthPassPlugin.enabled = false;
         renderer.addPrePlugin(depthPassPlugin);
         // CANVAS
         canvas = renderer.domElement;

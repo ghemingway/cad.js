@@ -102,7 +102,14 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         // Initialize the assembly
         this._loader.load(resourceURL, "assembly", function(err, part) {
             if (err) {
-                console.log("CADjs.load error - " + err);
+                // Popup message for user to handle
+                $("#dialog").dialog({
+                    autoOpen: true,
+                    buttons: [ { text: "Ok", click: function() { $(this).dialog("close"); } } ],
+                    modal: true,
+                    title: "CAD.js Load Error - " + err.status
+                });
+                $("#dialog-content").text("Error loading model: " + err.file);
             } else {
                 // Add the part to the list
                 self._parts.push(part);
@@ -251,6 +258,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onClick = function(event) {
+        if (!this._parts[0]) return;
         // Clear selections if meta key not pressed
         if (!event.metaKey) {
             this._parts[0].hideAllBoundingBoxes();
@@ -294,7 +302,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             this._viewer.invalidate();
         }
     };
-
+/*
     CADjs.prototype.setSelectedOpacity = function(opacity) {
         var node = this.tree.get_selected(false);
         if (node) {
@@ -307,7 +315,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             this._viewer.invalidate();
         }
     };
-
+*/
     CADjs.prototype.renderTree = function() {
         var self = this;
         var geometryOnly = false;

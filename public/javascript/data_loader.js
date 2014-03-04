@@ -112,9 +112,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
 
     DataLoader.prototype.load = function(url, validateType, callback) {
         var loadErrorCheck = function(error, assembly) {
-            if (!error) callback(error, assembly);
+            if (!error) {
+                callback(undefined, assembly);
+            }
             else {
-                console.log(error);
+                callback(error);
             }
         };
         var req = {
@@ -278,7 +280,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 this.dispatchEvent(event.data);
                 break;
             case "loadError":
-                if (req.callback) req.callback("loadError");
+                if (req.callback) req.callback({
+                    error: "loadError",
+                    status: event.data.status,
+                    file: req.url
+                });
                 break;
         }
     };

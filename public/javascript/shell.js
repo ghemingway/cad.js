@@ -37,20 +37,20 @@ define(["THREE"], function(THREE) {
         this.dispatchEvent({ type: "shellStartLoad", shell: this });
         // Create the geometry to hold the data
         this._geometry = new THREE.BufferGeometry();
-        this._geometry.addAttribute('position', Float32Array, this.size * 3, 3);
-        this._geometry.addAttribute('normal',   Float32Array, this.size * 3, 3);
-        this._geometry.addAttribute('color',    Float32Array, this.size * 3, 3);
+        this._geometry.addAttribute('position', Float32Array, this._size * 3, 3);
+        this._geometry.addAttribute('normal',   Float32Array, this._size * 3, 3);
+        this._geometry.addAttribute('color',    Float32Array, this._size * 3, 3);
 
         // Setup the offsets
         var chunkSize = 21845;
         var i;
         this._geometry.offsets = [];
-        var offsets = this.size / chunkSize;
+        var offsets = this._size / chunkSize;
         for (i = 0; i < offsets; i++) {
             var offset = {
                 start: i * chunkSize * 3,
                 index: i * chunkSize * 3,
-                count: Math.min( this.size - ( i * chunkSize ), chunkSize ) * 3
+                count: Math.min( this._size - ( i * chunkSize ), chunkSize ) * 3
             };
             this._geometry.offsets.push( offset );
         }
