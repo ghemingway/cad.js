@@ -14,7 +14,6 @@ body {
 .steptools-view {
     width: 100%;
     height: 100%;
-    background-color: #383838;
     position: absolute;
     top: 0;
     left: 0;
@@ -87,10 +86,25 @@ body {
     border-right: 1px solid #333;
 
     transition: opacity .2s;
+
+    padding: 1ex;
+}
+
+.bright .steptools-tree {
+    background-color: #666;
+    color: #fff;
 }
 
 .steptools-tree:hover {
     opacity: 1;
+}
+
+.non-initialized .steptools-tree {
+    display: none;
+}
+
+.compact .steptools-tree {
+    display: none;
 }
 
 .steptools-downloads {
@@ -111,6 +125,10 @@ body {
 .steptools-downloads.out {
     bottom: -25px;
     opacity: 0;
+}
+
+.non-initialized .steptools-downloads {
+    display: none;
 }
 
 .steptools-downloads:hover {
@@ -148,12 +166,32 @@ body {
     top: 32px;
 }
 
+.non-initialized .info-panel {
+    display: none;
+}
+
 .steptools-compass {
     position: relative;
+
+    transform:scale3d(.755, .75, .75);
+    -ms-transform:scale3d(.75, .75, .75); /* IE 9 */
+    -webkit-transform:scale3d(.75, .75, .75); /* Opera, Chrome, and Safari */
+}
+
+.non-initialized .steptools-compass {
+    display: none;
 }
 
 .key-hints {
     padding: 16px 0 0 0;
+}
+
+.compact .key-hints {
+    display: none;
+}
+
+.bright .key-hints {
+    color: #999;
 }
 
 .key-label {
@@ -163,4 +201,8 @@ body {
     text-align: center;
     border: 1px solid white;
     border-radius: 3px;
+}
+
+.non-initialized .key-label {
+    display: none;
 }
