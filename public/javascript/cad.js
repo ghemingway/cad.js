@@ -1,4 +1,4 @@
-/* global define, console */
+/*global define, console */
 
 /* G. Hemingway Copyright @2014
  * Context for the visualization of a set of CAD models
@@ -16,7 +16,16 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         ownloadsContainerId
      */
 
-    var _THEMES = [ "dark", "bright" ];
+    var THEMES = {
+            "dark": {
+                cssClass: "dark",
+                canvasClearColor: 0x000000
+            },
+            "bright": {
+                cssClass: "bright",
+                canvasClearColor: 0xffffff
+            }
+        };
 
     function CADjs(config) {
         if (!config || !config.viewContainerId || !config.compassContainerId || !config.treeContainerSelector) {
@@ -45,38 +54,48 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             this.setCompactMode( false );
         }
 
-        if ( config.theme !== undefined ) {
-            this.setTheme( config.theme );
-        } else {
-            this.setTheme( _THEMES[ 0 ] );
-        }
+        this.setTheme(THEMES[config.theme] || THEMES.dark);
 
     }
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
-        this._viewer = new Viewer(this._viewContainerId, this._compassContainerId);
+
+        var canvasClearColor = 0x000000;
+
+        if ( this._theme ) {
+            canvasClearColor = this._theme.canvasClearColor;
+        }
+
+        this._viewer = new Viewer(
+            this._viewContainerId,
+            this._compassContainerId,
+            canvasClearColor
+        );
+
         // Create the data loader
         this._loader = new DataLoader(this, this._viewer, { autorun: false });
         // Events
         this.bindEvents();
         // Signal ready
         $(this).trigger("pageSetup");
+
+        $( 'body').removeClass( 'non-initialized' );
     };
 
     CADjs.prototype.setCompactMode = function( isCompact ) {
+
+        var $body = $( 'body' );
 
         if ( this._isCompact !== isCompact ) {
 
             if ( isCompact ) {
 
-                this._$treeContainer.hide();
-                this._$viewContainer.addClass( "compact");
+                $body.addClass( "compact");
 
             } else {
 
-                this._$treeContainer.show();
-                this._$viewContainer.removeClass( "compact");
+                $body.removeClass( "compact");
 
             }
 
@@ -85,14 +104,23 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         }
     };
 
-    CADjs.prototype.setTheme = function( newTheme ) {
+    CADjs.prototype.setTheme = function(theme) {
 
-        if ( this._theme !== newTheme && _THEMES.indexOf( newTheme ) !== -1 ) {
+        var $body = $( 'body' );
 
-            this._$viewContainer.removeClass( this._theme );
-            this._$viewContainer.addClass( newTheme );
+        if ( theme ) {
 
-            this._theme = newTheme;
+            if ( this._theme ) {
+                $body.removeClass( this._theme.cssClass );
+            }
+
+            $body.addClass( theme.cssClass );
+
+            if (this._viewer) {
+                this._viewer.renderer.setClearColor( theme.canvasClearColor );
+            }
+
+            this._theme = theme;
 
         }
     };
@@ -129,11 +157,11 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.bindEvents = function () {
-        var self = this;
-        var canvasDOM = $( this._$viewContainer )[0];
+        var self = this,
+            canvasDOM = $( this._$viewContainer )[0],
 
         // Download manager interface
-        var $downloadsUl = this._$downloadsContainer.find( ">ul"),
+            $downloadsUl = this._$downloadsContainer.find( ">ul"),
             $downloadsCounter = this._$downloadsContainer.find( ".steptools-downloads-count");
 
         this._loader.addEventListener("addRequest", function(event) {
@@ -258,7 +286,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onClick = function(event) {
-        if (!this._parts[0]) return;
+        if (!this._parts[0]) {
+            return;
+        }
+
         // Clear selections if meta key not pressed
         if (!event.metaKey) {
             this._parts[0].hideAllBoundingBoxes();

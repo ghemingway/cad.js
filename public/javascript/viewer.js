@@ -9,11 +9,11 @@
 
 
 define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerControls) {
-    function Viewer(canvasParentId, compassParentId) {
+    function Viewer(canvasParentId, compassParentId, canvasClearColor) {
         var shouldRender = false,
             continuousRendering = false,
             canvasParent, renderer, canvas, scene, camera,
-//            light1, light2,
+//          light1, light2,
             controls, compass,
             render, animate, add3DObject, invalidate,
             renderTargetParametersRGBA, depthTarget, depthPassPlugin,
@@ -27,8 +27,13 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // RENDERER
         canvasParent = document.getElementById(canvasParentId);
-        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
         this.renderer = renderer;
+        
+        renderer.setClearColor( canvasClearColor );
         renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
         //    renderer.shadowMapEnabled = true;
         //    renderer.shadowMapType = THREE.PCFShadowMap;
