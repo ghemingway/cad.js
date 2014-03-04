@@ -298,10 +298,9 @@ define(["THREE", "Velvety"], function(THREE) {
         var self = this;
         this._object3D.traverse(function(object) {
             if (object.material && object.material.uniforms.opacity) {
+                object.material.transparent = opacity < 1;
+                object.material.depthWrite = opacity === 1;
                 object.material.uniforms['opacity'].value = opacity;
-                self._assembly.addEventListener("_clearOpacity", function() {
-                    object.material.uniforms['opacity'].value = 1;
-                });
             }
         });
     };

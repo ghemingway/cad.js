@@ -16,7 +16,6 @@ define([
         return {
             //side: THREE.DoubleSide,
             vertexColors: THREE.VertexColors,
-            transparent: true,
             uniforms: {
                 'opacity': {type: 'f', value: 1.0},
                 'ambientFactor': {type: 'f', value: 0.3},
