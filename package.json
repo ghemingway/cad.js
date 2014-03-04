@@ -18,7 +18,6 @@
   },
   "devDependencies": {
     "gulp-requirejs": "~0.1.3",
-    "gulp-uglify": "~0.2.1",
-    "gulp-bower": "0.0.3"
+    "gulp-uglify": "~0.2.1"
   }
 }

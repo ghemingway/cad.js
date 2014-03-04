@@ -1,42 +1,100 @@
+/* global define, console */
+
 /* G. Hemingway Copyright @2014
  * Context for the visualization of a set of CAD models
  */
-
-"use strict";
-
-
 /*************************************************************************/
 
 
 define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLoader, Viewer) {
+
+    "use strict";
     /* config:
-        viewContainer
-        compassContainer
-        treeContainer
-        downloadsContainer
+        viewContainerId
+        compassContainerId
+        dtreeContainerSelector
+        ownloadsContainerId
      */
+
+    var _THEMES = [ "dark", "bright" ];
+
     function CADjs(config) {
-        if (!config || !config.viewContainer || !config.compassContainer || !config.treeContainer) {
+        if (!config || !config.viewContainerId || !config.compassContainerId || !config.treeContainerSelector) {
             throw "CAD.js requires a configuration!!!";
         }
-        this._viewContainer = config.viewContainer;
-        this._compassContainer = config.compassContainer;
-        this._treeContainer = config.treeContainer;
-        this._downloadsContainer = config.downloadsContainer;
+        this._viewContainerId = config.viewContainerId;
+        this._$viewContainer = $( '#' + config.viewContainerId );
+
+        this._compassContainerId = config.compassContainerId;
+        this._$compassContainer = $( '#' + config.compassContainerId );
+
+        this._treeContainerSelector = config.treeContainerSelector;
+        this._$treeContainer = $( config.treeContainerSelector );
+
+        this._$downloadsContainer = $( '#' + config.downloadsContainerId );
+
+        this._isCompact = undefined;
         this._loader = undefined;
         this._parts = [];
         this._viewer = undefined;
+        this._theme = undefined;
+
+        if ( config.isCompact !== undefined ) {
+            this.setCompactMode( config.isCompact );
+        } else {
+            this.setCompactMode( false );
+        }
+
+        if ( config.theme !== undefined ) {
+            this.setTheme( config.theme );
+        } else {
+            this.setTheme( _THEMES[ 0 ] );
+        }
+
     }
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
-        this._viewer = new Viewer(this._viewContainer, this._compassContainer);
+        this._viewer = new Viewer(this._viewContainerId, this._compassContainerId);
         // Create the data loader
         this._loader = new DataLoader(this, this._viewer, { autorun: false });
         // Events
         this.bindEvents();
         // Signal ready
         $(this).trigger("pageSetup");
+    };
+
+    CADjs.prototype.setCompactMode = function( isCompact ) {
+
+        if ( this._isCompact !== isCompact ) {
+
+            if ( isCompact ) {
+
+                this._$treeContainer.hide();
+                this._$viewContainer.addClass( "compact");
+
+            } else {
+
+                this._$treeContainer.show();
+                this._$viewContainer.removeClass( "compact");
+
+            }
+
+            this._isCompact = isCompact;
+
+        }
+    };
+
+    CADjs.prototype.setTheme = function( newTheme ) {
+
+        if ( this._theme !== newTheme && _THEMES.indexOf( newTheme ) !== -1 ) {
+
+            this._$viewContainer.removeClass( this._theme );
+            this._$viewContainer.addClass( newTheme );
+
+            this._theme = newTheme;
+
+        }
     };
 
     CADjs.prototype.load = function(resourceURL) {
@@ -72,15 +130,21 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
     CADjs.prototype.bindEvents = function () {
         var self = this;
-        var canvasDOM = document.getElementById(this._viewContainer);
+        var canvasDOM = $( this._$viewContainer )[0];
 
         // Download manager interface
-        var $downloads = $(this._downloadsContainer);
+        var $downloadsUl = this._$downloadsContainer.find( ">ul"),
+            $downloadsCounter = this._$downloadsContainer.find( ".steptools-downloads-count");
+
         this._loader.addEventListener("addRequest", function(event) {
             var id = event.file.split(".")[0];
-            $downloads.append("<li id='" + id + "'>" + event.file + "</li>");
+            $downloadsUl.append("<li id='" + id + "'>" + event.file + "</li>");
             var count = self._loader.queueLength(false);
-            $(".steptools-downloads-count").text(count);
+            $downloadsCounter.text(count);
+
+            // Maming sure it is visble
+            self._$downloadsContainer.removeClass( "out" );
+
         });
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
@@ -107,7 +171,13 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             $("li#" + id).remove();
             // Update the count
             var count = self._loader.queueLength(false);
-            $(".steptools-downloads-count").text(count);
+            $downloadsCounter.text(count);
+
+            // Hiding when empty
+            if ( count === 0 ) {
+                self._$downloadsContainer.addClass( "out" );
+            }
+
         });
         this._loader.addEventListener("loadProgress", function(event) {
             if (event.loaded) {
@@ -125,11 +195,15 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             _change = false;
         });
         canvasDOM.addEventListener("mouseup", function(event) {
-            if (!_change) self.onClick(event);
+            if (!_change) {
+                self.onClick(event);
+            }
             _change = false;
         }, false);
         canvasDOM.addEventListener("mousemove", function() {
-            if (!_change) self.onMove();
+            if (!_change) {
+                self.onMove();
+            }
         }, false);
 
         // Keybased events
@@ -246,8 +320,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         var self = this;
         var geometryOnly = false;
         var treeData = this._parts[0].getTree(geometryOnly);
-        if (this.tree) this.tree.destroy();
-        this.tree = $.jstree.create(this._treeContainer, {
+        if (this.tree) {
+            this.tree.destroy();
+        }
+        this.tree = $.jstree.create(this._treeContainerSelector, {
             plugins : [ 'contextmenu' ],
             core: {
                 data: [ treeData ],
@@ -278,7 +354,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 //                        }
                     };
                     if (menuItem.state.disabled) {
-                        menu["show"] = {
+                        menu.show = {
                             label: "Show",
                             action: function() {
                                 var obj = self._parts[0].getByID(menuItem.id);
@@ -290,7 +366,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                             }
                         };
                     } else {
-                        menu["hide"] = {
+                        menu.hide = {
                             label: "Hide",
                             action: function() {
                                 var obj = self._parts[0].getByID(menuItem.id);
@@ -308,7 +384,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             }
         });
 
-        $(this._treeContainer).on("select_node.jstree deselect_node.jstree", function(event, data) {
+        this._$treeContainer.on("select_node.jstree deselect_node.jstree", function(event, data) {
             self._parts[0].hideAllBoundingBoxes();
             //self._parts[0].clearHighlights();
             for (var i = 0; i < data.selected.length; i++) {
