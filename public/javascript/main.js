@@ -24,6 +24,9 @@ require.config({
         jquery: {
             exports: "$"
         },
+        jqueryui: {
+            deps: ['jquery']
+        },
         jstree: {
             deps: ["jquery","jqueryui"]
         },
