@@ -177,9 +177,10 @@ self.addEventListener("message", function(e) {
         }
     });
     xhr.addEventListener("loadend", function() {
-        if (xhr.status === 404) {
+        if (xhr.status === 404 || xhr.status === 403) {
             self.postMessage({
                 type: "loadError",
+                status: xhr.status,
                 url: url,
                 file: parts[parts.length - 1],
                 workerID: workerID

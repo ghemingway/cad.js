@@ -11,6 +11,7 @@
 require.config({
     paths: {
         jquery:             'libs/jquery.min',
+        jqueryui:           'libs/jquery-ui.min',
         jstree:             'libs/jstree.min',
         underscore:         'libs/underscore-min',
         THREE:              'libs/three.min',
@@ -24,7 +25,7 @@ require.config({
             exports: "$"
         },
         jstree: {
-            deps: ["jquery"]
+            deps: ["jquery","jqueryui"]
         },
         underscore: {
             exports: "_"
@@ -40,7 +41,7 @@ require.config({
         },
         VIS: {
             exports: "VIS",
-            deps: ["jquery"]
+            deps: ["jquery","jqueryui"]
         },
         viewer: {
             deps: [
