@@ -44,7 +44,8 @@ function processShellXML(url, workerID, data) {
     // Signal that this worker is done
     self.postMessage({
         type: "workerFinish",
-        workerID: workerID
+        workerID: workerID,
+        file: parts[parts.length - 1]
     });
 }
 
