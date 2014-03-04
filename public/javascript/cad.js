@@ -135,8 +135,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         // Keybased events
         window.addEventListener("keypress", function(event) {
             var node, obj;
-            //console.log(event.keyCode);
-            switch(event.keyCode) {
+            switch(event.keyCode || event.charCode || event.which) {
                 // Explode on 'x' key pressed
                 case 120:
                     self.explode(100);
