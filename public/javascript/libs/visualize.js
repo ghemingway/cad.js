@@ -1,3 +1,4 @@
+/*global document, setTimeout, window */
 (function (global) {
     "use strict";
     var VIS,
@@ -84,7 +85,7 @@
             return this.config.processingPollUrl;
         },
         "getProcessingParamsUrl": function () {
-             if (this.config.processingParamsUrl === null) {
+            if (this.config.processingParamsUrl === null) {
                 this.config.processingParamsUrl = makeVisualizerUrl('processed_parameters');
             }
             return this.config.processingParamsUrl;
@@ -141,7 +142,7 @@
                         that.processingError.call(that);
                     }
                 },
-                error: function() {
+                error: function () {
                     that.processingError();
                 }
             });
@@ -156,13 +157,13 @@
                 data: {"unique_id": that.getProcessResourceId()},
                 success: function (response) {
 
-                    $.each(response.parameters, function(param) {
+                    $.each(response.parameters, function (param) {
                         that.parameters[param] = response.parameters[param];
                     });
 
                     $(that).trigger("ready");
                 },
-                "error": function() {
+                "error": function () {
                     that.processingError();
                 }
             });
@@ -174,11 +175,12 @@
                     "text": "There was an error processing this file for visualization"
                 })
             ).append($("<span>You can </span>"))
-             .append(
+                .append(
                     $("<a/>", {
                         "href": this.getResourceUrl(),
                         "text": "download the file"
-                    }))
+                    })
+                )
                 .append($("<span> instead.</span>"));
         },
 
