@@ -18,6 +18,7 @@ require.config({
         THREE:              'libs/three.min',
         TrackballControls:  'libs/TrackballControls',
         dat:                'libs/dat.gui.min',
+        bigScreen:          'libs/bigscreen.min',
         VIS:                'libs/visualize',
         Velvety:            'shaders/VelvetyShader'
     },
@@ -29,7 +30,7 @@ require.config({
             deps: ['jquery']
         },
         jstree: {
-            deps: ["jquery","jqueryui"]
+            deps: ["jquery", "jqueryui"]
         },
         underscore: {
             exports: "_"
@@ -45,7 +46,7 @@ require.config({
         },
         VIS: {
             exports: "VIS",
-            deps: ["jquery","jqueryui"]
+            deps: ["jquery", "jqueryui", "bigScreen"]
         },
         viewer: {
             deps: [
