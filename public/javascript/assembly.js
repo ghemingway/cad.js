@@ -204,6 +204,7 @@ define(["THREE"], function(THREE) {
                 sub(controls.target).
                 normalize().
                 multiplyScalar(dist);
+        controls.sceneRadius = radius;
         controls.target0.copy(newTargetPosition.clone());
         controls.position0.copy(newCameraPosition.clone());
         controls.up0.copy(camera.up.clone());

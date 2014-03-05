@@ -257,7 +257,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // 'q' unselects all tree elements
                 case 113:
                     self._parts[0].hideAllBoundingBoxes();
-                    console.log("Got here");
                     self.tree.deselect_all();
                     self._viewer.invalidate();
                     break;
@@ -267,8 +266,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     obj = self._parts[0].getByID(node[0]);
                     if (obj) {
                         obj.toggleTransparency();
-                        self._viewer.invalidate();
+                    } else {
+                        self._parts[0].toggleTransparency();
                     }
+                    self._viewer.invalidate();
                     break;
                 // 'z' to zoomToFit
                 case 122:
@@ -293,6 +294,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onClick = function(event) {
+        document.body.focus();
+
         if (!this._parts[0]) {
             return;
         }
