@@ -294,7 +294,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     };
 
     CADjs.prototype.onClick = function(event) {
-        document.body.focus();
+        event.target.focus();
 
         if (!this._parts[0]) {
             return;
