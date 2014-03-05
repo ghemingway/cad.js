@@ -170,10 +170,17 @@ body {
     display: none;
 }
 
+.compact .info-panel {
+    top: 14px;
+    right: 14px;
+}
+
 .steptools-compass {
     position: relative;
+}
 
-    transform:scale3d(.755, .75, .75);
+.compact .info-panel {
+    transform:scale3d(.75, .75, .75);
     -ms-transform:scale3d(.75, .75, .75); /* IE 9 */
     -webkit-transform:scale3d(.75, .75, .75); /* Opera, Chrome, and Safari */
 }
