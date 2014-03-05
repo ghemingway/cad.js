@@ -21,6 +21,10 @@ define(["THREE"], function(THREE) {
         this._product = undefined;
     }
 
+    Assembly.prototype.getCADjs = function() {
+        return this._loader._parent;
+    };
+
     Assembly.prototype.getID = function() {
         if (this._product) {
             return this._product.getID();
@@ -200,6 +204,7 @@ define(["THREE"], function(THREE) {
                 sub(controls.target).
                 normalize().
                 multiplyScalar(dist);
+        controls.sceneRadius = radius;
         controls.target0.copy(newTargetPosition.clone());
         controls.position0.copy(newCameraPosition.clone());
         controls.up0.copy(camera.up.clone());

@@ -9,7 +9,7 @@
 
 
 define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerControls) {
-    function Viewer(canvasParentId, compassParentId, canvasClearColor) {
+    function Viewer(CADjs) {
         var shouldRender = false,
             continuousRendering = false,
             canvasParent, renderer, canvas, scene, camera,
@@ -26,14 +26,14 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         };
 
         // RENDERER
-        canvasParent = document.getElementById(canvasParentId);
+        canvasParent = document.getElementById(CADjs._viewContainerId);
         renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true
         });
         this.renderer = renderer;
         
-        renderer.setClearColor( canvasClearColor );
+        renderer.setClearColor(CADjs.getThemeValue('canvasClearColor'));
         renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
         //    renderer.shadowMapEnabled = true;
         //    renderer.shadowMapType = THREE.PCFShadowMap;
@@ -118,7 +118,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         });
 
         // COMPASS
-        compass = new Compass(compassParentId, camera, controls, {
+        compass = new Compass(CADjs._compassContainerId, camera, controls, {
             width: 200,
             height: 200
         });

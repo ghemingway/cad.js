@@ -37,6 +37,10 @@ define(["THREE", "Velvety"], function(THREE) {
         return ret;
     }
 
+    Shape.prototype.getCADjs = function() {
+        return this._assembly.getCADjs();
+    };
+
     Shape.prototype.instance = function(source, assembly, parent, transform) {
         // Setup instance info
         source._instances.push(this);
@@ -116,10 +120,11 @@ define(["THREE", "Velvety"], function(THREE) {
 
     Shape.prototype.addAnnotationGeometry = function(lineGeometries) {
 //        console.log("Adding Annotation Geo: " + lineGeometries.length);
-        var material = new THREE.LineBasicMaterial({
-            color: 0xffffff,
-            linewidth: 1
-        });
+        var CADjs = this.getCADjs(),
+            material = new THREE.LineBasicMaterial({
+                color: CADjs.getThemeValue('annotationColor'),
+                linewidth: 1
+            });
         for (var i = 0; i < lineGeometries.length; i++) {
             var geometry = lineGeometries[i];
             var lines = new THREE.Line(geometry, material, THREE.LineStrip);
