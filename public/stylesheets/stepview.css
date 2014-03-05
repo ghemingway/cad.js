@@ -250,6 +250,23 @@ body.non-initialized::after {
     animation: spinclockwise 1.25s linear infinite reverse;
 }
 
+#resizer {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    display: none;
+    cursor: pointer;
+}
+
+#resizer>img {
+    opacity: .6;
+    display: block;
+}
+
+#resizer:hover>img {
+    opacity: 1;
+}
+
 
 @-webkit-keyframes spinclockwise {
     from {-webkit-transform: rotateZ(0deg);}

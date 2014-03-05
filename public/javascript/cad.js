@@ -1,4 +1,4 @@
-/*global define, console */
+/*global define, console, BigScreen */
 
 /* G. Hemingway Copyright @2014
  * Context for the visualization of a set of CAD models
@@ -48,6 +48,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._viewer = undefined;
         this._theme = undefined;
 
+        this._compactTheme = undefined;
+
         if ( config.isCompact !== undefined ) {
             this.setCompactMode( config.isCompact );
         } else {
@@ -60,7 +62,30 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
-        var canvasClearColor = 0x000000;
+        var canvasClearColor = 0x000000,
+            $resizer = $('#resizer'),
+            $expander = $('#resizer>.expander'),
+            $minimizer = $('#resizer>.minimizer');
+
+        if (BigScreen.enabled && this._isCompact === true) {
+
+            $resizer.show();
+            $minimizer.hide();
+            $expander.show();
+
+            $expander.click(function() {
+                BigScreen.toggle();
+                $minimizer.toggle();
+                $expander.toggle();
+            });
+            $minimizer.click(function() {
+                BigScreen.toggle();
+                $minimizer.toggle();
+                $expander.toggle();
+            });
+        } else {
+            $resizer.hide();
+        }
 
         if ( this._theme ) {
             canvasClearColor = this._theme.canvasClearColor;
