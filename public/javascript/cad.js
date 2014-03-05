@@ -12,20 +12,25 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
     /* config:
         viewContainerId
         compassContainerId
-        dtreeContainerSelector
-        ownloadsContainerId
+        downloadsContainerId
+        treeContainerSelector
+        isCompact
+        theme
      */
 
     var THEMES = {
             "dark": {
                 cssClass: "dark",
-                canvasClearColor: 0x000000
+                canvasClearColor: 0x000000,
+                annotationColor: 0xffffff
             },
             "bright": {
                 cssClass: "bright",
-                canvasClearColor: 0xffffff
+                canvasClearColor: 0xffffff,
+                annotationColor: 0x008080
             }
         };
+    THEMES.default = THEMES.dark;
 
     function CADjs(config) {
         if (!config || !config.viewContainerId || !config.compassContainerId || !config.treeContainerSelector) {
@@ -66,11 +71,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             canvasClearColor = this._theme.canvasClearColor;
         }
 
-        this._viewer = new Viewer(
-            this._viewContainerId,
-            this._compassContainerId,
-            canvasClearColor
-        );
+        this._viewer = new Viewer(this);
 
         // Create the data loader
         this._loader = new DataLoader(this, this._viewer, { autorun: false });
@@ -121,6 +122,14 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
             this._theme = theme;
 
+        }
+    };
+
+    CADjs.prototype.getThemeValue = function(name) {
+        if (typeof(this._theme[name]) !== 'undefined') {
+            return this._theme[name];
+        } else {
+            return THEMES.default[name];
         }
     };
 

@@ -21,6 +21,10 @@ define(["THREE"], function(THREE) {
         this._product = undefined;
     }
 
+    Assembly.prototype.getCADjs = function() {
+        return this._loader._parent;
+    };
+
     Assembly.prototype.getID = function() {
         if (this._product) {
             return this._product.getID();
