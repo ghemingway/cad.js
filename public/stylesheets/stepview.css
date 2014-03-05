@@ -206,3 +206,61 @@ body {
 .non-initialized .key-label {
     display: none;
 }
+
+
+
+body.non-initialized {
+    background: black;
+}
+body.non-initialized::before,
+body.non-initialized::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 64px;
+    height: 64px;
+    margin: auto;
+}
+body.non-initialized::before {
+    background: url(images/busy-icon-cw.png);
+    /*animation*/
+    -webkit-animation: spinclockwise 1s linear infinite;
+    -moz-animation: spinclockwise 1s linear infinite;
+    -ms-animation: spinclockwise 1s linear infinite;
+    -o-animation: spinclockwise 1s linear infinite;
+    animation: spinclockwise 1s linear infinite;
+}
+body.non-initialized::after {
+    background: url(images/busy-icon-ccw.png);
+    /*animation*/
+    -webkit-animation: spinclockwise 1.25s linear infinite reverse;
+    -moz-animation: spinclockwise 1.25s linear infinite reverse;
+    -ms-animation: spinclockwise 1.25s linear infinite reverse;
+    -o-animation: spinclockwise 1.25s linear infinite reverse;
+    animation: spinclockwise 1.25s linear infinite reverse;
+}
+
+
+@-webkit-keyframes spinclockwise {
+    from {-webkit-transform: rotateZ(0deg);}
+    to {-webkit-transform: rotateZ(360deg);}
+}
+@-moz-keyframes spinclockwise {
+    from {-moz-transform: rotateZ(0deg);}
+    to {-moz-transform: rotateZ(360deg);}
+}
+@-ms-keyframes spinclockwise {
+    from {-ms-transform: rotateZ(0deg);}
+    to {-ms-transform: rotateZ(360deg);}
+}
+@-o-keyframes spinclockwise {
+    from {-o-transform: rotateZ(0deg);}
+    to {-o-transform: rotateZ(360deg);}
+}
+@keyframes spinclockwise {
+    from {transform: rotateZ(0deg);}
+    to {transform: rotateZ(360deg);}
+}

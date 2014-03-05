@@ -60,7 +60,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
-
         var canvasClearColor = 0x000000;
 
         if ( this._theme ) {
@@ -80,7 +79,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         // Signal ready
         $(this).trigger("pageSetup");
 
-        $( 'body').removeClass( 'non-initialized' );
+        $('body').removeClass('non-initialized');
     };
 
     CADjs.prototype.setCompactMode = function( isCompact ) {
