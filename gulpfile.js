@@ -15,6 +15,7 @@ gulp.task('build', function() {
             THREE:              'libs/three.min',
             TrackballControls:  'libs/TrackballControls',
             dat:                'libs/dat.gui.min',
+            bigScreen:          'libs/bigscreen.min',
             VIS:                'libs/visualize',
             Velvety:            "shaders/VelvetyShader"
         },
@@ -42,7 +43,7 @@ gulp.task('build', function() {
             },
             VIS: {
                 exports: "VIS",
-                deps: ["jquery","jqueryui"]
+                deps: ["jquery","jqueryui", "bigScreen"]
             },
             viewer: {
                 deps: [

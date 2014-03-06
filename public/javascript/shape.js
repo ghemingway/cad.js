@@ -16,7 +16,6 @@ define(["THREE", "Velvety"], function(THREE) {
         this._unit = unit;
         this._instances = [];
         if (!ret) {
-//            console.log("Make new shape: " + id);
             // If we are here, this is the first one
             this._instanceID = 0;
             // Other setup items
@@ -29,6 +28,7 @@ define(["THREE", "Velvety"], function(THREE) {
             // Setup any transform from the parent reference frame
             this._transform = (new THREE.Matrix4()).copy(transform);
             this._object3D.applyMatrix(this._transform);
+            this._overlay3D = this._object3D.clone();
         } else {
             // Set up the object to be an instance
             this.instance(ret, assembly, parent, transform);
@@ -45,11 +45,11 @@ define(["THREE", "Velvety"], function(THREE) {
         // Setup instance info
         source._instances.push(this);
         this._instanceID = source._instances.length;
-//        console.log("Instance existing shape: " + this.getID());
         // Prep the object3D
         this._object3D = new THREE.Object3D();
         this._transform = (new THREE.Matrix4()).copy(transform);
         this._object3D.applyMatrix(this._transform);
+        this._overlay3D = this._object3D.clone();
 
         // Need to clone shell & annotation references & events
         this._shells = source._shells;
@@ -65,8 +65,9 @@ define(["THREE", "Velvety"], function(THREE) {
             shape.addEventListener("shapeLoaded", function(event) {
                 self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
             });
-            // Add of the child shape to the scene graph
+            // Add the child shape to the scene graph
             this._object3D.add(shape.getObject3D());
+            this._overlay3D.add(shape.getOverlay3D());
             this._children.push(shape);
         }
     };
@@ -80,6 +81,7 @@ define(["THREE", "Velvety"], function(THREE) {
         });
         // Add of the child shape to the scene graph
         this._object3D.add(childShape.getObject3D());
+        this._overlay3D.add(childShape.getOverlay3D());
     };
 
     Shape.prototype.addAnnotation = function(annotation) {
@@ -119,7 +121,6 @@ define(["THREE", "Velvety"], function(THREE) {
     };
 
     Shape.prototype.addAnnotationGeometry = function(lineGeometries) {
-//        console.log("Adding Annotation Geo: " + lineGeometries.length);
         var CADjs = this.getCADjs(),
             material = new THREE.LineBasicMaterial({
                 color: CADjs.getThemeValue('annotationColor'),
@@ -128,13 +129,17 @@ define(["THREE", "Velvety"], function(THREE) {
         for (var i = 0; i < lineGeometries.length; i++) {
             var geometry = lineGeometries[i];
             var lines = new THREE.Line(geometry, material, THREE.LineStrip);
-            this._object3D.add(lines);
+            this._overlay3D.add(lines);
         }
         this.dispatchEvent({ type: "shapeLoaded" });
     };
 
     Shape.prototype.getObject3D = function() {
         return this._object3D;
+    };
+
+    Shape.prototype.getOverlay3D = function() {
+        return this._overlay3D;
     };
 
     Shape.prototype.getName = function() {
@@ -314,14 +319,14 @@ define(["THREE", "Velvety"], function(THREE) {
             };
             // Start listening for assembly _hideBounding events
             this._assembly.addEventListener("_hideBounding", this._eventFunc);
-            this._object3D.add(this.bbox);
+            this._overlay3D.add(this.bbox);
         }
     };
 
     Shape.prototype.hideBoundingBox = function() {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
-        this._object3D.remove(this.bbox);
+        this._overlay3D.remove(this.bbox);
     };
 
     Shape.prototype.getCentroid = function(world) {
