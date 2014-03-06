@@ -260,13 +260,21 @@ body.non-initialized::after {
     cursor: pointer;
 }
 
-#resizer>img {
-    opacity: .6;
+#resizer>svg {
+    opacity: .65;
     display: block;
 }
 
-#resizer:hover>img {
+#resizer:hover>svg {
     opacity: 1;
+}
+
+#resizer>svg polygon {
+    fill: #fff;
+}
+
+.bright #resizer>svg polygon {
+    fill: #000;
 }
 
 
