@@ -18,8 +18,8 @@ define([
             vertexColors: THREE.VertexColors,
             uniforms: {
                 'opacity': {type: 'f', value: 1.0},
-                'ambientFactor': {type: 'f', value: 0.3},
-                'directFactor': {type: 'f', value: 1.0}
+                'ambientBrightness': {type: 'f', value: 0.3},
+                'tint': {type: 'v4', value: new THREE.Vector4(0,0,0,0)}
             },
             vertexShader: vertexShaderCode,
             fragmentShader: fragmentShaderCode

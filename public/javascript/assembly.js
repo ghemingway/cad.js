@@ -188,7 +188,7 @@ define(["THREE"], function(THREE) {
                 var x = (bbox.max.x + bbox.min.x) / -2.0;
                 var y = (bbox.max.y + bbox.min.y) / -2.0;
                 var z = (bbox.max.z + bbox.min.z) / -2.0;
-                this._product.getObject3D().applyMatrix(new THREE.Matrix4().makeTranslation(x, y, z));
+                this._product.applyMatrix(new THREE.Matrix4().makeTranslation(x, y, z));
             }
         }
     };

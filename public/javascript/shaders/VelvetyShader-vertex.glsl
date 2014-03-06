@@ -2,26 +2,24 @@ varying vec3 fNormal;
 varying vec3 fPosition;
 varying vec3 fColor;
 
-const float minColorBrightness = 0.15;
+const float lumaMin = 0.15;
+const float lumaRange = 1. - lumaMin;
 
-// This ensures that black colored shapes are not rendered as solid black by
-// effectively making dark colors slightly lighter.
-vec3 applyMinColorBrightness(vec3 color)
+float getLumaFromColor(const in vec3 color) {
+    return color.x * 0.299 + color.y * 0.587 + color.z * 0.114;
+}
+
+vec3 compressColor(vec3 color)
 {
-    if (length(color) < minColorBrightness * 3.0) {
-        return color + minColorBrightness;
-    } else {
-        return color;
-    }
+    float luma = getLumaFromColor(color);
+    return color * lumaRange + lumaMin;
 }
 
 void main()
 {
     vec4 pos = modelViewMatrix * vec4(position, 1.0);
-    vec3 N = normalMatrix * normal;
-    vec3 I = pos.xyz;
-    fNormal = normalize(faceforward(N, I, N));
-    fColor = applyMinColorBrightness(color);
-    fPosition = I;
+    fNormal = normalize(normalMatrix * normal);
+    fColor = compressColor(color);
+    fPosition = pos.xyz;
     gl_Position = projectionMatrix * pos;
 }
