@@ -11,7 +11,6 @@
 define(["THREE"], function(THREE) {
     function Product(id, assembly, name, stepFile, isRoot) {
         assembly.makeChild(id, this);
-//        console.log("Make new product: " + id);
         this._id = id;
         this._assembly = assembly;
         this._stepFile = stepFile;
@@ -20,6 +19,7 @@ define(["THREE"], function(THREE) {
         this._shapes = [];
         this._children = [];
         this._object3D = new THREE.Object3D();
+        this._overlay3D = new THREE.Object3D();
         return this;
     }
 
@@ -33,6 +33,7 @@ define(["THREE"], function(THREE) {
         if (this._isRoot) {
             var self = this;
             this._object3D.add(shape.getObject3D());
+            this._overlay3D.add(shape.getOverlay3D());
             shape.addEventListener("shapeLoaded", function(event) {
                 self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
             });
@@ -49,6 +50,15 @@ define(["THREE"], function(THREE) {
 
     Product.prototype.getObject3D = function() {
         return this._object3D;
+    };
+
+    Product.prototype.getOverlay3D = function() {
+        return this._overlay3D;
+    };
+
+    Product.prototype.applyMatrix = function(matrix) {
+        this._object3D.applyMatrix(matrix);
+        this._overlay3D.applyMatrix(matrix);
     };
 
     Product.prototype.getStepFile = function() {
@@ -102,14 +112,14 @@ define(["THREE"], function(THREE) {
             };
             // Start listening for assembly _hideBounding events
             this._assembly.addEventListener("_hideBounding", this._eventFunc);
-            this._object3D.add(this.bbox);
+            this._overlay3D.add(this.bbox);
         }
     };
 
     Product.prototype.hideBoundingBox = function() {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
-        this._object3D.remove(this.bbox);
+        this._overlay3D.remove(this.bbox);
     };
 
     Product.prototype.setOpacity = function (opacity) {

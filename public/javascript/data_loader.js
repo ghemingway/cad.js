@@ -326,6 +326,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
         this._viewer.add3DObject(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getOverlay3D());
         req.callback(undefined, assembly);
     };
 
@@ -548,6 +549,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
         this._viewer.add3DObject(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getOverlay3D());
         // Do we have batches
         if (doc.batches && doc.batches > 0) {
             for (var i = 0; i < doc.batches; i++) {
