@@ -48,12 +48,13 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._$downloadsContainer = $( '#' + config.downloadsContainerId );
 
         this._isCompact = undefined;
+        this._isFullScreen = undefined;
+        this._wasCompactBeforeFullscreen = false;
+
         this._loader = undefined;
         this._parts = [];
         this._viewer = undefined;
         this._theme = undefined;
-
-        this._compactTheme = undefined;
 
         if ( config.isCompact !== undefined ) {
             this.setCompactMode( config.isCompact );
@@ -67,27 +68,49 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
     CADjs.prototype.setupPage = function() {
         // Create the viewer
-        var canvasClearColor = 0x000000,
+        var self = this,
+            canvasClearColor = 0x000000,
             $resizer = $('#resizer'),
             $expander = $('#resizer>.expander'),
-            $minimizer = $('#resizer>.minimizer');
+            $minimizer = $('#resizer>.minimizer'),
+            minimizeMe, expandMe;
+
 
         if (BigScreen.enabled && this._isCompact === true) {
+
+            minimizeMe = function() {
+                BigScreen.toggle();
+            };
+
+            expandMe = function() {
+                BigScreen.toggle();
+            };
 
             $resizer.show();
             $minimizer.hide();
             $expander.show();
 
             $expander.click(function() {
-                BigScreen.toggle();
-                $minimizer.toggle();
-                $expander.toggle();
+                expandMe();
             });
+
             $minimizer.click(function() {
-                BigScreen.toggle();
+                minimizeMe();
+            });
+
+
+            BigScreen.onenter = function() {
                 $minimizer.toggle();
                 $expander.toggle();
-            });
+                self.setFullScreenMode(true);
+            };
+
+            BigScreen.onexit = function() {
+                $minimizer.toggle();
+                $expander.toggle();
+                self.setFullScreenMode(false);
+            };
+
         } else {
             $resizer.hide();
         }
@@ -108,7 +131,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         $('body').removeClass('non-initialized');
     };
 
-    CADjs.prototype.setCompactMode = function( isCompact ) {
+    CADjs.prototype.setCompactMode = function(isCompact) {
 
         var $body = $( 'body' );
 
@@ -125,6 +148,31 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             }
 
             this._isCompact = isCompact;
+
+        }
+    };
+
+    CADjs.prototype.setFullScreenMode = function(fullScreenMode) {
+
+        var $body = $('body');
+
+        if (this._isFullScreen !== fullScreenMode) {
+
+            if (this._isFullScreen !== true && this._isCompact === true) {
+                this._wasCompactBeforeFullscreen = true;
+                this.setCompactMode(false);
+            } else if ( this._isFullScreen === true && this._wasCompactBeforeFullscreen === true ) {
+                this._wasCompactBeforeFullscreen = false;
+                this.setCompactMode(true);
+            }
+
+            this._isFullScreen = fullScreenMode;
+
+            if (this._isFullScreen) {
+                $body.addClass('fullscreen');
+            } else {
+                $body.removeClass('fullscreen');
+            }
 
         }
     };
