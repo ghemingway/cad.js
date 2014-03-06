@@ -170,10 +170,17 @@ body {
     display: none;
 }
 
+.compact .info-panel {
+    top: 14px;
+    right: 14px;
+}
+
 .steptools-compass {
     position: relative;
+}
 
-    transform:scale3d(.755, .75, .75);
+.compact .info-panel {
+    transform:scale3d(.75, .75, .75);
     -ms-transform:scale3d(.75, .75, .75); /* IE 9 */
     -webkit-transform:scale3d(.75, .75, .75); /* Opera, Chrome, and Safari */
 }
@@ -241,6 +248,23 @@ body.non-initialized::after {
     -ms-animation: spinclockwise 1.25s linear infinite reverse;
     -o-animation: spinclockwise 1.25s linear infinite reverse;
     animation: spinclockwise 1.25s linear infinite reverse;
+}
+
+#resizer {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    display: none;
+    cursor: pointer;
+}
+
+#resizer>img {
+    opacity: .6;
+    display: block;
+}
+
+#resizer:hover>img {
+    opacity: 1;
 }
 
 
