@@ -102,6 +102,11 @@ requirejs(["cad", "jquery", "THREE", "VIS"], function(CADjs, $, THREE, VIS) {
 
         // What resource do we want to load
         cad.load( VIS.getResourceUrl() );
+
+        // Claim keyboard focus
+        if (typeof(window.focus) !== 'undefined') {
+            window.focus();
+        }
     });
 
     VIS.init();
