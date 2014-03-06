@@ -281,19 +281,12 @@ define(["THREE", "Velvety"], function(THREE) {
     Shape.prototype.highlight = function(colorHex) {
         var self = this;
         this._object3D.traverse(function(object) {
-            if (object.material) {
-                object.material._color = {
-                    ambient: object.material.ambient,
-                    color: object.material.color,
-                    specular: object.material.specular
-                };
-                object.material.ambient = new THREE.Color(colorHex);
-                object.material.color = object.material.ambient;
-                object.material.specular = object.material.ambient;
+            var color;
+            if (object.material && object.material.uniforms.tint) {
+                color = new THREE.Color(colorHex);
+                object.material.uniforms.tint.value.set(color.r, color.g, color.b, 0.3);
                 self._assembly.addEventListener("_clearHighlights", function() {
-                    object.material.ambient = object.material._color.ambient;
-                    object.material.color = object.material._color.color;
-                    object.material.specular = object.material._color.specular;
+                    object.material.uniforms.tint.value.setW(0);
                 });
             }
         });

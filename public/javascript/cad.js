@@ -261,9 +261,9 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             }
             _change = false;
         }, false);
-        canvasDOM.addEventListener("mousemove", function() {
+        canvasDOM.addEventListener("mousemove", function(event) {
             if (!_change) {
-                self.onMove();
+                self.onMove(event);
             }
         }, false);
 
@@ -339,18 +339,22 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._viewer.invalidate();
     };
 
-    CADjs.prototype.onMove = function() {
+    CADjs.prototype.onMove = function(event) {
+        var obj;
         if (this._parts.length > 0) {
-/*            this._parts[0].clearHighlights();
-            var obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
+            this._parts[0].clearHighlights();
+            obj = this._parts[0].select(this._viewer.camera, event.clientX, event.clientY);
             // Did we find an object
             if (obj) {
                 obj = obj.getNamedParent();
                 // Yes, go highlight it in the tree
-                obj.highlight(0xffff8f);
+                obj.highlight(0xffff60);
             }
-            this._viewer.invalidate();*/
         }
+        if (obj != this._lastHovered) {
+            this._viewer.invalidate();
+        }
+        this._lastHovered = obj;
     };
 
     CADjs.prototype.explode = function(distance) {
