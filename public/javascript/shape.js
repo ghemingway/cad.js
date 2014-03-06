@@ -293,7 +293,6 @@ define(["THREE", "Velvety"], function(THREE) {
     };
 
     Shape.prototype.setOpacity = function (opacity) {
-        var self = this;
         this._object3D.traverse(function(object) {
             if (object.material && object.material.uniforms.opacity) {
                 object.material.transparent = opacity < 1;

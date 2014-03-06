@@ -273,11 +273,11 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             switch(event.keyCode || event.charCode || event.which) {
                 // Explode on 'x' key pressed
                 case 120:
-                    self.explode(100);
+                    self.explode(self.getExplodeDistance());
                     break;
                 // Unexplode on 's' key pressed
                 case 115:
-                    self.explode(-100);
+                    self.explode(-self.getExplodeDistance());
                     break;
                 // 'q' unselects all tree elements
                 case 113:
@@ -369,6 +369,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             }
             this._viewer.invalidate();
         }
+    };
+
+    CADjs.prototype.getExplodeDistance = function () {
+        return this._viewer.controls.sceneRadius * 0.05;
     };
 /*
     CADjs.prototype.setSelectedOpacity = function(opacity) {
