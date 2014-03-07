@@ -29,6 +29,7 @@ define(["THREE", "Velvety"], function(THREE) {
             this._transform = (new THREE.Matrix4()).copy(transform);
             this._object3D.applyMatrix(this._transform);
             this._overlay3D = this._object3D.clone();
+            this._annotation3D = this._object3D.clone();
         } else {
             // Set up the object to be an instance
             this.instance(ret, assembly, parent, transform);
@@ -50,6 +51,7 @@ define(["THREE", "Velvety"], function(THREE) {
         this._transform = (new THREE.Matrix4()).copy(transform);
         this._object3D.applyMatrix(this._transform);
         this._overlay3D = this._object3D.clone();
+        this._annotation3D = this._object3D.clone();
 
         // Need to clone shell & annotation references & events
         this._shells = source._shells;
@@ -68,6 +70,7 @@ define(["THREE", "Velvety"], function(THREE) {
             // Add the child shape to the scene graph
             this._object3D.add(shape.getObject3D());
             this._overlay3D.add(shape.getOverlay3D());
+            this._annotation3D.add(shape.getAnnotation3D());
             this._children.push(shape);
         }
     };
@@ -82,6 +85,7 @@ define(["THREE", "Velvety"], function(THREE) {
         // Add of the child shape to the scene graph
         this._object3D.add(childShape.getObject3D());
         this._overlay3D.add(childShape.getOverlay3D());
+        this._annotation3D.add(childShape.getAnnotation3D());
     };
 
     Shape.prototype.addAnnotation = function(annotation) {
@@ -129,7 +133,8 @@ define(["THREE", "Velvety"], function(THREE) {
         for (var i = 0; i < lineGeometries.length; i++) {
             var geometry = lineGeometries[i];
             var lines = new THREE.Line(geometry, material, THREE.LineStrip);
-            this._overlay3D.add(lines);
+            lines.visible = false;
+            this._annotation3D.add(lines);
         }
         this.dispatchEvent({ type: "shapeLoaded" });
     };
@@ -140,6 +145,10 @@ define(["THREE", "Velvety"], function(THREE) {
 
     Shape.prototype.getOverlay3D = function() {
         return this._overlay3D;
+    };
+
+    Shape.prototype.getAnnotation3D = function() {
+        return this._annotation3D;
     };
 
     Shape.prototype.getName = function() {
@@ -275,12 +284,14 @@ define(["THREE", "Velvety"], function(THREE) {
         this._object3D.traverse(function(object) {
             object.visible = false;
         });
+        this.hideAnnotations();
     };
 
     Shape.prototype.show = function() {
         this._object3D.traverse(function(object) {
             object.visible = true;
         });
+        this.showAnnotations();
     };
 
     Shape.prototype.highlight = function(colorHex) {
@@ -294,6 +305,18 @@ define(["THREE", "Velvety"], function(THREE) {
                     object.material.uniforms.tint.value.setW(0);
                 });
             }
+        });
+    };
+
+    Shape.prototype.showAnnotations = function () {
+        this._annotation3D.traverse(function(object) {
+            object.visible = true;
+        });
+    };
+
+    Shape.prototype.hideAnnotations = function () {
+        this._annotation3D.traverse(function(object) {
+            object.visible = false;
         });
     };
 
@@ -321,12 +344,14 @@ define(["THREE", "Velvety"], function(THREE) {
             this._assembly.addEventListener("_hideBounding", this._eventFunc);
             this._overlay3D.add(this.bbox);
         }
+        this.showAnnotations();
     };
 
     Shape.prototype.hideBoundingBox = function() {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._overlay3D.remove(this.bbox);
+        this.hideAnnotations();
     };
 
     Shape.prototype.getCentroid = function(world) {
@@ -377,7 +402,7 @@ define(["THREE", "Velvety"], function(THREE) {
         for (i = 0; i < this._children.length; i++) {
             child = this._children[i];
             var explosionDirection = this._explodeStates[child.getID()];
-            child.getObject3D().translateOnAxis(explosionDirection, distance);
+            child.translateOnAxis(explosionDirection, distance);
         }
         // Clean up after myself
         if (this._explodeDistance === 0) {
@@ -402,6 +427,12 @@ define(["THREE", "Velvety"], function(THREE) {
             this._explodeStates = undefined;
             this._exploseStep = undefined;
         }
+    };
+
+    Shape.prototype.translateOnAxis = function(axis, magnitude) {
+        this.getObject3D().translateOnAxis(axis, magnitude);
+        this.getOverlay3D().translateOnAxis(axis, magnitude);
+        this.getAnnotation3D().translateOnAxis(axis, magnitude);
     };
 
     // Let shape have event system

@@ -22,12 +22,14 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             "dark": {
                 cssClass: "dark",
                 canvasClearColor: 0x000000,
-                annotationColor: 0xffffff
+                annotationColor: 0xffffff,
+                boundingBoxColor: 0x4f95bc
             },
             "bright": {
                 cssClass: "bright",
                 canvasClearColor: 0xffffff,
-                annotationColor: 0x008080
+                annotationColor: 0x004080,
+                boundingBoxColor: 0x008040
             }
         };
     THEMES.default = THEMES.dark;
@@ -224,7 +226,10 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 self._parts.push(part);
                 // Call back with the new Assembly - nicely centered
                 part.centerGeometry();
-                part.zoomToFit(self._viewer.camera, self._viewer.controls);
+                // calculate the scene's draw distance
+                self._viewer.controls.sceneRadius = part.getBoundingBox().size().length() * 0.5;
+                // center the view
+                self._viewer.zoomToFit(part);
                 // Update the tree
                 self.renderTree();
                 // Get the rest of the files
@@ -346,19 +351,19 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     break;
                 // 'z' to zoomToFit
                 case 122:
-                    self._parts[0].zoomToFit(self._viewer.camera, self._viewer.controls);
-                    self._viewer.invalidate();
+                    node = self.tree.get_selected(false);
+                    obj = self._parts[0].getByID(node[0]);
+                    if (!obj) {
+                        obj = self._parts[0];
+                    }
+                    self._viewer.zoomToFit(obj);
                     break;
                 // 'j' hide/show element
                 case 106:
                     node = self.tree.get_selected(false);
                     obj = self._parts[0].getByID(node[0]);
                     if (obj) {
-                        if (obj.toggleVisibility()) {
-                            self.tree.enable_node(node);
-                        } else {
-                            self.tree.disable_node(node);
-                        }
+                        obj.toggleVisibility();
                         self._viewer.invalidate();
                     }
                     break;
@@ -454,47 +459,34 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             },
             contextmenu: {
                 items: function(menuItem) {
-                    var menu = {
-//                        showAll: {
-//                            label: "Show All",
-//                            action: function() {
-//                                self._parts[0].showAll();
-//                                // TODO: Need to update tree to make all enabled
-//                                //console.log(self.tree.disabled);
-//                            }
-//                        }//,
-//                        focusOn: {
-//                            label: "Focus On",
-//                            action: function() {
-//                                var obj = self._parts[0].getByID(menuItem.id);
-//                                if (obj) {
-//                                    self._parts[0].focusOn(obj);
-//                                }
-//                            }
-//                        }
-                    };
-                    if (menuItem.state.disabled) {
-                        menu.show = {
-                            label: "Show",
+                    var obj = self._parts[0].getByID(menuItem.id),
+                        menu = {
+                            focusOn: {
+                                label: "Focus On",
+                                action: function() {
+                                    if (obj) {
+                                        self._viewer.zoomToFit(obj);
+                                    }
+                                }
+                            }
+                        };
+                    if (obj.getObject3D().visible) {
+                        menu.hide = {
+                            label: "Hide",
                             action: function() {
-                                var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
-                                    obj.show();
+                                    obj.hide();
                                     self._viewer.invalidate();
-                                    self.tree.enable_node(menuItem);
                                 }
                             }
                         };
                     } else {
-                        menu.hide = {
-                            label: "Hide",
+                        menu.show = {
+                            label: "Show",
                             action: function() {
-                                var obj = self._parts[0].getByID(menuItem.id);
                                 if (obj) {
-                                    obj.hide();
+                                    obj.show();
                                     self._viewer.invalidate();
-                                    self.tree.disable_node(menuItem);
-                                    self.tree.deselect_node(menuItem);
                                 }
                             }
                         };

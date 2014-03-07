@@ -548,8 +548,9 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        this._viewer.add3DObject(rootProduct.getObject3D());
-        this._viewer.add3DObject(rootProduct.getOverlay3D());
+        this._viewer.add3DObject(rootProduct.getObject3D(), 'geometry');
+        this._viewer.add3DObject(rootProduct.getOverlay3D(), 'overlay');
+        this._viewer.add3DObject(rootProduct.getAnnotation3D(), 'annotation');
         // Do we have batches
         if (doc.batches && doc.batches > 0) {
             for (var i = 0; i < doc.batches; i++) {

@@ -33,6 +33,10 @@ define(["THREE"], function(THREE) {
         }
     };
 
+    Assembly.prototype.getObject3D = function() {
+        return this._product.getObject3D();
+    };
+
     Assembly.prototype.isChild = function(id) {
         return (this._objects[id] !== undefined);
     };
@@ -193,23 +197,6 @@ define(["THREE"], function(THREE) {
         }
     };
 
-    Assembly.prototype.zoomToFit = function(camera, controls) {
-        var boundingBox = this._product.getBoundingBox(),
-            radius = boundingBox.size().length() * 0.5,
-            horizontalFOV = 2 * Math.atan(THREE.Math.degToRad(camera.fov * 0.5) * camera.aspect),
-            fov = Math.min(THREE.Math.degToRad(camera.fov), horizontalFOV),
-            dist = radius / Math.sin(fov * 0.5),
-            newTargetPosition = new THREE.Vector3(),
-            newCameraPosition = camera.position.clone().
-                sub(controls.target).
-                normalize().
-                multiplyScalar(dist);
-        controls.sceneRadius = radius;
-        controls.target0.copy(newTargetPosition.clone());
-        controls.position0.copy(newCameraPosition.clone());
-        controls.up0.copy(camera.up.clone());
-        controls.reset();
-    };
     Assembly.prototype.select = function(camera, mouseX, mouseY) {
         if (!this._product) return undefined;
         mouseX = (mouseX / window.innerWidth) * 2 - 1;
@@ -345,7 +332,7 @@ define(["THREE"], function(THREE) {
         // Return the new Bounding Box Geometry
         var material = new THREE.LineBasicMaterial({
             linewidth: 2,
-            color: 0x4f95bc
+            color: this.getCADjs().getThemeValue('boundingBoxColor')
         });
         return new THREE.Line(geometry, material, THREE.LinePieces);
     };

@@ -12,12 +12,11 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
     function Viewer(CADjs) {
         var shouldRender = false,
             continuousRendering = false,
-            canvasParent, renderer, canvas, scene, camera,
-//          light1, light2,
+            canvasParent, renderer, canvas, geometryScene, annotationScene, overlayScene, camera,
             controls, compass,
-            render, animate, add3DObject, invalidate,
+            render, animate, add3DObject, invalidate, zoomToFit,
             renderTargetParametersRGBA, depthTarget, depthPassPlugin,
-            composer, renderPassSSAO, renderPassFXAA, renderPassCopy;
+            composer, renderPassSSAO, renderPassFXAA;
 
         renderTargetParametersRGBA = {
             minFilter: THREE.LinearFilter,
@@ -35,8 +34,6 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         
         renderer.setClearColor(CADjs.getThemeValue('canvasClearColor'));
         renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
-        //    renderer.shadowMapEnabled = true;
-        //    renderer.shadowMapType = THREE.PCFShadowMap;
         renderer.sortObjects = true;
         renderer.autoClear = false;
         // DEPTH PASS
@@ -48,8 +45,10 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         // CANVAS
         canvas = renderer.domElement;
         canvasParent.appendChild(canvas);
-        // SCENE
-        scene = new THREE.Scene();
+        // SCENES
+        geometryScene = new THREE.Scene();
+        annotationScene = new THREE.Scene();
+        overlayScene = new THREE.Scene();
         // CAMERA
         camera = new THREE.PerspectiveCamera(
             75,
@@ -60,10 +59,9 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         camera.position.x = -5000;
         camera.position.y = -5000;
         camera.position.z = 0;
-        camera.lookAt(scene.position);
+        camera.lookAt(geometryScene.position);
 
         // EFFECTS
-        composer = new THREE.EffectComposer(renderer);
         // EFFECT SSAO
         renderPassSSAO = new THREE.ShaderPass(THREE.SSAOShader);
         renderPassSSAO.uniforms['tDepth'].value = depthTarget;
@@ -75,38 +73,13 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         renderPassSSAO.enabled = false;
         // EFFECT FXAA
         renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
+        renderPassFXAA.material.depthWrite = false;
         renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
-        // EFFECTS COPY
-        renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
-        renderPassCopy.renderToScreen = true;
+        renderPassFXAA.renderToScreen = true;
         // ADD RENDER PASSES
+        composer = new THREE.EffectComposer(renderer);
         composer.addPass(renderPassSSAO);
         composer.addPass(renderPassFXAA);
-        composer.addPass(renderPassCopy);
-
-        /* Lights are no longer needed since we use a simplified lighting shader
-        // LIGHTS
-        scene.add(new THREE.AmbientLight(0xdddddd));
-        light1 = new THREE.DirectionalLight(0xffffff, 0.5);
-        light1.position.set(1, 1, 1);
-        scene.add( light1 );
-
-        light2 = new THREE.DirectionalLight(0xffffff, 0.5);
-        light2.position.set(0, -1, 0);
-        scene.add(light2);
-        /*
-         light3 = new THREE.SpotLight( 0xffffff, 1.5 );
-         light3.position.set( 0, 0, 10000 );
-         light3.castShadow = true;
-         light3.shadowCameraNear = 200;
-         light3.shadowCameraFar = this.camera.far;
-         light3.shadowCameraFov = 50;
-         light3.shadowBias = -0.00022;
-         light3.shadowDarkness = 0.5;
-         light3.shadowMapWidth = 2048;
-         light3.shadowMapHeight = 2048;
-         this.scene.add(light3);
-         */
 
         // VIEW CONTROLS
         controls =  ViewerControls({
@@ -118,17 +91,16 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         });
 
         // COMPASS
-        compass = new Compass(CADjs._compassContainerId, camera, controls, {
-            width: 200,
-            height: 200
-        });
+        compass = new Compass(CADjs._compassContainerId, camera, controls);
 
         // PRIVATE FUNCTIONS
         render = function() {
-            depthPassPlugin.enabled = true;
-            renderer.render(scene, camera, composer.renderTarget2, true);
-            depthPassPlugin.enabled = false;
+            //depthPassPlugin.enabled = true;
+            renderer.render(geometryScene, camera, composer.renderTarget2, true);
+            //depthPassPlugin.enabled = false;
             composer.render(0.5);
+            renderer.render(overlayScene, camera);
+            renderer.render(annotationScene, camera);
         };
         animate = function(forceRendering) {
             requestAnimationFrame(function() {
@@ -144,8 +116,36 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         invalidate = function() {
             shouldRender = true;
         };
-        add3DObject = function(a3DObject) {
-            scene.add( a3DObject );
+        add3DObject = function(a3DObject, sceneName) {
+            switch(sceneName) {
+            case 'overlay':
+                overlayScene.add(a3DObject);
+                break;
+            case 'annotation':
+                annotationScene.add(a3DObject);
+                break;
+            case 'geometry':
+            default:
+                geometryScene.add(a3DObject);
+                break;
+            }
+            invalidate();
+        };
+        zoomToFit = function (object) {
+            var object3d = object.getObject3D(),
+                boundingBox = object.getBoundingBox(),
+                radius = boundingBox.size().length() * 0.5,
+                horizontalFOV = 2 * Math.atan(THREE.Math.degToRad(camera.fov * 0.5) * camera.aspect),
+                fov = Math.min(THREE.Math.degToRad(camera.fov), horizontalFOV),
+                dist = radius / Math.sin(fov * 0.5),
+                newTargetPosition = boundingBox.max.clone().
+                    lerp(boundingBox.min, 0.5).
+                    applyMatrix4(object3d.matrixWorld);
+            camera.position.
+                sub(controls.target).
+                setLength(dist).
+                add(newTargetPosition);
+            controls.target.copy(newTargetPosition);
             invalidate();
         };
 
@@ -171,7 +171,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
             camera.aspect = canvasParent.offsetWidth / canvasParent.offsetHeight;
             camera.updateProjectionMatrix();
-            camera.lookAt(scene.position);
+            camera.lookAt(geometryScene.position);
             composer.reset();
             controls.handleResize();
             render();
@@ -182,6 +182,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         this.controls = controls;
         this.invalidate = invalidate;
         this.add3DObject = add3DObject;
+        this.zoomToFit = zoomToFit;
         animate(true); // Initial Rendering
     }
 

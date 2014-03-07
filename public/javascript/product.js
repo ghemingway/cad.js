@@ -20,6 +20,7 @@ define(["THREE"], function(THREE) {
         this._children = [];
         this._object3D = new THREE.Object3D();
         this._overlay3D = new THREE.Object3D();
+        this._annotation3D = new THREE.Object3D();
         return this;
     }
 
@@ -34,6 +35,7 @@ define(["THREE"], function(THREE) {
             var self = this;
             this._object3D.add(shape.getObject3D());
             this._overlay3D.add(shape.getOverlay3D());
+            this._annotation3D.add(shape.getAnnotation3D());
             shape.addEventListener("shapeLoaded", function(event) {
                 self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
             });
@@ -56,9 +58,14 @@ define(["THREE"], function(THREE) {
         return this._overlay3D;
     };
 
+    Product.prototype.getAnnotation3D = function() {
+        return this._annotation3D;
+    };
+
     Product.prototype.applyMatrix = function(matrix) {
         this._object3D.applyMatrix(matrix);
         this._overlay3D.applyMatrix(matrix);
+        this._annotation3D.applyMatrix(matrix);
     };
 
     Product.prototype.getStepFile = function() {
@@ -100,6 +107,18 @@ define(["THREE"], function(THREE) {
         return this.boundingBox.clone();
     };
 
+    Product.prototype.showAnnotations = function () {
+        this._annotation3D.traverse(function(object) {
+            object.visible = true;
+        });
+    };
+
+    Product.prototype.hideAnnotations = function () {
+        this._annotation3D.traverse(function(object) {
+            object.visible = false;
+        });
+    };
+
     Product.prototype.showBoundingBox = function() {
         var bounds = this.getBoundingBox();
         if (!this.bbox && !bounds.empty()) {
@@ -114,16 +133,17 @@ define(["THREE"], function(THREE) {
             this._assembly.addEventListener("_hideBounding", this._eventFunc);
             this._overlay3D.add(this.bbox);
         }
+        this.showAnnotations();
     };
 
     Product.prototype.hideBoundingBox = function() {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._overlay3D.remove(this.bbox);
+        this.hideAnnotations();
     };
 
     Product.prototype.setOpacity = function (opacity) {
-        var self = this;
         this._object3D.traverse(function(object) {
             if (object.material && object.material.uniforms.opacity) {
                 object.material.transparent = opacity < 1;
@@ -169,12 +189,14 @@ define(["THREE"], function(THREE) {
         this._object3D.traverse(function(object) {
             object.visible = false;
         });
+        this.hideAnnotations();
     };
 
     Product.prototype.show = function() {
         this._object3D.traverse(function(object) {
             object.visible = true;
         });
+        this.showAnnotations();
     };
 
     Product.prototype.explode = function(distance, timeS) {

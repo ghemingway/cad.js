@@ -212,6 +212,10 @@ body {
     border-radius: 3px;
 }
 
+.bright .key-label {
+    border-color: #999;
+}
+
 .non-initialized .key-label {
     display: none;
 }

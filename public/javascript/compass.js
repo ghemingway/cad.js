@@ -30,16 +30,11 @@ define([
     ];
 
 
-    function Compass(compassParentId, camera, controls, config) {
+    function Compass(compassParentId, camera, controls) {
         var that = this;
         this.compassParent = $('#'+compassParentId);
         this.controls = controls;
         this.camera = camera;
-        this.config = {
-            magnitude: config.magnitude ? config.magnitude : 100,
-            width: config.width ? config.width : 200,
-            height: config.height ? config.height: 200
-        };
         this.compassParent.html(compassDomText);
         this.$cubeButtons = $('.cube-button', this.compassParent);
         this.compassCube = document.getElementById('compass-cube');
