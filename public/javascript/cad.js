@@ -224,9 +224,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
             } else {
                 // Add the part to the list
                 self._parts.push(part);
-                // Call back with the new Assembly - nicely centered
-                part.centerGeometry();
-                // calculate the scene's draw distance
+                // calculate the scene's radius for draw distance calculations
                 self._viewer.controls.sceneRadius = part.getBoundingBox().size().length() * 0.5;
                 // center the view
                 self._viewer.zoomToFit(part);
