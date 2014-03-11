@@ -74,8 +74,7 @@
         },
         "getResourceUrl": function () {
         	var url = this.getParameter("resource_url");
-        	console.log(url);
-        	if (true) {
+        	if (url === null) {
 	        	url = "http://ghemingway.github.io/cad.js/data/cutter/index.json";
         	}
             return url
