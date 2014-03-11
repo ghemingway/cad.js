@@ -13,9 +13,8 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         var shouldRender = false,
             continuousRendering = false,
             canvasParent, renderer, canvas, geometryScene, annotationScene, overlayScene, camera,
-            pickingScene, pickingTexture, pickingData,
             controls, compass,
-            render, animate, add3DObject, invalidate, zoomToFit, addPickingGeometry, pick,
+            render, animate, add3DObject, invalidate, zoomToFit,
             renderTargetParametersRGBA, depthTarget, depthPassPlugin,
             composer, renderPassSSAO, renderPassFXAA, renderPassCopy,
             autoAntialiasing;
@@ -52,12 +51,6 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         geometryScene = new THREE.Scene();
         annotationScene = new THREE.Scene();
         overlayScene = new THREE.Scene();
-        // PICKING
-        pickingScene = new THREE.Scene();
-        pickingTexture = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight);
-        pickingTexture.generateMipmaps = false;
-        pickingData = {};
-
         // CAMERA
         camera = new THREE.PerspectiveCamera(
             75,
@@ -165,38 +158,6 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             controls.target.copy(newTargetPosition);
             invalidate();
         };
-        addPickingGeometry = function(part) {
-            var pickingMaterial = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-            var object3D = part.getObject3D().clone();
-            object3D.traverse(function(object) {
-               console.log(object.userData);
-            });
-/*            var children = part.getChildren();
-            _.forEach(_.keys(children), function(childID) {
-                var child = children[childID];
-                if (typeof child.getObject3D === 'function') {
-                    var object3D = child.getObject3D();
-                    console.log(object3D);
-                    //var pickingGeometry = new THREE.Geometry(),
-                    //pickingScene.add( new THREE.Mesh( pickingGeometry, pickingMaterial ) );
-                }
-            });*/
-        };
-        pick = function(mouse) {
-            renderer.render(pickingScene, camera, pickingTexture);
-            var gl = renderer.getContext();
-            //read the pixel under the mouse from the texture
-            var pixelBuffer = new Uint8Array(4);
-            gl.readPixels(mouse.x, pickingTexture.height - mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer);
-            //interpret the pixel as an ID
-            var id = (pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2]);
-            var data = pickingData[id];
-            if ( data) {
-//              get the object
-            } else {
-//                highlightBox.visible = false;
-            }
-        };
 
         // CONTROL EVENT HANDLERS
         controls.addEventListener("change", function() {
@@ -232,8 +193,6 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         this.invalidate = invalidate;
         this.add3DObject = add3DObject;
         this.zoomToFit = zoomToFit;
-        this.addPickingGeometry = addPickingGeometry;
-        this.pick = pick;
         animate(true); // Initial Rendering
     }
 

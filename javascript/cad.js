@@ -226,8 +226,6 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 self._parts.push(part);
                 // calculate the scene's radius for draw distance calculations
                 self._viewer.controls.sceneRadius = part.getBoundingBox().size().length() * 0.5;
-                // Add the part to the picking geometry
-                self._viewer.addPickingGeometry(part);
                 // center the view
                 self._viewer.zoomToFit(part);
                 // Update the tree

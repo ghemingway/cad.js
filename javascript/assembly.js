@@ -45,10 +45,6 @@ define(["THREE"], function(THREE) {
         return this._objects[id];
     };
 
-    Assembly.prototype.getChildren = function() {
-        return this._objects;
-    };
-
     Assembly.prototype.makeChild = function(id, fallback) {
 //        console.log("Assembly.makeChild: " + id);
         if (!id) {
