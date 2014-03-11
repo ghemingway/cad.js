@@ -73,7 +73,12 @@
             return this.getParameter("processingStatus");
         },
         "getResourceUrl": function () {
-            return this.getParameter("resource_url");
+        	var url = this.getParameter("resource_url");
+        	console.log(typeof url);
+        	if (true) {
+	        	url = "http://ghemingway.github.io/cad.js/data/cutter/index.json";
+        	}
+            return url
         },
         "getProcessResourceId": function () {
             return getQueryParameter("processingResourceId");
