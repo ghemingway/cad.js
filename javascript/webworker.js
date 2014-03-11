@@ -24,6 +24,11 @@ function processAnnotation(url, workerID, data) {
         data: data,
         workerID: workerID
     });
+    self.postMessage({
+        type: "workerFinish",
+        workerID: workerID,
+        file: parts[parts.length - 1]
+    });
 }
 
 function processShellXML(url, workerID, data) {
@@ -39,7 +44,8 @@ function processShellXML(url, workerID, data) {
     // Signal that this worker is done
     self.postMessage({
         type: "workerFinish",
-        workerID: workerID
+        workerID: workerID,
+        file: parts[parts.length - 1]
     });
 }
 
@@ -96,14 +102,14 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
         type: "shellLoad",
         data: buffers,
         id: dataJSON.id,
-        workerID: workerID,
-        file: parts[parts.length - 1]
+        workerID: workerID
     }, [buffers.position.buffer, buffers.normals.buffer, buffers.colors.buffer]);
     // Do we signal that we are all done
     if (signalFinish) {
         self.postMessage({
             type: "workerFinish",
-            workerID: workerID
+            workerID: workerID,
+            file: parts[parts.length - 1]
         });
     }
 }
@@ -120,7 +126,8 @@ function processBatchJSON(url, workerID, data) {
     }
     self.postMessage({
         type: "workerFinish",
-        workerID: workerID
+        workerID: workerID,
+        file: parts[parts.length - 1]
     });
 }
 
@@ -171,9 +178,10 @@ self.addEventListener("message", function(e) {
         }
     });
     xhr.addEventListener("loadend", function() {
-        if (xhr.status === 404) {
+        if (xhr.status === 404 || xhr.status === 403) {
             self.postMessage({
                 type: "loadError",
+                status: xhr.status,
                 url: url,
                 file: parts[parts.length - 1],
                 workerID: workerID

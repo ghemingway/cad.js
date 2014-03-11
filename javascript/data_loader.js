@@ -112,9 +112,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
 
     DataLoader.prototype.load = function(url, validateType, callback) {
         var loadErrorCheck = function(error, assembly) {
-            if (!error) callback(error, assembly);
+            if (!error) {
+                callback(undefined, assembly);
+            }
             else {
-                console.log(error);
+                callback(error);
             }
         };
         var req = {
@@ -215,7 +217,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             req = this._loading[event.data.workerID];
         }
         // Put worker back into the queue - if it is the time
-        if (_.indexOf(["rootLoad", "workerFinish", "annotationLoad", "loadError"], event.data.type) != -1) {
+        if (_.indexOf(["rootLoad", "workerFinish", "loadError"], event.data.type) != -1) {
             this._loading[event.data.workerID] = undefined;
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
@@ -253,13 +255,11 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             case "shellLoad":
                 switch (req.contentType) {
                     case "application/xml":
-//                        console.log("WARNING: XML Load broken - cant find shell or shell size");
                         xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
                         shell = req.shell;
                         data = this.parseShellXML(xmlDoc, req.shellSize);
                         break;
                     case "application/json":
-//                        console.log("Loading: " + event.data.id);
                         shell = this._shells[event.data.id];
                         data = event.data.data;
                         break;
@@ -271,13 +271,20 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 shell.addGeometry(data.position, data.normals, data.colors);
                 this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
+            case "workerFinish":
+                this.dispatchEvent({ type: "workerFinish", file: event.data.file });
+                break;
             case "parseComplete":
             case "loadProgress":
             case "loadComplete":
                 this.dispatchEvent(event.data);
                 break;
             case "loadError":
-                if (req.callback) req.callback("loadError");
+                if (req.callback) req.callback({
+                    error: "loadError",
+                    status: event.data.status,
+                    file: req.url
+                });
                 break;
         }
     };
@@ -319,6 +326,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
         this._viewer.add3DObject(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getOverlay3D());
         req.callback(undefined, assembly);
     };
 
@@ -540,7 +548,9 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        this._viewer.add3DObject(rootProduct.getObject3D());
+        this._viewer.add3DObject(rootProduct.getObject3D(), 'geometry');
+        this._viewer.add3DObject(rootProduct.getOverlay3D(), 'overlay');
+        this._viewer.add3DObject(rootProduct.getAnnotation3D(), 'annotation');
         // Do we have batches
         if (doc.batches && doc.batches > 0) {
             for (var i = 0; i < doc.batches; i++) {
