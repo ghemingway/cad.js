@@ -4,14 +4,14 @@ body {
     font: 11px 'Lucida Grande', sans-serif;
 }
 
-.steptools-content-container {
+.cadjs-content-container {
     color: #eee;
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-.steptools-view {
+.cadjs-view {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -19,7 +19,7 @@ body {
     left: 0;
 }
 
-.steptools-control {
+.cadjs-control {
     position: absolute;
     padding-left: 8px;
     height: 60px;
@@ -29,13 +29,13 @@ body {
     z-index: 10000;
 }
 
-.steptools-control .btn-group {
+.cadjs-control .btn-group {
     float: left;
     margin-right: 15px;
     margin-top: 4px;
 }
 
-.steptools-control .btn {
+.cadjs-control .btn {
     width: 27px;
     height: 25px;
     padding: 2px 3px;
@@ -43,7 +43,7 @@ body {
     display: inline-block;
 }
 
-.steptools-control .btn.active {
+.cadjs-control .btn.active {
     text-decoration: none;
     background: #626262;
     background: -o-linear-gradient(top, #c8c8c8 0%, #626262 100%);
@@ -58,13 +58,13 @@ body {
     color: #fff;
 }
 
-.steptools-control .steptools-logo-container {
+.cadjs-control .cadjs-logo-container {
     position: absolute;
     top: 5px;
     right: 5px;
 }
 
-.steptools-assembly {
+.cadjs-assembly {
     float: left;
     width: 30%;
     height: 100%;
@@ -74,7 +74,7 @@ body {
     cursor: pointer;
 }
 
-.steptools-tree {
+.cadjs-tree {
     font-size: 8px;
     width: 250px;
     position: absolute;
@@ -92,24 +92,24 @@ body {
     padding: 1ex;
 }
 
-.bright .steptools-tree {
+.bright .cadjs-tree {
     background-color: #666;
     color: #fff;
 }
 
-.steptools-tree:hover {
+.cadjs-tree:hover {
     opacity: 1;
 }
 
-.non-initialized .steptools-tree {
+.non-initialized .cadjs-tree {
     display: none;
 }
 
-.compact .steptools-tree {
+.compact .cadjs-tree {
     display: none;
 }
 
-.steptools-downloads {
+.cadjs-downloads {
     font-size: 8px;
     border-top: 1px solid #555;
     border-left: 1px solid #555;
@@ -124,30 +124,30 @@ body {
     transition: opacity .4s, bottom .4s;
 }
 
-.steptools-downloads.out {
+.cadjs-downloads.out {
     bottom: -25px;
     opacity: 0;
 }
 
-.non-initialized .steptools-downloads {
+.non-initialized .cadjs-downloads {
     display: none;
 }
 
-.steptools-downloads:hover {
+.cadjs-downloads:hover {
     opacity: 1;
 }
 
-.steptools-downloads h3 {
+.cadjs-downloads h3 {
     font-size: 1em;
     margin: 5px;
 }
 
-.steptools-downloads .steptools-downloads-count {
+.cadjs-downloads .cadjs-downloads-count {
     font-size: 1em;
     float: right;
 }
 
-.steptools-downloads > ul {
+.cadjs-downloads > ul {
     list-style-type: none;
     list-style-image: none;
     margin-left: 5px;
@@ -177,7 +177,7 @@ body {
     right: 14px;
 }
 
-.steptools-compass {
+.cadjs-compass {
     position: relative;
 }
 
@@ -187,7 +187,7 @@ body {
     -webkit-transform:scale3d(.75, .75, .75); /* Opera, Chrome, and Safari */
 }
 
-.non-initialized .steptools-compass {
+.non-initialized .cadjs-compass {
     display: none;
 }
 
