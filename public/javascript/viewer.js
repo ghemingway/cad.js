@@ -161,6 +161,7 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // CONTROL EVENT HANDLERS
         controls.addEventListener("change", function() {
+            camera.far = (controls.sceneRadius || 0) + camera.position.length();
             invalidate();
         });
         controls.addEventListener("start", function() {

@@ -32,25 +32,18 @@ define(["THREE", "TrackballControls"], function(THREE, TrackballControls) {
             trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
             trackballControl.position0.multiplyScalar( -viewDistance );
             trackballControl.sceneRadius = viewDistance;
-            trackballControl._reset = trackballControl.reset;
-            trackballControl._update = trackballControl.update;
-            trackballControl.reset = function () {
-                var radius = this.sceneRadius || 0;
-                this._reset();
-                camera.far = radius + camera.position.length();
-            };
-            trackballControl.update = function () {
-                var radius = this.sceneRadius || 0;
-                this._update();
-                camera.far = radius + camera.position.length();
-            };
             trackballControl.reset();
             trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
-                var distance = trackballControl.object.position.length(),
-                    upVector = typeof(opt_upVector) === 'undefined' ? trackballControl.up0 : opt_upVector;
-                trackballControl.position0 = referenceOrientation.clone().applyEuler(euler).multiplyScalar(-distance);
-                trackballControl.up0.set(upVector.x, upVector.y, upVector.z);
-                trackballControl.reset();
+                var distance = camera.position.distanceTo(this.target);
+                this.target0.copy(this.target);
+                this.position0.copy(referenceOrientation).
+                    applyEuler(euler).
+                    multiplyScalar(-distance).
+                    add(this.target);
+                if (typeof(opt_upVector) !== 'undefined') {
+                    this.up0.copy(opt_upVector);
+                }
+                this.reset();
             };
         }
         if ( camera !== undefined && camera !== null ) {
