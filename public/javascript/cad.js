@@ -246,7 +246,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
         // Download manager interface
             $downloadsUl = this._$downloadsContainer.find( ">ul"),
-            $downloadsCounter = this._$downloadsContainer.find( ".steptools-downloads-count");
+            $downloadsCounter = this._$downloadsContainer.find( ".cadjs-downloads-count");
 
         this._loader.addEventListener("addRequest", function(event) {
             var id = event.file.split(".")[0];

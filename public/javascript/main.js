@@ -89,10 +89,10 @@ require.config({
 requirejs(["cad", "jquery", "THREE", "VIS"], function(CADjs, $, THREE, VIS) {
     $(VIS).on("ready", function(){
         var cad = window.cadjs = new CADjs({
-            viewContainerId: "steptools-view",
-            compassContainerId: "steptools-compass",
-            downloadsContainerId: "steptools-downloads",
-            treeContainerSelector: ".steptools-tree",
+            viewContainerId: "cadjs-view",
+            compassContainerId: "cadjs-compass",
+            downloadsContainerId: "cadjs-downloads",
+            treeContainerSelector: ".cadjs-tree",
 
             isCompact: VIS.getParameter( "compact" ) === "true",
             theme: VIS.getParameter( "theme" )
