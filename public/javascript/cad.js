@@ -225,7 +225,7 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                 // Add the part to the list
                 self._parts.push(part);
                 // calculate the scene's radius for draw distance calculations
-                self._viewer.controls.sceneRadius = part.getBoundingBox().size().length() * 0.5;
+                self._viewer.updateSceneBoundingBox(part.getBoundingBox());
                 // center the view
                 self._viewer.zoomToFit(part);
                 // Update the tree
@@ -418,12 +418,13 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
                     obj.explode(distance);
                 }
             }
+            this._viewer.updateSceneBoundingBox(this._parts[0].getBoundingBox());
             this._viewer.invalidate();
         }
     };
 
     CADjs.prototype.getExplodeDistance = function () {
-        return this._viewer.controls.sceneRadius * 0.05;
+        return this._viewer.sceneRadius * 0.05;
     };
 /*
     CADjs.prototype.setSelectedOpacity = function(opacity) {

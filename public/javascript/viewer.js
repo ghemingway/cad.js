@@ -10,7 +10,8 @@
 
 define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerControls) {
     function Viewer(CADjs) {
-        var shouldRender = false,
+        var that = this,
+            shouldRender = false,
             continuousRendering = false,
             canvasParent, renderer, canvas, geometryScene, annotationScene, overlayScene, camera,
             controls, compass,
@@ -24,6 +25,9 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             magFilter: THREE.LinearFilter,
             format: THREE.RGBAFormat
         };
+
+        this.sceneCenter = new THREE.Vector3(0,0,0);
+        this.sceneRadius = 10000;
 
         // RENDERER
         canvasParent = document.getElementById(CADjs._viewContainerId);
@@ -161,7 +165,16 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
 
         // CONTROL EVENT HANDLERS
         controls.addEventListener("change", function() {
-            camera.far = (controls.sceneRadius || 0) + camera.position.length();
+            var x0 = that.sceneCenter,
+                x1 = camera.position,
+                x2 = controls.target,
+                x2subX1 = x2.clone().sub(x1),
+                x1subX0 = x1.clone().sub(x0),
+                c = x2subX1.clone().cross(x1.clone().sub(x0)).lengthSq() / x2subX1.lengthSq(),
+                d = Math.sqrt(Math.abs(c - x1subX0.lengthSq()));
+            camera.near = Math.max(0.1, d - that.sceneRadius);
+            camera.far = d + that.sceneRadius;
+            camera.updateProjectionMatrix();
             invalidate();
         });
         controls.addEventListener("start", function() {
@@ -181,10 +194,9 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
             renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
             renderer.setSize(canvasParent.offsetWidth, canvasParent.offsetHeight);
             camera.aspect = canvasParent.offsetWidth / canvasParent.offsetHeight;
-            camera.updateProjectionMatrix();
-            camera.lookAt(geometryScene.position);
             composer.reset();
             controls.handleResize();
+            controls.dispatchEvent({type: 'change'});
             render();
         });
 
@@ -196,6 +208,11 @@ define(["THREE", "compass", "viewer_controls"], function(THREE, Compass, ViewerC
         this.zoomToFit = zoomToFit;
         animate(true); // Initial Rendering
     }
+
+    Viewer.prototype.updateSceneBoundingBox = function (newBoundingBox) {
+        this.sceneCenter.copy(newBoundingBox.center());
+        this.sceneRadius = newBoundingBox.size().length()/2;
+    };
 
     // Extend Viewer with events
     THREE.EventDispatcher.prototype.apply(Viewer.prototype);
