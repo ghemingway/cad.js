@@ -31,7 +31,6 @@ define(["THREE", "TrackballControls"], function(THREE, TrackballControls) {
             trackballControl.up0.set( 0, 1, 0 );
             trackballControl.position0 = referenceOrientation.clone().applyEuler( viewAngles  );
             trackballControl.position0.multiplyScalar( -viewDistance );
-            trackballControl.sceneRadius = viewDistance;
             trackballControl.reset();
             trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
                 var distance = camera.position.distanceTo(this.target);
