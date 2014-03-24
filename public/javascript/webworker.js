@@ -93,7 +93,7 @@ var TYSON = (function () {
         var pushFloat64 = imports.pushFloat64;
         var pushDecimal = imports.pushDecimal;
         var pushString = imports.pushString;
-        var pushArray = imports.pushArray;
+        var newTypedArray = imports.newTypedArray;
         var newObject = imports.newObject;
         var newArray = imports.newArray;
 
@@ -341,7 +341,7 @@ var TYSON = (function () {
         function decode () {
             var marker = 0;
             var count = 0;
-            var array_type = 0;
+            var arrayType = 0;
             var i = 0;
             while (1) {
                 marker = readI8() | 0;
@@ -399,79 +399,29 @@ var TYSON = (function () {
                     newObject(count | 0);
                     return;
                 case 97:  // $a
-                    array_type = readI8() | 0;
+                    arrayType = readI8() | 0;
                     count = readI8() | 0;
 
-                    if (array_type == $M) {
+                    if ((arrayType | 0) == (77 | 0)) {  // $M
                         for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
                             decode();
                         }
                         newArray(count | 0);
                     } else {
-                        // Uniform integer array, building it in place not
-                        // using the stack
-                        var val = [];
-                        for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
-                            switch (array_type | 0) {
-                            case 66:  // $B
-                                val[i] = readI8() | 0;
-                                if (val[i] >= 128){
-                                    val[i] = val[i] - 256 | 0;
-                                }
-                                break;
-                            case 105: // $i
-                                val[i] = readI16() | 0;
-                                if (val[i] >= 32768){
-                                    val[i] = val[i] - 65536 | 0;
-                                }
-                                break;
-                            case 73:  // $I
-                                val[i] = readI32() | 0;
-                                if (val[i] >= 2147483648){
-                                    val[i] = val[i] - 4294967296 | 0;
-                                }
-                                break;
-                            }
-                        }
-                        pushArray(val);
+                        newTypedArray(count | 0, arrayType | 0);
                     }
                     return;
                 case 65:  // $A
-                    array_type = readI8() | 0;
+                    arrayType = readI8() | 0;
                     count = readI32() | 0;
 
-                    if (array_type == $M) {
+                    if ((arrayType | 0) == (77 | 0)) {  // $M
                         for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
                             decode();
                         }
                         newArray(count | 0);
-                    }else {
-                        // Uniform integer array, building it in place not
-                        // using the stack
-                        var val = [];
-                        for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
-                            switch (array_type | 0) {
-                            case 66:  // $B
-                                val[i] = readI8() | 0;
-                                if (val[i] >= 128){
-                                    val[i] = val[i] - 256 | 0;
-                                }
-                                break;
-                            case 105: // $i
-                                val[i] = readI16() | 0;
-                                if (val[i] >= 32768){
-                                    val[i] = val[i] - 65536 | 0;
-                                }
-                                break;
-                            case 73:  // $I
-                                val[i] = readI32() | 0;
-                                if (val[i] >= 2147483648){
-                                    val[i] = val[i] - 4294967296 | 0;
-                                }
-                                break;
-                            }
-                        }
-                        pushArray(val);
+                    } else {
+                        newTypedArray(count | 0, arrayType | 0);
                     }
                     return;
                 default:
@@ -496,7 +446,7 @@ var TYSON = (function () {
             return val | 0;
         }
 
-        // Write an int32 value.
+        // Read an int32 value.
         function readI32 () {
             var val = 0;
             val = bytesU8[pos] << 24;
@@ -593,8 +543,38 @@ var TYSON = (function () {
                 }
                 values.push(val);
             },
-            pushArray:function(val){
-                values.push(val);
+            newTypedArray:function (count, arrayType){
+                var start = core.getPos();
+                var bytes = 1;
+                switch (arrayType) {
+                    case 66:  // $B
+                        bytes = 1;
+                        break;
+                    case 105: // $i
+                        bytes = 2;
+                        break;
+                    case 73:  // $I
+                        bytes = 4;
+                        break;
+                }
+                var stop = start + count * bytes;
+                var valueArray = [];
+                var i, j;
+                for (i = 0, j = start; i < count; i++, j += bytes) {
+                    switch (bytes) {
+                        case 1:  // $B
+                            valueArray[i] = view.getInt8(j);
+                            break;
+                        case 2: // $i
+                            valueArray[i] = view.getInt16(j);
+                            break;
+                        case 4:  // $I
+                            valueArray[i] = view.getInt32(j);
+                            break;
+                    }
+                }
+                values.push(valueArray);
+                core.setPos(stop);
             },
             newArray:function (count) {
                 var val = [];
@@ -762,7 +742,6 @@ function processBatchTYSON(url, workerID, buffer) {
     var tyson = TYSON(buffer);
     var dataJSON = tyson.decode();
     var parts = url.split("/");
-    console.log('Shells ' +dataJSON.shells.length);
     self.postMessage({
         type: "parseComplete",
         file: parts[parts.length - 1]
