@@ -162,6 +162,7 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         switch (filetype) {
             case "xml": req.contentType = "application/xml"; break;
             case "json": req.contentType = "application/json"; break;
+            case "tyson": req.contentType = "application/octet-stream"; break;
             default:
                 console.log("DataLoader.resolveUrl error - invalid content type: " + filetype);
         }
@@ -260,6 +261,10 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                         data = this.parseShellXML(xmlDoc, req.shellSize);
                         break;
                     case "application/json":
+                        shell = this._shells[event.data.id];
+                        data = event.data.data;
+                        break;
+                    case "application/octet-stream":
                         shell = this._shells[event.data.id];
                         data = event.data.data;
                         break;
@@ -551,11 +556,15 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
         this._viewer.add3DObject(rootProduct.getObject3D(), 'geometry');
         this._viewer.add3DObject(rootProduct.getOverlay3D(), 'overlay');
         this._viewer.add3DObject(rootProduct.getAnnotation3D(), 'annotation');
+        var batchExtension = '.json'
+        if (doc.useTyson){
+            batchExtension = '.tyson';
+        }
         // Do we have batches
         if (doc.batches && doc.batches > 0) {
             for (var i = 0; i < doc.batches; i++) {
                 this.addRequest({
-                    url: req.base + "batch" + i + ".json",
+                    url: req.base + "batch" + i + batchExtension,
                     validateType: "batch"
                 });
             }
