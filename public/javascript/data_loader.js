@@ -158,13 +158,13 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
             req.url += defaultURL;
         }
         // Determine content type
-        var filetype = req.url.split('.').pop();
-        switch (filetype) {
+        var extension = req.url.split('.').pop();
+        switch (extension) {
             case "xml": req.contentType = "application/xml"; break;
             case "json": req.contentType = "application/json"; break;
-            case "tyson": req.contentType = "application/octet-stream"; break;
+            case "tyson": req.contentType = "application/tyson"; break;
             default:
-                console.log("DataLoader.resolveUrl error - invalid content type: " + filetype);
+                console.log("DataLoader.resolveUrl error - invalid content type: " + extension);
         }
         if (!req.url.base || req.url.match(/^\w+:/) || req.url.match(/^\//)) {
             return req.url;
@@ -255,21 +255,19 @@ define(["THREE", "underscore", "assembly", "product", "shape", "annotation", "sh
                 break;
             case "shellLoad":
                 switch (req.contentType) {
-                    case "application/xml":
-                        xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
-                        shell = req.shell;
-                        data = this.parseShellXML(xmlDoc, req.shellSize);
-                        break;
-                    case "application/json":
-                        shell = this._shells[event.data.id];
-                        data = event.data.data;
-                        break;
-                    case "application/octet-stream":
-                        shell = this._shells[event.data.id];
-                        data = event.data.data;
-                        break;
-                    default:
-                        console.log("Blahhlal - What the hell is this?");
+                case "application/xml":
+                    xmlDoc = parser.parseFromString(event.data.data, "text/xml").documentElement;
+                    shell = req.shell;
+                    data = this.parseShellXML(xmlDoc, req.shellSize);
+                    break;
+                case "application/json":
+                case "application/tyson":
+                case "application/octet-stream":
+                    shell = this._shells[event.data.id];
+                    data = event.data.data;
+                    break;
+                default:
+                    console.log("Blahhlal - What the hell is this?");
                 }
                 // Remove the reference to the shell
                 delete this._shells[event.data.id];
