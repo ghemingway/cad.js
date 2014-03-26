@@ -19,6 +19,8 @@ import sys
 import time
 import xml.etree.cElementTree as ET
 
+from tyson import TysonEncoder
+
 import logging
 logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG)
@@ -62,14 +64,15 @@ def parse_xml(path):
 
 #------------------------------------------------------------------------------
 
-def translate_index(doc):
+def translate_index(doc, use_tyson):
     """Returns the full JSON"""
     return {
         'root': doc.attrib['root'],
         'products': [translate_product(x) for x in doc.iter('product')],
         'shapes': [translate_shape(x) for x in doc.iter('shape')],
         'shells': [translate_shell(x) for x in doc.iter('shell')],
-        'annotations': [translate_annotation(x) for x in doc.iter('annotation')]
+        'annotations': [translate_annotation(x) for x in doc.iter('annotation')],
+        'useTyson': use_tyson
     }
 
 
@@ -283,6 +286,7 @@ class BatchWorker(WorkerBase):
             batch = {'shells': []}
             indexed = CONFIG['indexPoints'] or CONFIG['indexNormals']
             reindex = job['reindex'] and indexed
+            use_tyson = job['use_tyson']
             if reindex:
                 batch['values'] = {}
             for s in job['shells']:
@@ -312,10 +316,21 @@ class BatchWorker(WorkerBase):
                 sorted_v = sorted(batch['values'].items(), key=itemgetter(1))
                 batch['values'] = map(itemgetter(0), sorted_v)
             # write batch
-            out_path = join(job['path'], job['name'] + ".json")
+            extension = use_tyson and ".tyson" or ".json"
+
+            out_path = join(job['path'], job['name'] + extension)
             try:
                 with open(out_path, "w") as f:
-                    json.dump(batch, f)
+                    if use_tyson:
+                        TysonEncoder().encode(batch, f)
+                        f.flush();
+                        # Must add padding for now to avoid a chrome bug
+                        f.seek(0,2)
+                        f_size = f.tell()
+                        for i in range(0, 8 - (f_size % 8)):
+                            f.write(chr(0))
+                    else:
+                        json.dump(batch, f)
             except Exception as e:
                 reason = "Unable to output JSON '{}': {}.".format(out_path, e)
                 self.report_exception(job, reason)
@@ -355,9 +370,10 @@ class TranslationWorker(WorkerBase):
 class XMLTranslator(object):
     """Translates STEP XML files to JSON"""
 
-    def __init__(self, batches=None, reindex=None):
+    def __init__(self, batches=None, reindex=None, use_tyson=None):
         self.batches = batches
         self.reindex = reindex
+        self.use_tyson = use_tyson
         self.parser = None
 
     @staticmethod
@@ -397,7 +413,8 @@ class XMLTranslator(object):
         # enqueue jobs
         for batch, info in batches.items():
             job = {'path': xml_dir, 'name': batch, 'shells': info['shells'],
-                   'reindex': self.reindex}
+                   'reindex': self.reindex,
+                   'use_tyson': self.use_tyson}
             queue.put(job)
 
         # add worker termination cues
@@ -426,9 +443,8 @@ class XMLTranslator(object):
             shells_size = sum([size for name, size in shells])
             msg = "Shells.  Count: {} Total Size: {} bytes."
             LOG.debug(msg.format(len(shells), shells_size))
-            regex = re.compile("batch[0-9]*.json")
-            is_batch = lambda x: regex.match(x)
-            sizes = [size_of(x) for x in os.listdir(xml_dir) if is_batch(x)]
+            batch_extension = '.tyson' if self.use_tyson else '.json'
+            sizes = [size_of(x + batch_extension) for x in batches.keys()]
             batches_size = sum(sizes)
             msg = "Batches.  Count: {} Total Size: {} bytes."
             LOG.debug(msg.format(len(sizes), batches_size))
@@ -452,7 +468,7 @@ class XMLTranslator(object):
             return True
         root = tree.getroot()
         try:
-            data = translate_index(root)
+            data = translate_index(root, self.use_tyson)
         except Exception as e:
             LOG.exception("Unable to translate index file.")
             return True
@@ -540,10 +556,12 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--batches", type=int, default=0, help=h)
     h = "re-index when batching shells"
     parser.add_argument("-r", "--reindex", action="store_true", help=h)
+    h = "output TySON instead of JSON"
+    parser.add_argument("-t", "--tyson", action="store_true", help=h)
     args = parser.parse_args()
 
     start_time = datetime.now()
-    translator = XMLTranslator(args.batches, args.reindex)
+    translator = XMLTranslator(args.batches, args.reindex, args.tyson)
     errors_in_translation = translator.translate(args.dir, args.index)
     dt = datetime.now() - start_time
     LOG.info("xmlToJson Elapsed time: {} secs".format(dt.seconds))
