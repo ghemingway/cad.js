@@ -119,13 +119,23 @@ body {
     bottom: 0;
     right: 0;
     width: 270px;
-    max-height: 20em;
 
     transition: opacity .4s, bottom .4s;
 }
+#cadjs-downloads-header {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: lighter;
+}
+#cadjs-downloads-header-label {
+    vertical-align: top;
+}
+.cadjs-downloads:hover ul {
+    display: block;
+}
 
 .cadjs-downloads.out {
-    bottom: -25px;
+    bottom: -100%;
     opacity: 0;
 }
 
@@ -148,17 +158,14 @@ body {
 }
 
 .cadjs-downloads > ul {
+    display: none;
+}
+.cadjs-downloads:hover > ul {
+    display: block;
+    margin: 5px;
+    padding: 0;
     list-style-type: none;
     list-style-image: none;
-    margin-left: 5px;
-    -webkit-margin-before: 0;
-    -webkit-margin-after: 0;
-    -webkit-margin-start: 0;
-    -webkit-margin-end: 0;
-    -webkit-padding-start: 0;
-    overflow-x: hidden;
-    overflow-y: scroll;
-    height: 100%;
 }
 
 .info-panel {

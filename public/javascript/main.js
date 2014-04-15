@@ -50,6 +50,7 @@ require.config({
         },
         viewer: {
             deps: [
+                'libs/n-progress-ring',
                 'libs/threejs/EffectComposer',
                 'libs/threejs/CopyShader',
                 'libs/threejs/FXAAShader',

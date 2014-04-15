@@ -246,10 +246,21 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
 
         // Download manager interface
             $downloadsUl = this._$downloadsContainer.find( ">ul"),
-            $downloadsCounter = this._$downloadsContainer.find( ".cadjs-downloads-count");
+            $downloadsCounter = this._$downloadsContainer.find( ".cadjs-downloads-count"),
+
+            progressRing = new NPROGRESSRING({
+                parentElement: this._$downloadsContainer.find('#cadjs-downloads-progress-bar')[0],
+                size: 18,
+                innerRadius: 0.6,
+                rotationSpeed: -Math.PI
+            }),
+            progressIdMap = {},
+            progressValues = [];
 
         this._loader.addEventListener("addRequest", function(event) {
             var id = event.file.split(".")[0];
+            progressIdMap[id] = progressValues.push(0) - 1;
+            progressRing.update(progressValues);
             $downloadsUl.append("<li id='" + id + "'>" + event.file + "</li>");
             var count = self._loader.queueLength(false);
             $downloadsCounter.text(count);
@@ -260,6 +271,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         });
         this._loader.addEventListener("loadComplete", function(event) {
             var id = event.file.split(".")[0];
+            progressValues[progressIdMap[id]] = 1;
+            progressRing.update(progressValues);
             // Is this the index file
             if (id === "index") {
                 $("li#index").remove();
@@ -294,6 +307,8 @@ define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLo
         this._loader.addEventListener("loadProgress", function(event) {
             if (event.loaded) {
                 var id = event.file.split(".")[0];
+                progressValues[progressIdMap[id]] = event.loaded / 100;
+                progressRing.update(progressValues);
                 $("li#" + id).text(event.file + ": " + event.loaded.toFixed(2) + "%");
             }
         });
