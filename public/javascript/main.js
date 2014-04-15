@@ -20,7 +20,8 @@ require.config({
         dat:                'libs/dat.gui.min',
         bigScreen:          'libs/bigscreen.min',
         VIS:                'libs/visualize',
-        Velvety:            'shaders/VelvetyShader'
+        Velvety:            'shaders/VelvetyShader',
+        NProgressRing:      'libs/n-progress-ring'
     },
     shim: {
         jquery: {
@@ -50,7 +51,6 @@ require.config({
         },
         viewer: {
             deps: [
-                'libs/n-progress-ring',
                 'libs/threejs/EffectComposer',
                 'libs/threejs/CopyShader',
                 'libs/threejs/FXAAShader',

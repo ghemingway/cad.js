@@ -17,7 +17,8 @@ gulp.task('build', function() {
             dat:                'libs/dat.gui.min',
             bigScreen:          'libs/bigscreen.min',
             VIS:                'libs/visualize',
-            Velvety:            "shaders/VelvetyShader"
+            Velvety:            'shaders/VelvetyShader',
+            NProgressRing:      'libs/n-progress-ring'
         },
         shim: {
             jquery: {

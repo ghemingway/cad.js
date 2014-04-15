@@ -6,7 +6,7 @@
 /*************************************************************************/
 
 
-define(["jquery", "jstree", "data_loader", "viewer"], function($, jstree, DataLoader, Viewer) {
+define(["jquery", "jstree", "data_loader", "viewer", 'NProgressRing'], function($, jstree, DataLoader, Viewer, NProgressRing) {
 
     "use strict";
     /* config:
