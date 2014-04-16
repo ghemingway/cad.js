@@ -264,30 +264,27 @@ body.non-initialized::after {
 }
 
 #resizer {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
     display: none;
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
     cursor: pointer;
+    padding: 4px;
 }
-
-#resizer>svg {
-    opacity: .65;
+#resizer:hover {
+    background: #0099ff;
+}
+#resizer svg {
     display: block;
 }
 
-#resizer:hover>svg {
-    opacity: 1;
+#resizer svg polygon {
+    fill: white;
 }
 
-#resizer>svg polygon {
-    fill: #fff;
+.bright #resizer svg polygon {
+    fill: black;
 }
-
-.bright #resizer>svg polygon {
-    fill: #000;
-}
-
 
 @-webkit-keyframes spinclockwise {
     from {-webkit-transform: rotateZ(0deg);}
