@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "",
+  "type": "object",
+  "properties": {
+    "batches": {
+      "type": "number"
+    },
+    "shells": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "required": [
+          "href",
+          "id",
+          "size"
+        ],
+        "properties": {
+          "href": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bbox": {
+            "type": "array",
+            "items": {
+              "required": [],
+              "properties": {}
+            }
+          },
+          "size": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "useTyson": {
+      "type": "boolean"
+    },
+    "shapes": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "required": [],
+              "properties": {}
+            }
+          },
+          "shells": {
+            "type": "array",
+            "items": {
+              "required": [],
+              "properties": {}
+            }
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "children": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "items": {
+              "required": [
+                "ref",
+                "xform"
+              ],
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "xform": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "products": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "required": [
+          "step",
+          "id",
+          "name"
+        ],
+        "properties": {
+          "shapes": {
+            "type": "array",
+            "items": {
+              "required": [],
+              "properties": {}
+            }
+          },
+          "step": {
+            "type": "string",
+            "minLength": 1
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "required": [],
+              "properties": {}
+            }
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "annotations": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "required": [
+          "href",
+          "id"
+        ],
+        "properties": {
+          "href": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "batches",
+    "shells",
+    "useTyson",
+    "shapes",
+    "products",
+    "root",
+    "annotations"
+  ]
+}
