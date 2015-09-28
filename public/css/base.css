@@ -1,0 +1,16 @@
+body {
+  font: 11px 'Lucida Grande', sans-serif;
+  background: #000000; }
+
+.cadjs-content-container {
+  color: #eee;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; }
+
+.cadjs-view {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0; }

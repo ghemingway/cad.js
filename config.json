@@ -1,0 +1,51 @@
+{
+  "host": "localhost",
+  "port": 8080,
+  "protocol": "http",
+  "sessionCookieAge": 10000000,
+  "sessionRememberAge": 10000000,
+  "fetchDuration": 300,
+  "api_version": "v1",
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379,
+    "database": 0
+  },
+  "security": {
+    "url": "/session",
+    "token_expiration": 10000
+  },
+  "storage": {
+    "module": "s3",
+    "host":     "192.168.59.103",
+    "port":     49153,
+    "protocol": "http://",
+    "access_key": "test:tester",
+    "secret_key": "testing",
+    "type":     "openstack",
+    "context":  "/auth/v1.0",
+    "version":  1,
+    "containers": ["attachments", "files"]
+  },
+  "environments": {
+    "development": {
+      "redis": {
+        "database": 1
+      },
+      "storage": {
+        "module": "filesystem",
+        "dir": "./data"
+      }
+    },
+    "test": {
+      "port": 8081,
+      "fetchDuration": 5,
+      "redis": {
+        "database": 2
+      }
+    },
+    "production": {
+      "protocol": "https"
+    }
+  }
+}
