@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "STEPNC",
+  "description": "Visualization of STEP-NC workplan and working steps",
+  "type": "object",
+  "definitions": {
+  	"working_step": {
+  		"type": "object",
+  		"properties": {
+  			"name": { "type": "string" },
+  			"base_time": { "type": "number" },
+			"opt_time": { "type": "number" },
+			"distance": { "type": "number" }
+  		}
+  	}
+  },
+  "properties": {
+	"workplan": {
+		"allOf": [
+    		{ "$ref": "#/definitions/working_step" },
+			{ "properties":
+        		{ "children": {
+        				"type": "array"
+        			}
+        		},
+        		"required": [ "children" ]
+        	}
+  		]
+    },
+    "selective": {
+    	"allOf": [
+    		{ "$ref": "#/definitions/working_step" },
+    		{ "properties": {
+    			{ 
+    				"children": { "type": "array" },
+    				"selected": { "type": "number" }
+    			},
+    			"required" : [ "children", "selected" ]
+    		}}
+    	]
+    },
+    "frame": {
+    	"allOf": [
+    		{ "$ref": "#/definitions/working_step" }
+    	]
+    },
+    "compensation": {
+    	"allOf": [
+    		{ "$ref": "#/definitions/working_step" }
+    	]
+    },
+    "nc_function": {
+    	"allOf": [
+    		{ "$ref": "#/definitions/working_step" },
+    		{ "properties": {
+    			{ 
+    				"tool": { "type": "string" },
+    				"path": { "type": "array" }
+    			},
+    			"required" : [ "children", "selected" ]
+    		}}
+    	]
+    }
+  },
+  "required": [
+    "workplan"
+  ]
+}
