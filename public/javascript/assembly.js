@@ -203,8 +203,7 @@ define(["THREE"], function(THREE) {
         mouseY = -(mouseY / window.innerHeight) * 2 + 1;
         // Convert mouse-space to global
         var vector = new THREE.Vector3(mouseX, mouseY, .999);
-        var projector = new THREE.Projector();
-        projector.unprojectVector(vector, camera);
+        vector.project(camera);
         // Cast ray from camera, pointed towards click point
         vector.sub(camera.position).normalize();
         var raycaster = new THREE.Raycaster(camera.position, vector);
@@ -238,7 +237,7 @@ define(["THREE"], function(THREE) {
         }
         // Create the new box buffer
         var geometry = new THREE.BufferGeometry();
-        geometry.addAttribute( 'position', Float32Array, 36, 3 );
+        geometry.addAttribute( 'position', new THREE.BufferAttribute(36, 3) );
 
         var positions = geometry.attributes.position.array;
         //Front face bottom
@@ -334,7 +333,7 @@ define(["THREE"], function(THREE) {
             linewidth: 2,
             color: this.getCADjs().getThemeValue('boundingBoxColor')
         });
-        return new THREE.Line(geometry, material, THREE.LinePieces);
+        return new THREE.Line(geometry, material, THREE.LineSegments);
     };
 
     /***********************************/
