@@ -39,14 +39,14 @@ module.exports = class Shell extends THREE.EventDispatcher {
         this.dispatchEvent({type: "shellStartLoad", shell: this});
         // Create the geometry to hold the data
         this._geometry = new THREE.BufferGeometry();
-        this._geometry.addAttribute('position', Float32Array, this._size * 3, 3);
-        this._geometry.addAttribute('normal', Float32Array, this._size * 3, 3);
-        this._geometry.addAttribute('color', Float32Array, this._size * 3, 3);
+        this._geometry.addAttribute('position', new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('normal',   new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('color',    new THREE.BufferAttribute(this._size * 3, 3));
 
         // Setup the offsets
         var chunkSize = 21845;
         var i;
-        this._geometry.offsets = [];
+        this._geometry.groups = [];
         var offsets = this._size / chunkSize;
         for (i = 0; i < offsets; i++) {
             var offset = {
@@ -54,7 +54,7 @@ module.exports = class Shell extends THREE.EventDispatcher {
                 index: i * chunkSize * 3,
                 count: Math.min(this._size - ( i * chunkSize ), chunkSize) * 3
             };
-            this._geometry.offsets.push(offset);
+            this._geometry.groups.push(offset);
         }
 
         // Now load the rest of the data

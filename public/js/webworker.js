@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-
+/******/
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-
+/******/
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			exports: {},
 /******/ 			id: moduleId,
 /******/ 			loaded: false
 /******/ 		};
-
+/******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-
-
+/******/
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-
+/******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-
+/******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "/js/";
-
+/******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
 /******/ })
@@ -49,13 +49,13 @@
 	 *
 	 * Extended by Gabor Pap to include TySON decoding
 	 */
-
+	
 	/*********************************************************************
 	 *
 	 * TYSON decoder
 	 *
 	 *********************************************************************/
-
+	
 	/*
 	 * Copyright 2013 Art Compiler LLC
 	 * Copyright 2013 Mozilla Foundation
@@ -72,14 +72,14 @@
 	 * See the License for the specific language governing permissions and
 	 * limitations under the License.
 	 */
-
-	"use strict";
-
+	
+	"use strict"
+	
 	/*
 	 This module implements a decoder of TYSON (an extension of UBJSON) objects.
-
+	
 	 !!! The encoder has NOT been updated to create TYSON, rather it outputs UBJSON.
-
+	
 	 startObject(flags)
 	 finishObject(size)
 	 startArray(flags)
@@ -92,17 +92,18 @@
 	 writeI64(val)
 	 writeF32(val)
 	 writeF64(val)
-
+	
 	 imported functions
-
+	
 	 imports = {
 	 resizeHeap,
 	 }
-
+	
 	 */
-
+	
+	;
 	var DEBUG = true;
-
+	
 	var assert = !DEBUG ? function () {} : function (val, str) {
 	    if (str === void 0) {
 	        str = "failed!";
@@ -111,22 +112,22 @@
 	        throw "assert: " + str;
 	    }
 	};
-
+	
 	var global = undefined;
-
+	
 	var TYSON = (function () {
-
+	
 	    var Core = function Core(stdlib, imports, heap) {
-
-	        "use asm";
-
+	        "use asm"
+	
 	        // BEGIN SNIP
-
+	
+	        ;
 	        var pos = 0;
 	        var bytesU8 = new stdlib.Uint8Array(heap);
 	        var bytesD32 = new stdlib.Float32Array(heap);
 	        var bytesD64 = new stdlib.Float64Array(heap);
-
+	
 	        var imul = stdlib.Math.imul;
 	        var pushNull = imports.pushNull;
 	        var pushTrue = imports.pushTrue;
@@ -139,7 +140,7 @@
 	        var newTypedArray = imports.newTypedArray;
 	        var newObject = imports.newObject;
 	        var newArray = imports.newArray;
-
+	
 	        // Markers for UBJSON types
 	        var $o = 111;
 	        var $O = 79;
@@ -159,42 +160,42 @@
 	        var $T = 84;
 	        var $F = 70;
 	        var $M = 77;
-
+	
 	        var $_ = 95; // place holder byte
-
+	
 	        // Flag bits
 	        var BIG = 0x00000001;
-
+	
 	        // Return the current position in the ArrayBuffer.
 	        function getPos() {
 	            return pos | 0;
 	        }
-
+	
 	        function setPos(p) {
 	            p = p | 0;
 	            pos = p;
 	        }
-
+	
 	        // BEGIN Builder
-
+	
 	        // Write a null value.
 	        function writeNull() {
 	            bytesU8[pos] = $Z;
 	            pos = pos + 1 | 0;
 	        }
-
+	
 	        // Write a true value.
 	        function writeTrue() {
 	            bytesU8[pos] = $T;
 	            pos = pos + 1 | 0;
 	        }
-
+	
 	        // Write a false value.
 	        function writeFalse() {
 	            bytesU8[pos] = $F;
 	            pos = pos + 1 | 0;
 	        }
-
+	
 	        // Write a byte (int8) value.
 	        function writeByte(val) {
 	            val = val | 0;
@@ -202,7 +203,7 @@
 	            bytesU8[pos + 1 | 0] = val;
 	            pos = pos + 2 | 0;
 	        }
-
+	
 	        // Write an int16 value.
 	        function writeI16(val) {
 	            val = val | 0;
@@ -211,7 +212,7 @@
 	            bytesU8[pos + 2 | 0] = val & 0xFF;
 	            pos = pos + 3 | 0;
 	        }
-
+	
 	        // Write an int32 value.
 	        function writeI32(val) {
 	            val = val | 0;
@@ -222,7 +223,7 @@
 	            bytesU8[pos + 4 | 0] = val & 0xFF;
 	            pos = pos + 5 | 0;
 	        }
-
+	
 	        // WARNING writeD32() and writeD64() write bytes out with the reverse
 	        // endian-ness of the host computer. The order is reversed because UBJSON
 	        // demands big endian-ness and most computers use litte endian as their
@@ -232,7 +233,7 @@
 	        // writing UBJSON values from a computer or UBJSON implementation with a
 	        // different endian-ness. However, these are not use cases that are in scope
 	        // for the current implementation.
-
+	
 	        // Write an float32 value.
 	        function writeD32(val) {
 	            val = +val;
@@ -247,7 +248,7 @@
 	            bytesU8[pos + 4 | 0] = bytesU8[scratchPos | 0];
 	            pos = pos + 5 | 0;
 	        }
-
+	
 	        // Write an float64 value.
 	        function writeD64(val) {
 	            val = +val;
@@ -266,7 +267,7 @@
 	            bytesU8[pos + 8 | 0] = bytesU8[scratchPos | 0];
 	            pos = pos + 9 | 0;
 	        }
-
+	
 	        // Start an object. Allocate space for a new object. (flags & BIG) means
 	        // more than 255 properties.
 	        function startObject(flags) {
@@ -284,7 +285,7 @@
 	                pos = pos + 5 | 0;
 	            }
 	        }
-
+	
 	        // Finish an object. Offset is position before calling startObject().
 	        function finishObject(offset, count, flags) {
 	            offset = offset | 0;
@@ -299,7 +300,7 @@
 	                bytesU8[offset + 4 | 0] = count & 0xFF;
 	            }
 	        }
-
+	
 	        // Start an array. Allocate space for a new array. (flags & BIG) means
 	        // more than 255 elements.
 	        function startArray(flags) {
@@ -317,7 +318,7 @@
 	                pos = pos + 5 | 0;
 	            }
 	        }
-
+	
 	        // Finish an array. Offset is position before calling startArray().
 	        function finishArray(offset, count, flags) {
 	            offset = offset | 0;
@@ -332,7 +333,7 @@
 	                bytesU8[offset + 4 | 0] = count & 0xFF;
 	            }
 	        }
-
+	
 	        // Start a string value. Allocate space for a new string. (flags & BIG)
 	        // means contains more 255 bytes. Call writeStringChar() to add characters,
 	        // and finishString() to patch the byte count. Notice that characters are
@@ -352,7 +353,7 @@
 	                pos = pos + 5 | 0;
 	            }
 	        }
-
+	
 	        // Finish a string value. Patch its byte count.
 	        function finishString(offset, count, flags) {
 	            offset = offset | 0;
@@ -367,7 +368,7 @@
 	                bytesU8[offset + 4 | 0] = count & 0xFF;
 	            }
 	        }
-
+	
 	        // Write a UTF8 character into a string value.
 	        function writeStringChar(val) {
 	            val = val | 0;
@@ -375,9 +376,9 @@
 	            bytesU8[pos] = val;
 	            pos = pos + 1 | 0;
 	        }
-
+	
 	        // END Builder
-
+	
 	        // BEGIN Decoder
 	        // Construct a TYSON value from a sequence of bytes.
 	        function decode() {
@@ -458,7 +459,7 @@
 	                        // $a
 	                        arrayType = readI8() | 0;
 	                        count = readI8() | 0;
-
+	
 	                        if ((arrayType | 0) == (77 | 0)) {
 	                            // $M
 	                            for (i = 0; ~ ~i < ~ ~count; i = i + 1 | 0) {
@@ -473,7 +474,7 @@
 	                        // $A
 	                        arrayType = readI8() | 0;
 	                        count = readI32() | 0;
-
+	
 	                        if ((arrayType | 0) == (77 | 0)) {
 	                            // $M
 	                            for (i = 0; ~ ~i < ~ ~count; i = i + 1 | 0) {
@@ -489,14 +490,14 @@
 	                }
 	            }
 	        }
-
+	
 	        function readI8() {
 	            var val = 0;
 	            val = bytesU8[pos] | 0;
 	            pos = pos + 1 | 0;
 	            return val | 0;
 	        }
-
+	
 	        // Read an int16 value.
 	        function readI16() {
 	            var val = 0;
@@ -505,7 +506,7 @@
 	            pos = pos + 2 | 0;
 	            return val | 0;
 	        }
-
+	
 	        // Read an int32 value.
 	        function readI32() {
 	            var val = 0;
@@ -516,10 +517,10 @@
 	            pos = pos + 4 | 0;
 	            return val | 0;
 	        }
-
+	
 	        // END Decoder
 	        // END SNIP
-
+	
 	        // Exports
 	        return {
 	            // Builder functions
@@ -545,7 +546,7 @@
 	            setPos: setPos
 	        };
 	    };
-
+	
 	    var TYSON = function TYSON(buffer) {
 	        var view = new DataView(buffer);
 	        var values = [];
@@ -650,31 +651,31 @@
 	                }
 	                values.push(val);
 	            }
-
+	
 	        };
 	        var core = Core(global, imports, buffer);
-
+	
 	        function decode() {
 	            core.decode();
 	            return values.pop();
 	        }
-
+	
 	        var ubjson = Object.create(core);
 	        ubjson.decode = decode;
 	        return ubjson;
 	    };
-
+	
 	    return TYSON;
 	})();
-
+	
 	/*********************************************************************
 	 *
 	 * TYSON decoder ends here
 	 *
 	 *********************************************************************/
-
+	
 	/*********************************************************************/
-
+	
 	function processAssembly(url, workerID, data) {
 	    // All we really need to do is pass this back to the main thread
 	    self.postMessage({
@@ -684,7 +685,7 @@
 	        workerID: workerID
 	    });
 	}
-
+	
 	function processAnnotation(url, workerID, data) {
 	    var parts = url.split("/");
 	    // All we really need to do is pass this back to the main thread
@@ -701,9 +702,9 @@
 	        file: parts[parts.length - 1]
 	    });
 	}
-
+	
 	/*********************************************************************/
-
+	
 	function unindexValues(data, buffers) {
 	    var numValues = data.pointsIndex.length;
 	    for (var i = 0; i < numValues; i++) {
@@ -713,7 +714,7 @@
 	    //delete data.pointsIndex;
 	    //delete data.normalsIndex;
 	}
-
+	
 	function uncompressColors(data, colorsBuffer) {
 	    var index = 0;
 	    var numBlocks = data.colorsData.length;
@@ -727,7 +728,7 @@
 	    }
 	    //delete data.colorsData;
 	}
-
+	
 	function processShellJSON(url, workerID, dataJSON, signalFinish) {
 	    // Just copy the data into arrays
 	    var buffers = {
@@ -735,7 +736,7 @@
 	        normals: new Float32Array(dataJSON.pointsIndex.length),
 	        colors: new Float32Array(dataJSON.pointsIndex.length)
 	    };
-
+	
 	    if (dataJSON.values) {
 	        if (dataJSON.precision) {
 	            var factor = Math.pow(10, dataJSON.precision);
@@ -749,7 +750,7 @@
 	    if (dataJSON.colorsData) {
 	        uncompressColors(dataJSON, buffers.colors);
 	    }
-
+	
 	    var parts = url.split("/");
 	    self.postMessage({
 	        type: "shellLoad",
@@ -766,7 +767,7 @@
 	        });
 	    }
 	}
-
+	
 	function processBatchJSON(url, workerID, data) {
 	    var dataJSON = JSON.parse(data);
 	    var parts = url.split("/");
@@ -783,7 +784,7 @@
 	        file: parts[parts.length - 1]
 	    });
 	}
-
+	
 	function processBatchTYSON(url, workerID, buffer) {
 	    var tyson = TYSON(buffer);
 	    var dataJSON = tyson.decode();
@@ -801,9 +802,9 @@
 	        file: parts[parts.length - 1]
 	    });
 	}
-
+	
 	/*********************************************************************/
-
+	
 	self.addEventListener("message", function (e) {
 	    // Get the request URL info
 	    var url = e.data.url;
@@ -868,7 +869,7 @@
 	        }
 	        self.postMessage(message);
 	    });
-
+	
 	    xhr.open("GET", url, true);
 	    if (dataType == 'tyson') {
 	        xhr.responseType = 'arraybuffer';
@@ -883,3 +884,4 @@
 
 /***/ }
 /******/ ]);
+//# sourceMappingURL=webworker.map

@@ -5,6 +5,7 @@ var path =      require("path"),
 module.exports = {
     cache: true,
     debug: true,
+    devtool: 'source-map',
     sourceMapFileName: "[file].map",
     context: __dirname + "/src/client",
     entry: {
@@ -20,6 +21,7 @@ module.exports = {
     },
     module: {
         loaders: [
+            { test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
             // required to write "require('./style.css')"
             { test: /\.scss$/, loader: "style!css!sass" },
             { test: /\.css$/,  loader: "style-loader!css-loader" },
@@ -31,7 +33,14 @@ module.exports = {
             { test: /\.svg$/,           loader: "file-loader?prefix=font/" },
 
             // required for react jsx
-            { test: /\.jsx?$/,  exclude: /node_modules/, loader: "babel" },
+            {
+                test: /\.jsx?$/,
+                exclude: /node_modules/,
+                loader: "babel-loader",
+                query: {
+                    presets: ['es2015', 'react']
+                }
+            },
 
             // required for GLSL support
             { test: /\.glsl$/, loader: 'webpack-glsl' }
@@ -45,10 +54,11 @@ module.exports = {
     },
     plugins: [
         new webpack.ProvidePlugin({
-            "_": "lodash",
-            "$": "jquery",
+            "_":        "lodash",
+            "$":        "jquery",
+            "jQuery":   "jquery",
             "Backbone": "backbone",
-            "THREE": "three"
+            "THREE":    "three"
         })
     ]
 };

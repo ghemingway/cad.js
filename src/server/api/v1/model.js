@@ -24,10 +24,9 @@ var _resolve = function(req, res) {
  * @return {200,username} Successful login yields the username
  */
 var _fetch = function(req, res) {
-    var data = require(
-        path.join(__dirname, '../../../../data/boxy/index.json')
-    );
-    res.status(200).send(data);
+    var dirPath = path.join(__dirname, '../../../../data/' + req.params.modelId);
+    app.logger.debug('Model: ' + dirPath);
+    res.status(200).sendFile('index.json', { root: dirPath });
 };
 
 

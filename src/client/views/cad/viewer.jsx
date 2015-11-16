@@ -9,7 +9,6 @@ var React               = require('react'),
     ViewerControls      = require('./viewer_controls');
     require('./shaders/CopyShader');
     require('./shaders/EffectComposer');
-    require('./shaders/DepthPassPlugin');
     require('./shaders/FXAAShader');
     require('./shaders/VelvetyShader');
     require('./shaders/SSAOShader');
@@ -18,6 +17,10 @@ var React               = require('react'),
 /*************************************************************************/
 
 module.exports = class CADViewer extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
     componentWillMount() {
         this.renderTargetParametersRGBA = {
             minFilter: THREE.LinearFilter,
@@ -44,13 +47,6 @@ module.exports = class CADViewer extends React.Component {
         this.renderer.sortObjects = true;
         this.renderer.autoClear = false;
 
-        // DEPTH PASS
-        var depthTarget = new THREE.WebGLRenderTarget(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight, this.renderTargetParametersRGBA);
-        var depthPassPlugin = new THREE.DepthPassPlugin();
-        depthPassPlugin.renderTarget = depthTarget;
-        depthPassPlugin.enabled = false;
-        //this.renderer.addPrePlugin(depthPassPlugin);
-
         // SCENES
         this.geometryScene = new THREE.Scene();
         this.annotationScene = new THREE.Scene();
@@ -69,15 +65,6 @@ module.exports = class CADViewer extends React.Component {
         this.camera.lookAt(this.geometryScene.position);
 
         // EFFECTS
-        // EFFECT SSAO
-        var renderPassSSAO = new THREE.ShaderPass(THREE.SSAOShader);
-        //renderPassSSAO.uniforms['tDepth'].value = depthTarget;
-        renderPassSSAO.uniforms['size'].value.set(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight);
-        renderPassSSAO.uniforms['cameraNear'].value = this.camera.near;
-        renderPassSSAO.uniforms['cameraFar'].value = this.camera.far;
-        renderPassSSAO.uniforms['aoClamp'].value = 0.9;
-        renderPassSSAO.uniforms['lumInfluence'].value = 0.5;
-        renderPassSSAO.enabled = false;
 
         // EFFECT FXAA
         var renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
@@ -88,7 +75,6 @@ module.exports = class CADViewer extends React.Component {
 
         // ADD RENDER PASSES
         this.composer = new THREE.EffectComposer(this.renderer);
-        this.composer.addPass(renderPassSSAO);
         this.composer.addPass(renderPassFXAA);
         this.composer.addPass(renderPassCopy);
 
@@ -97,18 +83,13 @@ module.exports = class CADViewer extends React.Component {
             viewer: this,
             camera: this.camera,
             canvas: this.renderer.domElement,
-            renderPassSSAO: renderPassSSAO,
             renderPassFXAA: renderPassFXAA
         });
 
         // SCREEN RESIZE
         window.addEventListener("resize", function() {
             console.log('CADViewer Resize');
-            //depthTarget = new THREE.WebGLRenderTarget(canvasParent.offsetWidth, canvasParent.offsetHeight, renderTargetParametersRGBA);
-            //depthPassPlugin.renderTarget = depthTarget;
-            //renderPassSSAO.uniforms['tDepth'].value = depthTarget;
-            //renderPassSSAO.uniforms['size'].value.set(canvasParent.offsetWidth, canvasParent.offsetHeight);
-            //renderPassFXAA.uniforms['resolution'].value.set(1/canvasParent.offsetWidth, 1/canvasParent.offsetHeight);
+            renderPassFXAA.uniforms['resolution'].value.set(1/self.canvasParent.offsetWidth, 1/self.canvasParent.offsetHeight);
             self.renderer.setSize(self.canvasParent.offsetWidth, self.canvasParent.offsetHeight);
             self.camera.aspect = self.canvasParent.offsetWidth / self.canvasParent.offsetHeight;
             self.composer.reset();
@@ -141,7 +122,7 @@ module.exports = class CADViewer extends React.Component {
     }
 
     render() {
-        return(<canvas id="cadjs-canvas" />);
+        return <canvas id="cadjs-canvas" />;
     }
 
     update() {

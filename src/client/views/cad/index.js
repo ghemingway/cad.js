@@ -7,6 +7,7 @@
 var _           = require('lodash'),
     DataLoader  = require('./data_loader'),
     React       = require('react'),
+    ReactDOM    = require('react-dom'),
     CADView     = React.createFactory(require('./viewer'));
 
 /*************************************************************************/
@@ -31,7 +32,7 @@ class CADjs extends THREE.EventDispatcher {
             autorun: false,
             workerPath: "/js/webworker.js"
         });
-        React.render(this._viewer, document.getElementById('cadjs-view'));
+        ReactDOM.render(this._viewer, document.getElementById('cadjs-view'));
     }
 
     load(reqPath, basePath) {
@@ -40,14 +41,6 @@ class CADjs extends THREE.EventDispatcher {
         this._loader.load(reqPath, basePath, "assembly", function(err, part) {
             if (err) {
                 console.log('CAD.index Load error: ' + path);
-                //// Popup message for user to handle
-                //$("#dialog").dialog({
-                //    autoOpen: true,
-                //    buttons: [ { text: "Ok", click: function() { $(this).dialog("close"); } } ],
-                //    modal: true,
-                //    title: "CAD.js Load Error - " + err.status
-                //});
-                //$("#dialog-content").text("Error loading model: " + err.file);
             } else {
                 // Add the part to the list
                 self._rootAssembly = part;

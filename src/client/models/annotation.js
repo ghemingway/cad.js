@@ -4,7 +4,7 @@
 
 "use strict";
 
-//var THREE = require('three');
+var THREE = require('three');
 
 
 /********************************* Annotation Class ********************************/
@@ -30,8 +30,10 @@ module.exports = class Annotation extends THREE.EventDispatcher {
     //        console.log("Annotation.addGeometry: " + data.lines.length);
         this._lines =_.map(data.lines, function(line) {
             var linestrip = new THREE.BufferGeometry();
-            linestrip.addAttribute('position', Float32Array, line.length / 3, 3);
-            linestrip.attributes.position.array.set(line);
+            //linestrip.addAttribute('position', Float32Array, line.length / 3, 3);
+            //linestrip.attributes.position.array.set(line);
+            linestrip.addAttribute('position', new THREE.BufferAttribute(line, 3));
+            linestrip.attributes.position.array = line;
             return linestrip;
         });
         // All done - signal completion

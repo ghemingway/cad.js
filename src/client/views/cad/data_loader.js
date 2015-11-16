@@ -268,10 +268,10 @@ module.exports = class DataLoader extends THREE.EventDispatcher {
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Add the assembly to the scene
-        console.log(this._viewer);
-        this._viewer.add3DObject(rootProduct.getObject3D(), 'geometry');
-        this._viewer.add3DObject(rootProduct.getOverlay3D(), 'overlay');
-        this._viewer.add3DObject(rootProduct.getAnnotation3D(), 'annotation');
+        //console.log(this._viewer);
+        //this._viewer.add3DObject(rootProduct.getObject3D(), 'geometry');
+        //this._viewer.add3DObject(rootProduct.getOverlay3D(), 'overlay');
+        //this._viewer.add3DObject(rootProduct.getAnnotation3D(), 'annotation');
         var batchExtension = '.json';
         if (doc.useTyson) {
             batchExtension = '.tyson';

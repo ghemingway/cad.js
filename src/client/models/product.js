@@ -8,8 +8,10 @@
 /********************************* Product Class ********************************/
 
 
-define(["THREE"], function(THREE) {
-    function Product(id, assembly, name, stepFile, isRoot) {
+module.exports = class Product extends THREE.EventDispatcher {
+    constructor(id, assembly, name, stepFile, isRoot) {
+        super();
+        console.log('Product: ' + id);
         assembly.makeChild(id, this);
         this._id = id;
         this._assembly = assembly;
@@ -24,11 +26,11 @@ define(["THREE"], function(THREE) {
         return this;
     }
 
-    Product.prototype.addChild = function(childProduct) {
+    addChild(childProduct) {
         this._children.push(childProduct);
-    };
+    }
 
-    Product.prototype.addShape = function(shape) {
+    addShape(shape) {
         shape.setProduct(this);
         this._shapes.push(shape);
         if (this._isRoot) {
@@ -40,39 +42,39 @@ define(["THREE"], function(THREE) {
                 self.dispatchEvent({ type: "shapeLoaded", shell: event.shell });
             });
         }
-    };
+    }
 
-    Product.prototype.getID = function() {
+    getID() {
         return this._id;
-    };
+    }
 
-    Product.prototype.getProductName = function() {
+    getProductName() {
         return this._name;
-    };
+    }
 
-    Product.prototype.getObject3D = function() {
+    getObject3D() {
         return this._object3D;
-    };
+    }
 
-    Product.prototype.getOverlay3D = function() {
+    getOverlay3D() {
         return this._overlay3D;
-    };
+    }
 
-    Product.prototype.getAnnotation3D = function() {
+    getAnnotation3D() {
         return this._annotation3D;
-    };
+    }
 
-    Product.prototype.applyMatrix = function(matrix) {
+    applyMatrix(matrix) {
         this._object3D.applyMatrix(matrix);
         this._overlay3D.applyMatrix(matrix);
         this._annotation3D.applyMatrix(matrix);
-    };
+    }
 
-    Product.prototype.getStepFile = function() {
+    getStepFile() {
         return this._stepFile;
-    };
+    }
 
-    Product.prototype.getTree = function() {
+    getTree() {
         // Check if only geometry-aligned Products get added to tree
         var children = [], tmpChild;
         for (var i = 0; i < this._shapes.length; i++) {
@@ -95,9 +97,9 @@ define(["THREE"], function(THREE) {
                 children    : children
             };
         }
-    };
+    }
 
-    Product.prototype.getBoundingBox = function() {
+    getBoundingBox() {
         if (!this.boundingBox) {
             this.boundingBox = new THREE.Box3();
             for (var i = 0; i < this._shapes.length; i++) {
@@ -105,21 +107,21 @@ define(["THREE"], function(THREE) {
             }
         }
         return this.boundingBox.clone();
-    };
+    }
 
-    Product.prototype.showAnnotations = function () {
+    showAnnotations() {
         this._annotation3D.traverse(function(object) {
             object.visible = true;
         });
-    };
+    }
 
-    Product.prototype.hideAnnotations = function () {
+    hideAnnotations() {
         this._annotation3D.traverse(function(object) {
             object.visible = false;
         });
-    };
+    }
 
-    Product.prototype.showBoundingBox = function() {
+    showBoundingBox() {
         var bounds = this.getBoundingBox();
         if (!this.bbox && !bounds.empty()) {
             this.bbox = this._assembly.buildBoundingBox(bounds);
@@ -134,16 +136,16 @@ define(["THREE"], function(THREE) {
             this._overlay3D.add(this.bbox);
         }
         this.showAnnotations();
-    };
+    }
 
-    Product.prototype.hideBoundingBox = function() {
+    hideBoundingBox() {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._overlay3D.remove(this.bbox);
         this.hideAnnotations();
-    };
+    }
 
-    Product.prototype.setOpacity = function (opacity) {
+    setOpacity(opacity) {
         this._object3D.traverse(function(object) {
             if (object.material && object.material.uniforms.opacity) {
                 object.material.transparent = opacity < 1;
@@ -151,26 +153,26 @@ define(["THREE"], function(THREE) {
                 object.material.uniforms['opacity'].value = opacity;
             }
         });
-    };
+    }
 
-    Product.prototype.toggleVisibility = function() {
+    toggleVisibility() {
         if (this._object3D.visible) {
             this.hide();
         } else {
             this.show();
         }
         return this._object3D.visible;
-    };
+    }
 
-    Product.prototype.toggleTransparency = function() {
+    toggleTransparency() {
         if (this.isTransparent()) {
             this.setOpacity(1);
         } else {
             this.setOpacity(0.5);
         }
-    };
+    }
 
-    Product.prototype.isTransparent = function () {
+    isTransparent() {
         // returns true if object or any children are transparent
         var transparent = false,
             testObject = function(object) {
@@ -183,26 +185,22 @@ define(["THREE"], function(THREE) {
             this._object3D.traverse(testObject);
         }
         return transparent;
-    };
+    }
 
-    Product.prototype.hide = function() {
+    hide() {
         this._object3D.traverse(function(object) {
             object.visible = false;
         });
         this.hideAnnotations();
-    };
+    }
 
-    Product.prototype.show = function() {
+    show() {
         this._object3D.traverse(function(object) {
             object.visible = true;
         });
         this.showAnnotations();
-    };
+    }
 
-    Product.prototype.explode = function(distance, timeS) {
-    };
-
-    // Let product have event system
-    THREE.EventDispatcher.prototype.apply(Product.prototype);
-    return Product;
-});
+    explode(distance, timeS) {
+    }
+};
