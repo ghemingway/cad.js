@@ -1,7 +1,6 @@
 /* G. Hemingway Copyright @2014
  * Shell class handles all of the actual geometry - shared between Shapes
  */
-
 "use strict";
 
 //var THREE = require('three');
@@ -9,7 +8,7 @@
 
 /********************************* Helper Functions ********************************/
 
-module.exports = class Shell extends THREE.EventDispatcher {
+export default class Shell extends THREE.EventDispatcher {
     constructor(id, assembly, parent, size, defaultColor, boundingBox) {
         super();
         var ret = assembly.makeChild(id, this);

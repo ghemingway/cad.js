@@ -1,14 +1,12 @@
 /* G. Hemingway Copyright @2014
  * Product class for the CAD models
  */
-
 "use strict";
 
 
 /********************************* Product Class ********************************/
 
-
-module.exports = class Product extends THREE.EventDispatcher {
+export default class Product extends THREE.EventDispatcher {
     constructor(id, assembly, name, stepFile, isRoot) {
         super();
         console.log('Product: ' + id);

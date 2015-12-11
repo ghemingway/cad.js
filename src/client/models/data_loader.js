@@ -1,33 +1,30 @@
 /* G. Hemingway Copyright @2015
  * Data loader - Specialized for each type of data (e.g. JSON, TYSON, etc.)
  */
-
 "use strict";
 
 
-var Assembly            = require('../../models/assembly'),
-    Product             = require('../../models/product'),
-    Shape               = require('../../models/shape'),
-    Shell               = require('../../models/shell'),
-    Annotation          = require('../../models/annotation');
+import Assembly            from './assembly';
+import Product             from './product';
+import Shape               from './shape';
+import Shell               from './shell';
+import Annotation          from './annotation';
 
 /********************************* Helper Functions ********************************/
 
-module.exports = class DataLoader extends THREE.EventDispatcher {
-    constructor(viewer, config) {
+export default class DataLoader extends THREE.EventDispatcher {
+    constructor(config) {
         super();
-        this._viewer = viewer;
         this._queue = [];       // The queue of requests to load
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
-        this._shells = {};
 
         var self = this;
         this._workers = [];     // List of workers
         while (this._workers.length < this._maxWorkers) {
             var worker = new Worker(config.workerPath);
-            worker.addEventListener("message", function (event) {
+            worker.addEventListener('message', function (event) {
                 self.workerMessage(event);
             });
             this._freeWorkers.push(this._workers.length);
@@ -109,60 +106,19 @@ module.exports = class DataLoader extends THREE.EventDispatcher {
 
     /************** DataLoader Class Functions ****************************/
 
-    load(reqPath, basePath, validateType, callback) {
-        var loadErrorCheck = function (error, assembly) {
-            if (!error) {
-                callback(undefined, assembly);
-            }
-            else {
-                callback(error);
-            }
-        };
-        var req = {
-            url: reqPath,
-            validateType: validateType,
-            callback: loadErrorCheck
-        };
-        // Need to try to get index.json then index.xml then pop error message
-        var self = this;
-        this.resolveUrl(req, basePath, function(err, req) {
-            if (err) {
-                console.log('DataLoader.Load error: ' + JSON.stringify(err));
-            } else {
-                self.addRequest(req);
-                self.runLoadQueue();
-            }
+    load(req, callback) {
+        this.addRequest(req, function(model) {
+            console.log('DataLoader.load callback');
+            console.log(model);
+            callback(model);
         });
     }
 
-    resolveUrl(req, basePath, callback) {
-        if (!req.base) {
-            req.base = basePath;
-        }
-        var parts = req.url.split('/');
-        // Direct request
-        if (parts.length === 1) {
-            req.url = req.base + req.url;
-            callback(undefined, req);
-        // Need to get actual ModelId
-        } else {
-            $.ajax({
-                url: req.base + 'resolve/' + req.url,
-                type: 'GET'
-            }).done(function(data) {
-                req.url = req.base + data.modelId;
-                callback(undefined, req);
-            }).fail(function(err) {
-                callback(err);
-            });
-        }
-    }
-
-    addRequest(req) {
+    addRequest(req, callback) {
+        req.callback = callback;
         // Push onto the queue and send out a message
         this._queue.push(req);
-        var parts = req.url.split("/");
-        this.dispatchEvent({type: "addRequest", file: parts[parts.length - 1]});
+        this.dispatchEvent({type: 'addRequest', path: req.path });
     }
 
     sortQueue() {
@@ -247,13 +203,14 @@ module.exports = class DataLoader extends THREE.EventDispatcher {
     }
 
     initRequest(req) {
+        console.log('InitRequest: ' + req.path);
         // Fetch the worker to use
         var worker = this._workers[req.workerID];
         // Send the request to the worker
         var data = {
-            url: req.url,
+            url: req.baseURL + '/' + req.path,
             workerID: req.workerID,
-            type: req.validateType
+            type: req.type
         };
         if (data.type === "shell") data.shellSize = req.shellSize;
         worker.postMessage(data);

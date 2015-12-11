@@ -1,28 +1,40 @@
 /* Copyright G. Hemingway 2015 */
 "use strict";
 
-var http            = require('http'),
-    path            = require('path'),
-    _               = require('lodash'),
-//    io              = require('socket.io'),
-//    redis           = require('redis'),
-    session         = require('express-session'),
-    RedisStore      = require('connect-redis')(session),
-    express         = require('express'),
-    bodyParser      = require('body-parser'),
-    cookieParser    = require('cookie-parser'),
-    jade            = require('jade'),
-    CoreServer      = require('./core_server'),
-    util            = require('util');
+var http                = require('http'),
+    path                = require('path'),
+    _                   = require('lodash'),
+    io                  = require('socket.io'),
+    ioSession           = require('socket.io-express-session'),
+    redis               = require('redis'),
+    expSession          = require('express-session'),
+    RedisStore          = require('connect-redis')(expSession),
+    express             = require('express'),
+    bodyParser          = require('body-parser'),
+    cookieParser        = require('cookie-parser'),
+    jade                = require('jade'),
+    CoreServer          = require('./core_server'),
+    util                = require('util');
 
 /************************* Support Site *********************************/
+
+var COOKIE_SECRET = 'imhotep';
 
 function APIServer() {
     CoreServer.call(this);
     // Setup the session
-//    this.redis.session = this.redisClient;
-//    this.redis.socket = this.redisClient;
+    this.session = expSession({
+        store: new RedisStore({
+            client: this.redis.session
+        }),
+        cookie: { httpOnly: false },
+        secret: COOKIE_SECRET,
+        resave: false,
+        saveUninitialized: false
+    });
+    // Set up the rest
     this._setExpress();
+    this._setSocket();
     this._setRoutes();
     this._setSite();
 }
@@ -41,13 +53,7 @@ APIServer.prototype._setExpress = function() {
     }));
     this.express.use(bodyParser.json());
     this.express.use(cookieParser('imhotep'));
-    this.express.use(session({
-        resave: true,
-        saveUninitialized: true,
-        cookie: { httpOnly: false },
-        store: new RedisStore({ client: this.redis.session }),
-        secret: 'imhotep'
-    }));
+    this.express.use(this.session);
     this.express.use(require('method-override')());
     this.express.use(require('serve-static')(path.join(__dirname, '/../../public')));
     this.express.use(require('morgan')('tiny'));
@@ -59,99 +65,18 @@ APIServer.prototype._setExpress = function() {
 };
 
 /*
- * Restrict a route to just a logged in user
+ * Setup the socket server
  */
-APIServer.prototype.restrictLogin = function(req, res, next) {
-    var self = this;
-    if (req.session.user) {
-        req.session._garbage = new Date();
-        req.session.touch();
-        next();
-    }
-    else {
-        if (req.cookies && req.cookies.logintoken) {
-            var cookieVals = req.cookies.logintoken.split(':');
-            if (3 != cookieVals.length) {
-                this.logger.warn('Invalid logintoken: ' + req.cookies.logintoken);
-                if (req.method === 'HEAD') res.status(401).end();
-                else res.status(401).send({ error: 'unauthorized' });
-                return;
-            }
-            this.redis.session.get(req.cookies.logintoken, function(err, value) {
-                if (err || !value) {
-                    self.logger.debug('Access denied - Unknown login token.');
-                    if (req.method === 'HEAD') res.status(401).end();
-                    else res.status(401).send({ error: 'unauthorized' });
-                } else {
-                    self.models.Email.findOne({ address: cookieVals[0] }).populate('user').exec(function(err, email) {
-                        if (err || !email) {
-                            self.logger.debug('Access denied - Unknown email address from token.');
-                            if (req.method === 'HEAD') res.status(401).end();
-                            else res.status(401).send({ error: 'unauthorized' });
-                        } else {
-                            req.session.user = email.user;
-                            var loginToken = cookieVals[0] + ':' + uuid.v4() + ':' + (parseInt(cookieVals[2])+1);
-                            self.redis.session.del(req.cookies.logintoken);
-                            self.redis.session.setex(loginToken, self.config.sessionCookieAge, 0);
-                            res.cookie('logintoken', loginToken, { expires: new Date(Date.now() + self.config.sessionRememberAge), path: '/' });
-                            next();
-                        }
-                    });
-                }
-            });
-        } else {
-            this.logger.debug('APIServer.restrictLogin - Access denied - caller not logged in.');
-            if (req.method === 'HEAD') res.status(401).end();
-            else res.status(401).send({ error: 'unauthorized' });
-        }
-    }
-};
+APIServer.prototype._setSocket = function() {
+    this.server = http.Server(this.express);
+    this.ioServer = io(this.server);
+    this.ioServer.use(ioSession(this.session));
+    this.ioServer.on('connection', function (socket) {
+        console.log('Socket connected');
 
-/*
- * Restrict route to just admin
- */
-APIServer.prototype.restrictAdmin = function(req, res, next) {
-    if (req.session.user && req.session.user.admin) next();
-    else {
-        this.logger.debug('Admin access denied.');
-        res.status(401).send({ error: 'unauthorized' });
-    }
-};
-
-/*
- * Rate limit requests
- */
-APIServer.prototype.rateLimit = function(req, res, next) {
-    var self = this;
-    var ip = 'ratelimit:' + req.ip;
-    this.redisClient.llen(ip, function(err, reply) {
-        if (err) {
-            self.logger.debug('Error - RateLimit redis query: ' + err);
-            res.status(500).send({ error: 'server error' });
-        }
-        else if (reply && reply > 100) {
-            self.logger.info('Client being rate limited: %s', ip);
-            res.status(401).send({ error: 'unauthorized' });
-        } else {
-            self.redisClient.exists(ip, function(err, reply) {
-                if (err) {
-                    self.logger.debug('Error - RateLimit redis query: ' + err);
-                    res.status(500).send({ error: 'server error' });
-                }
-                else if (reply === 0) {
-                    self.redisClient.multi()
-                        .rpush(ip, ip)
-                        .expire(ip, 1)
-                        .exec(function(err, reply) {
-                            next();
-                        });
-                } else {
-                    self.redisClient.rpushx(ip, ip, function(err, reply) {
-                        next();
-                    });
-                }
-            });
-        }
+        socket.on('disconnect', function(){
+            console.log('Socket disconnected');
+        });
     });
 };
 
@@ -159,8 +84,8 @@ APIServer.prototype.rateLimit = function(req, res, next) {
  * Core API Routes
  */
 APIServer.prototype._setRoutes = function() {
-    require('./api/v1/session')(this.router, this);
-    require('./api/v1/model')(this.router, this);
+    require('./api/v1/session')(this);
+    require('./api/v1/model')(this);
 };
 
 /*
@@ -168,11 +93,9 @@ APIServer.prototype._setRoutes = function() {
  */
 APIServer.prototype._setSite = function() {
     var self = this;
-
-    /************************* Dynamic Site *********************************/
-
     var services = {
         api_endpoint: this.config.protocol + '://' + this.config.host + ':' + this.config.port,
+        socket: "/",
         auth: "/v1/session",
         model: "/v1/model"
     };
@@ -199,7 +122,10 @@ APIServer.prototype._setSite = function() {
  */
 APIServer.prototype.run = function() {
     var self = this;
-    this.express.listen(this.config.port, function() {
+    //this.express.listen(this.config.port, function() {
+    //    self.logger.info('\tCAD.js API Server listening on: ' + self.config.port);
+    //});
+    this.server.listen(this.config.port, function () {
         self.logger.info('\tCAD.js API Server listening on: ' + self.config.port);
     });
 };

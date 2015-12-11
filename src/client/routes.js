@@ -2,11 +2,16 @@
 "use strict";
 
 
- /*************************************************************************/
+import React from           'react';
+import ReactDOM from        'react-dom';
+import CADView from         './views/cad';
+
+/*************************************************************************/
 
 module.exports = Backbone.Router.extend({
     routes: {
         '':                             '_landing',
+        ':modelID':                     '_model',
         '*path':                        '_default'
     },
     initialize: function(options) {
@@ -17,11 +22,24 @@ module.exports = Backbone.Router.extend({
         console.log('Landing path');
     },
 
+    _model: function(modelID) {
+        var self = this;
+        // Render the root CAD view
+        ReactDOM.render(<CADView dispatcher={this.app} viewContainerId='cadjs-view' root3DObject={this.app._root3DObject} />,
+            document.getElementById('cadjs-view'), function() {
+                // Dispatch setModel to the CADManager
+                self.app.cadManager.dispatchEvent({
+                    type: 'setModel',
+                    path: modelID,
+                    baseURL: self.app._services.api_endpoint + self.app._services.model,
+                    modelType: 'assembly'
+                });
+        });
+    },
+
     /************** Default Route ************************/
 
-    _default: function(modelPath) {
-        //console.log('Triggering setModel: ' + modelPath);
-        this.app.trigger('setModel', { path: modelPath });
-        this.navigate(modelPath, { trigger: false });
+    _default: function(path) {
+        console.log('Landed on default path ' + path);
     }
 });

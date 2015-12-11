@@ -742,6 +742,7 @@ function processBatchTYSON(url, workerID, buffer) {
 
 
 self.addEventListener("message", function(e) {
+    console.log(e);
     // Get the request URL info
     var url = e.data.url;
     var workerID = e.data.workerID;

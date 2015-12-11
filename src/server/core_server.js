@@ -45,6 +45,7 @@ CoreServer.prototype._redisConnection = function(callback) {
     var self = this;
     this.redisClient = redis.createClient(this.config.redis.port, this.config.redis.host);
     this.redis = {
+        session:    this.redisClient,
         async:      this.redisClient,
         fetch:      this.redisClient
     };

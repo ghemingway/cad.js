@@ -97,7 +97,7 @@ var _logout = function(req, res) {
 
 /***************** Module Export Function *******************/
 
-module.exports = function(router, globalApp) {
+module.exports = function(globalApp) {
     app = globalApp;
     app._auth = {
         auth:           _auth,
@@ -113,7 +113,7 @@ module.exports = function(router, globalApp) {
         app._auth.auth = _.has(plugin, 'login') ? plugin.auth : app._auth.auth;
     }
     // Set routes
-    router.post(   '/v1/session',  app._auth.login);
-    router.get(    '/v1/session',  app._auth.authenticated);
-    router.delete( '/v1/session',  app._auth.logout);
+    app.router.post(   '/v1/session',  app._auth.login);
+    app.router.get(    '/v1/session',  app._auth.authenticated);
+    app.router.delete( '/v1/session',  app._auth.logout);
 };

@@ -30,6 +30,7 @@ var _fetch = function(req, res) {
 };
 
 
+
 var _list = function(req, res) {
     res.status(200).send([
         { id: 'asdfasdkja', name: 'foo', date: 'May 1, 1958' },
@@ -41,7 +42,7 @@ var _list = function(req, res) {
 
 /***************** Module Export Function *******************/
 
-module.exports = function(router, globalApp) {
+module.exports = function(globalApp) {
     app = globalApp;
     app._storage = {
         resolve:    _resolve,
@@ -57,7 +58,7 @@ module.exports = function(router, globalApp) {
         app._auth.fetch = _.has(plugin, 'fetch') ? plugin.fetch : app._auth.fetch;
         app._auth.list = _.has(plugin, 'list') ? plugin.list: app._auth.list;
     }
-    router.get('/v1/model/resolve/*',       app._storage.resolve);
-    router.get('/v1/model/:modelId',        app._storage.fetch);
-    router.get('/v1/model',                 app._storage.list);
+    app.router.get('/v1/model/resolve/*',       app._storage.resolve);
+    app.router.get('/v1/model/:modelId',        app._storage.fetch);
+    app.router.get('/v1/models',                app._storage.list);
 };

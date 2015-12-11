@@ -1,15 +1,13 @@
 /* G. Hemingway Copyright @2014
  * Context for the overall CAD assembly
  */
-
 "use strict";
 
 //var THREE = require('three');
 
 /*************************************************************************/
 
-
-module.exports = class Assembly extends THREE.EventDispatcher {
+export default class Assembly extends THREE.EventDispatcher {
     constructor(rootID, defaultColor, loader) {
         super();
         this._rootID = rootID;

@@ -5,18 +5,21 @@
 "use strict";
 
 
-var React               = require('react'),
-    ViewerControls      = require('./viewer_controls');
-    require('./shaders/CopyShader');
-    require('./shaders/EffectComposer');
-    require('./shaders/FXAAShader');
-    require('./shaders/VelvetyShader');
-    require('./shaders/SSAOShader');
-    require('./shaders/ShaderPass');
+import React            from 'react';
+import ViewerControls   from './viewer_controls';
+import LoadQueueView    from '../load_queue';
+
+// Import shaders
+require('./shaders/CopyShader');
+require('./shaders/EffectComposer');
+require('./shaders/FXAAShader');
+require('./shaders/VelvetyShader');
+require('./shaders/SSAOShader');
+require('./shaders/ShaderPass');
 
 /*************************************************************************/
 
-module.exports = class CADViewer extends React.Component {
+export default class CADViewer extends React.Component {
     constructor(props) {
         super(props);
     }
@@ -79,7 +82,7 @@ module.exports = class CADViewer extends React.Component {
         this.composer.addPass(renderPassCopy);
 
         // VIEW CONTROLS
-        this.controls =  ViewerControls({
+        this.controls =  new ViewerControls({
             viewer: this,
             camera: this.camera,
             canvas: this.renderer.domElement,
@@ -98,7 +101,7 @@ module.exports = class CADViewer extends React.Component {
             self.update();
         });
 
-        this.props.app.dispatchEvent({ type: 'cadViewer::mounted' });
+        //this.props.dispatcher.dispatchEvent({ type: 'cadViewer::mounted' });
     }
 
     invalidate() {
@@ -121,10 +124,6 @@ module.exports = class CADViewer extends React.Component {
         invalidate();
     }
 
-    render() {
-        return <canvas id="cadjs-canvas" />;
-    }
-
     update() {
         if (this.autoAntialiasing) {
             this.renderer.clear();
@@ -139,6 +138,10 @@ module.exports = class CADViewer extends React.Component {
         this.renderer.render(this.overlayScene, this.camera);
         this.renderer.render(this.annotationScene, this.camera);
     };
+
+    render() {
+        return <canvas id="cadjs-canvas" />;
+    }
 };
 
 /*

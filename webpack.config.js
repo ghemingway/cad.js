@@ -10,7 +10,7 @@ module.exports = {
     context: __dirname + "/src/client",
     entry: {
         main: "./main",
-        webworker: "./views/cad/webworker"
+        webworker: "./models/webworker"
     },
     output: {
         path: "./public/js/",
@@ -23,7 +23,7 @@ module.exports = {
         loaders: [
             { test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
             // required to write "require('./style.css')"
-            { test: /\.scss$/, loader: "style!css!sass" },
+            { test: /\.scss$/, loader: "style!css!sass-loader" },
             { test: /\.css$/,  loader: "style-loader!css-loader" },
 
             // required for bootstrap icons

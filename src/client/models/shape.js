@@ -1,7 +1,6 @@
 /* G. Hemingway Copyright @2014
  * Shape class for the CAD models
  */
-
 "use strict";
 
 
@@ -9,7 +8,7 @@
 
 /********************************* Shape Class ********************************/
 
-module.exports = class Shape extends THREE.EventDispatcher {
+export default class Shape extends THREE.EventDispatcher {
     constructor(id, assembly, parent, transform, unit) {
         super();
         var ret = assembly.makeChild(id, this);

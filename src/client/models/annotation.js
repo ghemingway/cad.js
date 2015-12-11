@@ -1,15 +1,12 @@
-/* G. Hemingway Copyright @2015
- * Annotation object
- */
-
+/* Copyright G. Hemingway, 2015 - All rights reserved */
 "use strict";
 
-var THREE = require('three');
+//var THREE = require('three');
 
 
 /********************************* Annotation Class ********************************/
 
-module.exports = class Annotation extends THREE.EventDispatcher {
+export default class Annotation extends THREE.EventDispatcher {
     constructor(id, assembly) {
         super();
         var ret = assembly.makeChild(id, this);

@@ -4,56 +4,47 @@
 "use strict";
 
 
-var _           = require('lodash'),
-    DataLoader  = require('./data_loader'),
-    React       = require('react'),
-    ReactDOM    = require('react-dom'),
-    CADView     = React.createFactory(require('./viewer'));
+var _           = require('lodash');
+import DataLoader  from './data_loader';
 
 /*************************************************************************/
 
-class CADjs extends THREE.EventDispatcher {
-    constructor(config) {
+export default class CADManager extends THREE.EventDispatcher {
+    constructor() {
         super();
-        var self = this;
-        this._viewContainerId = config.viewContainerId;
-        // TODO: Set this to default empty assembly
+        this._models = {};
+        this.addEventListener('setModel', this.load);
+        // Set this to default empty assembly
         this._root3DObject = new THREE.Object3D();
-        this.addEventListener("cadViewer::mounted", function() {
-            //console.log('I see the CADView got mounted');
-            // Once view is in place, bind events
-            self.bindEvents();
-        });
-        this._viewer = CADView({
-            app: this,
-            viewContainerId: this._viewContainerId
-        });
-        this._loader = new DataLoader(this._viewer, {
+        // Setup data loader
+        this._loader = new DataLoader({
             autorun: false,
             workerPath: "/js/webworker.js"
         });
-        ReactDOM.render(this._viewer, document.getElementById('cadjs-view'));
     }
 
-    load(reqPath, basePath) {
+    // Load a new assembly request
+    load(req) {
         var self = this;
+        req.type = req.modelType;
+        delete req.modelType;
         // Initialize the assembly
-        this._loader.load(reqPath, basePath, "assembly", function(err, part) {
+        this._loader.load(req, function(err, model) {
             if (err) {
-                console.log('CAD.index Load error: ' + path);
+                console.log('CADManager.load error: ' + err);
             } else {
-                // Add the part to the list
-                self._rootAssembly = part;
-                // calculate the scene's radius for draw distance calculations
-                self._viewer.updateSceneBoundingBox(part.getBoundingBox());
-                // center the view
-                self._viewer.zoomToFit(part);
-                // Update the tree
-                self.renderTree();
-                // Get the rest of the files
-                self._loader.runLoadQueue();
+                // Add the model to the list of loaded models
+                self._models[req.path] = model;
+                //// calculate the scene's radius for draw distance calculations
+                //self._viewer.updateSceneBoundingBox(part.getBoundingBox());
+                //// center the view
+                //self._viewer.zoomToFit(part);
+                //// Update the tree
+                //self.renderTree();
             }
         });
+        // Get the rest of the files
+        this._loader.runLoadQueue();
     }
 
     bindEvents() {
@@ -377,4 +368,3 @@ CADjs.prototype.renderTree = function() {
     });
 };
 */
-module.exports = CADjs;
