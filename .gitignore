@@ -1,5 +1,5 @@
 node_modules/*
-/public/js/*
+public/js/*
 .idea/*
 .DS_Store
 data/*
