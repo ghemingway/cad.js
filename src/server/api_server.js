@@ -72,10 +72,10 @@ APIServer.prototype._setSocket = function() {
     this.ioServer = io(this.server);
     this.ioServer.use(ioSession(this.session));
     this.ioServer.on('connection', function (socket) {
-        console.log('Socket connected');
+//        console.log('Socket connected');
 
         socket.on('disconnect', function(){
-            console.log('Socket disconnected');
+//            console.log('Socket disconnected');
         });
     });
 };
@@ -96,6 +96,7 @@ APIServer.prototype._setSite = function() {
     var services = {
         api_endpoint: this.config.protocol + '://' + this.config.host + ':' + this.config.port,
         socket: "/",
+        version: '/v1',
         auth: "/v1/session",
         model: "/v1/model"
     };

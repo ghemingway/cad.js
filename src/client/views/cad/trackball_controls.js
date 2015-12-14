@@ -389,40 +389,25 @@ THREE.TrackballControls = function ( object, domElement ) {
     }
 
     function mousedown( event ) {
-
         if ( _this.enabled === false ) return;
-
         event.preventDefault();
         event.stopPropagation();
-
         if ( _state === STATE.NONE ) {
-
             _state = event.button;
-
         }
-
         if ( _state === STATE.ROTATE && !_this.noRotate ) {
-
             _moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
             _movePrev.copy(_moveCurr);
-
         } else if ( _state === STATE.ZOOM && !_this.noZoom ) {
-
             _zoomStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
             _zoomEnd.copy(_zoomStart);
-
         } else if ( _state === STATE.PAN && !_this.noPan ) {
-
             _panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
             _panEnd.copy(_panStart);
-
         }
-
         document.addEventListener( 'mousemove', mousemove, false );
         document.addEventListener( 'mouseup', mouseup, false );
-
         _this.dispatchEvent( startEvent );
-
     }
 
     function mousemove( event ) {
@@ -554,48 +539,34 @@ THREE.TrackballControls = function ( object, domElement ) {
     }
 
     function touchend( event ) {
-
         if ( _this.enabled === false ) return;
-
         switch ( event.touches.length ) {
-
             case 1:
                 _movePrev.copy(_moveCurr);
                 _moveCurr.copy( getMouseOnCircle(  event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
                 break;
-
             case 2:
                 _touchZoomDistanceStart = _touchZoomDistanceEnd = 0;
-
                 var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
                 var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
                 _panEnd.copy( getMouseOnScreen( x, y ) );
                 _panStart.copy( _panEnd );
                 break;
-
         }
-
         _state = STATE.NONE;
         _this.dispatchEvent( endEvent );
-
     }
 
     this.domElement.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
-
     this.domElement.addEventListener( 'mousedown', mousedown, false );
-
     this.domElement.addEventListener( 'mousewheel', mousewheel, false );
     this.domElement.addEventListener( 'DOMMouseScroll', mousewheel, false ); // firefox
-
     this.domElement.addEventListener( 'touchstart', touchstart, false );
     this.domElement.addEventListener( 'touchend', touchend, false );
     this.domElement.addEventListener( 'touchmove', touchmove, false );
-
     window.addEventListener( 'keydown', keydown, false );
     window.addEventListener( 'keyup', keyup, false );
-
     this.handleResize();
-
     // force an update at start
     this.update();
 

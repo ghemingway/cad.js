@@ -15,6 +15,7 @@ export default class Assembly extends THREE.EventDispatcher {
         this._loader = loader;
         this._objects = [];
         this._product = undefined;
+        this.type = 'assembly';
     }
 
     getCADjs() {
@@ -31,6 +32,14 @@ export default class Assembly extends THREE.EventDispatcher {
 
     getObject3D() {
         return this._product.getObject3D();
+    }
+
+    getOverlay3D() {
+        return this._product.getOverlay3D();
+    }
+
+    getAnnotation3D() {
+        return this._product.getAnnotation3D();
     }
 
     isChild(id) {
@@ -63,7 +72,7 @@ export default class Assembly extends THREE.EventDispatcher {
             if (this._product._stepFile) return this._product._stepFile;
             else return this._product._name;
         } else {
-            return "Assembly";
+            return "Empty assembly";
         }
     }
 

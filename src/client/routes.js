@@ -25,15 +25,18 @@ module.exports = Backbone.Router.extend({
     _model: function(modelID) {
         var self = this;
         // Render the root CAD view
-        ReactDOM.render(<CADView dispatcher={this.app} viewContainerId='cadjs-view' root3DObject={this.app._root3DObject} />,
-            document.getElementById('cadjs-view'), function() {
-                // Dispatch setModel to the CADManager
-                self.app.cadManager.dispatchEvent({
-                    type: 'setModel',
-                    path: modelID,
-                    baseURL: self.app._services.api_endpoint + self.app._services.model,
-                    modelType: 'assembly'
-                });
+        ReactDOM.render(<CADView
+            dispatcher={this.app.cadManager}
+            viewContainerId='cadjs-view'
+            root3DObject={this.app._root3DObject}
+        />, document.getElementById('cadjs-view'), function() {
+            // Dispatch setModel to the CADManager
+            self.app.cadManager.dispatchEvent({
+                type: 'setModel',
+                path: modelID,
+                baseURL: self.app._services.api_endpoint + self.app._services.version,
+                modelType: 'assembly'
+            });
         });
     },
 

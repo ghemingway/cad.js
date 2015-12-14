@@ -9,7 +9,6 @@
 export default class Product extends THREE.EventDispatcher {
     constructor(id, assembly, name, stepFile, isRoot) {
         super();
-        console.log('Product: ' + id);
         assembly.makeChild(id, this);
         this._id = id;
         this._assembly = assembly;

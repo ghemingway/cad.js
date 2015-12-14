@@ -21,6 +21,8 @@ export default class CADManager extends THREE.EventDispatcher {
             autorun: false,
             workerPath: "/js/webworker.js"
         });
+        // Start listening for events
+        this.bindEvents();
     }
 
     // Load a new assembly request
@@ -35,12 +37,9 @@ export default class CADManager extends THREE.EventDispatcher {
             } else {
                 // Add the model to the list of loaded models
                 self._models[req.path] = model;
-                //// calculate the scene's radius for draw distance calculations
-                //self._viewer.updateSceneBoundingBox(part.getBoundingBox());
-                //// center the view
-                //self._viewer.zoomToFit(part);
-                //// Update the tree
-                //self.renderTree();
+                self.dispatchEvent({ type: 'model:add', path: req.path });
+                // Make sure all the rest of the parts have loaded
+                self._loader.runLoadQueue();
             }
         });
         // Get the rest of the files
@@ -48,77 +47,28 @@ export default class CADManager extends THREE.EventDispatcher {
     }
 
     bindEvents() {
-        //var self = this,
-        //    canvasDOM = $( this._$viewContainer )[0],
-        //
-        //// Download manager interface
-        //    $downloadsUl = this._$downloadsContainer.find( ">ul"),
-        //    $downloadsCounter = this._$downloadsContainer.find( ".cadjs-downloads-count"),
-        //
-        //    progressRing = new NPROGRESSRING({
-        //        parentElement: this._$downloadsContainer.find('#cadjs-downloads-progress-bar')[0],
-        //        size: 18,
-        //        innerRadius: 0.6,
-        //        rotationSpeed: -Math.PI
-        //    }),
-        //    progressIdMap = {},
-        //    progressValues = [];
-        //
-        //this._loader.addEventListener("addRequest", function(event) {
-        //    var id = event.file.split(".")[0];
-        //    progressIdMap[id] = progressValues.push(0) - 1;
-        //    progressRing.update(progressValues);
-        //    $downloadsUl.append("<li id='" + id + "'>" + event.file + "</li>");
-        //    var count = self._loader.queueLength(false);
-        //    $downloadsCounter.text(count);
-        //
-        //    // Making sure it is visble
-        //    self._$downloadsContainer.removeClass( "out" );
-        //
-        //});
-        //this._loader.addEventListener("loadComplete", function(event) {
-        //    var id = event.file.split(".")[0];
-        //    progressValues[progressIdMap[id]] = 1;
-        //    progressRing.update(progressValues);
-        //    // Is this the index file
-        //    if (id === "index") {
-        //        $("li#index").remove();
-        //    } else {
-        //        // Change the file status to 'parsing'
-        //        $("li#" + id).text(event.file + ": Parsing");
-        //    }
-        //});
-        //this._loader.addEventListener("parseComplete", function(event) {
-        //    var id = event.file.split(".")[0];
-        //    // Change the file status to 'parsing'
-        //    $("li#" + id).text(event.file + ": Finishing");
-        //});
-        //this._loader.addEventListener("shellLoad", function() {
+        var self = this;
+        this._loader.addEventListener("addRequest", function(event) {
+            self.dispatchEvent(event);
+        });
+        this._loader.addEventListener("loadComplete", function(event) {
+            self.dispatchEvent(event);
+        });
+        this._loader.addEventListener("parseComplete", function(event) {
+            self.dispatchEvent(event);
+        });
+        this._loader.addEventListener("shellLoad", function(event) {
+            self.dispatchEvent(event);
         //    // Make sure to redraw the model
         //    self._viewer.invalidate();
-        //});
-        //this._loader.addEventListener("workerFinish", function(event) {
-        //    var id = event.file.split(".")[0];
-        //    // Remove the item from the list
-        //    $("li#" + id).remove();
-        //    // Update the count
-        //    var count = self._loader.queueLength(false);
-        //    $downloadsCounter.text(count);
-        //
-        //    // Hiding when empty
-        //    if ( count === 0 ) {
-        //        self._$downloadsContainer.addClass( "out" );
-        //    }
-        //
-        //});
-        //this._loader.addEventListener("loadProgress", function(event) {
-        //    if (event.loaded) {
-        //        var id = event.file.split(".")[0];
-        //        progressValues[progressIdMap[id]] = event.loaded / 100;
-        //        progressRing.update(progressValues);
-        //        $("li#" + id).text(event.file + ": " + event.loaded.toFixed(2) + "%");
-        //    }
-        //});
+        });
+        this._loader.addEventListener("workerFinish", function(event) {
+            self.dispatchEvent(event);
+        });
+        this._loader.addEventListener("loadProgress", function(event) {
+            self.dispatchEvent(event);
+        });
+
         //
         //// Need to turn mouse selection on and off to not interfere with click drag view control
         //var _change;

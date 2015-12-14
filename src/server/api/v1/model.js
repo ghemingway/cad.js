@@ -24,9 +24,22 @@ var _resolve = function(req, res) {
  * @return {200,username} Successful login yields the username
  */
 var _fetch = function(req, res) {
-    var dirPath = path.join(__dirname, '../../../../data/' + req.params.modelId);
-    app.logger.debug('Model: ' + dirPath);
-    res.status(200).sendFile('index.json', { root: dirPath });
+    var dirPath, filename;
+    if (req.params.modelId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.modelId);
+        filename = 'index.json';
+        app.logger.debug('Assembly: ' + filename);
+
+    } else if (req.params.shellId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        filename = 'shell_' + req.params.shellId + '.json';
+        app.logger.debug('Shell: ' + filename);
+    } else if (req.params.annoId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        filename = 'annotation_' + req.params.annoId + '.json';
+        app.logger.debug('Annotation: ' + filename);
+    }
+    res.status(200).sendFile(filename, { root: dirPath });
 };
 
 
@@ -59,6 +72,8 @@ module.exports = function(globalApp) {
         app._auth.list = _.has(plugin, 'list') ? plugin.list: app._auth.list;
     }
     app.router.get('/v1/model/resolve/*',       app._storage.resolve);
-    app.router.get('/v1/model/:modelId',        app._storage.fetch);
+    app.router.get('/v1/assembly/:modelId',     app._storage.fetch);
+    app.router.get('/v1/assembly/:assemblyId/shell/:shellId',       app._storage.fetch);
+    app.router.get('/v1/assembly/:assemblyId/annotation/:annoId',   app._storage.fetch);
     app.router.get('/v1/models',                app._storage.list);
 };

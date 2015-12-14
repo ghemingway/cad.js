@@ -29,7 +29,7 @@ var App  = function() {
     this.socket = io();
     // Connect to the socket server
     this.socket.on('connect', function() {
-        console.log('Socket client connected');
+        //console.log('Socket client connected');
     });
 
     // Begin routing the application

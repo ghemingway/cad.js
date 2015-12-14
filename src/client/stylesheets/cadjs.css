@@ -109,36 +109,6 @@ body {
     display: none;
 }
 
-.cadjs-downloads {
-    font-size: 8px;
-    border-top: 1px solid #555;
-    border-left: 1px solid #555;
-    opacity: .6;
-    background-color: #222;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 270px;
-
-    transition: opacity .4s, bottom .4s;
-}
-#cadjs-downloads-header {
-    font-size: 12px;
-    line-height: 16px;
-    font-weight: lighter;
-}
-#cadjs-downloads-header-label {
-    vertical-align: top;
-}
-.cadjs-downloads:hover ul {
-    display: block;
-}
-
-.cadjs-downloads.out {
-    bottom: -100%;
-    opacity: 0;
-}
-
 .non-initialized .cadjs-downloads {
     display: none;
 }

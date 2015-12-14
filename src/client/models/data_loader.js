@@ -19,6 +19,7 @@ export default class DataLoader extends THREE.EventDispatcher {
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
+        this._shells = [];
 
         var self = this;
         this._workers = [];     // List of workers
@@ -107,18 +108,22 @@ export default class DataLoader extends THREE.EventDispatcher {
     /************** DataLoader Class Functions ****************************/
 
     load(req, callback) {
-        this.addRequest(req, function(model) {
-            console.log('DataLoader.load callback');
-            console.log(model);
-            callback(model);
+        req.base = req.baseURL + '/assembly/' + req.path;
+        this.addRequest(req, function(err, model) {
+            callback(err, model);
         });
     }
 
+    /* Needed fields
+     * path: name of the file to be loaded
+     * baseURL: everything through v1
+     * type: type of model (assembly, shell, etc.)
+     */
     addRequest(req, callback) {
         req.callback = callback;
         // Push onto the queue and send out a message
         this._queue.push(req);
-        this.dispatchEvent({type: 'addRequest', path: req.path });
+        this.dispatchEvent({ type: 'addRequest', path: req.path });
     }
 
     sortQueue() {
@@ -154,7 +159,7 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     workerMessage(event) {
         var req, shell;
-        console.log("Worker Message: " + event.data.type);
+        //console.log("Worker Message: " + event.data.type);
         // Find the request this message corresponds to
         if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
             req = this._loading[event.data.workerID];
@@ -174,7 +179,7 @@ export default class DataLoader extends THREE.EventDispatcher {
             case "annotationLoad":
                 data = JSON.parse(event.data.data);
                 req.annotation.addGeometry(data);
-                this.dispatchEvent({type: "shellLoad", file: event.data.file});
+                this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
             case "shellLoad":
                 shell = this._shells[event.data.id];
@@ -182,10 +187,10 @@ export default class DataLoader extends THREE.EventDispatcher {
                 // Remove the reference to the shell
                 delete this._shells[event.data.id];
                 shell.addGeometry(data.position, data.normals, data.colors);
-                this.dispatchEvent({type: "shellLoad", file: event.data.file});
+                this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 break;
             case "workerFinish":
-                this.dispatchEvent({type: "workerFinish", file: event.data.file});
+                this.dispatchEvent({ type: "workerFinish", file: event.data.file });
                 break;
             case "parseComplete":
             case "loadProgress":
@@ -203,12 +208,12 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     initRequest(req) {
-        console.log('InitRequest: ' + req.path);
+        //console.log('InitRequest: ' + req.path);
         // Fetch the worker to use
         var worker = this._workers[req.workerID];
         // Send the request to the worker
         var data = {
-            url: req.baseURL + '/' + req.path,
+            url: req.baseURL + '/' + req.type + '/' + req.path,
             workerID: req.workerID,
             type: req.type
         };
@@ -224,11 +229,7 @@ export default class DataLoader extends THREE.EventDispatcher {
         // Process the rest of the index JSON - get the product with the root ID
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
-        // Add the assembly to the scene
-        //console.log(this._viewer);
-        //this._viewer.add3DObject(rootProduct.getObject3D(), 'geometry');
-        //this._viewer.add3DObject(rootProduct.getOverlay3D(), 'overlay');
-        //this._viewer.add3DObject(rootProduct.getAnnotation3D(), 'annotation');
+        // Handle batches
         var batchExtension = '.json';
         if (doc.useTyson) {
             batchExtension = '.tyson';
@@ -248,11 +249,10 @@ export default class DataLoader extends THREE.EventDispatcher {
     buildProductJSON(req, doc, assembly, id, isRoot) {
         // Create the product
         var self = this;
-        var productJSON = _.findWhere(doc.products, {id: id});
+        var productJSON = _.findWhere(doc.products, { id: id });
         // Have we already seen this product
         if (!assembly.isChild(id)) {
             var product = new Product(id, assembly, productJSON.name, productJSON.step, isRoot);
-            console.log(product);
             // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
             var identityTransform = (new THREE.Matrix4()).identity();
             _.each(productJSON.shapes, function (shapeID) {
@@ -308,9 +308,9 @@ export default class DataLoader extends THREE.EventDispatcher {
             // Have we already loaded this annotation - if not, request the shell be loaded?
             if (!alreadyLoaded) {
                 this.addRequest({
-                    url: req.base + annoJSON.href,
-                    validateType: "annotation",
-                    annotation: anno
+                    path: annoJSON.id,
+                    baseURL: req.base,
+                    type: "annotation"
                 });
             }
             return anno;
@@ -335,8 +335,9 @@ export default class DataLoader extends THREE.EventDispatcher {
                 //                console.log(this._shells);
                 if (!doc.batches || doc.batches === 0) {
                     this.addRequest({
-                        url: req.base + shellJSON.href,
-                        validateType: "shell"
+                        path: shellJSON.id,
+                        baseURL: req.base,
+                        type: "shell"
                     });
                 }
             }
