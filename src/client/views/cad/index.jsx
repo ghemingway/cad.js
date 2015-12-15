@@ -9,6 +9,7 @@ import React            from 'react';
 import ViewerControls   from './viewer_controls';
 import CompassView      from '../compass/compass';
 import LoadQueueView    from '../load_queue';
+import StepTreeView     from '../step_tree/step_tree';
 
 // Import shaders
 require('./shaders/CopyShader');
@@ -27,11 +28,12 @@ export default class CADViewer extends React.Component {
         this.onModelAdd = this.onModelAdd.bind(this);
         this.onModelRemove = this.onModelRemove.bind(this);
         this.invalidate = this.invalidate.bind(this);
+        this.onKeypress= this.onKeypress.bind(this);
     }
 
     onModelAdd(event) {
         console.log('ModelAdd: ' + event.path);
-        var model = this.props.dispatcher._models[event.path];
+        var model = this.props.manager._models[event.path];
         //console.log(model);
         //if (this.type)
         // Add the model to the scene
@@ -48,6 +50,56 @@ export default class CADViewer extends React.Component {
         console.log('ModelRemove: ' + event.path);
     }
 
+    onKeypress(event) {
+        console.log(event.keyCode);
+    var node, obj;
+    switch(event.keyCode || event.charCode || event.which) {
+        // Explode on 'x' key pressed
+        case 120:
+            this.explode(this.getExplodeDistance());
+            break;
+        // Unexplode on 's' key pressed
+        case 115:
+            this.explode(-this.getExplodeDistance());
+            break;
+        // 'q' unselects all tree elements
+        case 113:
+            this._parts[0].hideAllBoundingBoxes();
+            this.tree.deselect_all();
+            this._viewer.invalidate();
+            break;
+        // 'o' to toggle transparency
+        case 111:
+            node = this.tree.get_selected(false);
+            obj = this._parts[0].getByID(node[0]);
+            if (obj) {
+                obj.toggleTransparency();
+            } else {
+                this._parts[0].toggleTransparency();
+            }
+            this._viewer.invalidate();
+            break;
+        // 'z' to zoomToFit
+        case 122:
+            node = this.tree.get_selected(false);
+            obj = this._parts[0].getByID(node[0]);
+            if (!obj) {
+                obj = this._parts[0];
+            }
+            this._viewer.zoomToFit(obj);
+            break;
+        // 'j' hide/show element
+        case 106:
+            node = this.tree.get_selected(false);
+            obj = this._parts[0].getByID(node[0]);
+            if (obj) {
+                obj.toggleVisibility();
+                this._viewer.invalidate();
+            }
+            break;
+        }
+    }
+
     componentWillMount() {
         this.renderTargetParametersRGBA = {
             minFilter: THREE.LinearFilter,
@@ -57,9 +109,11 @@ export default class CADViewer extends React.Component {
 
         this.sceneCenter = new THREE.Vector3(0,0,0);
         this.sceneRadius = 10000;
-        this.props.dispatcher.addEventListener("model:add", this.onModelAdd);
-        this.props.dispatcher.addEventListener("model:remove", this.onModelRemove);
-        this.props.dispatcher.addEventListener("shellLoad", this.invalidate);
+        this.props.manager.addEventListener("model:add", this.onModelAdd);
+        this.props.manager.addEventListener("model:remove", this.onModelRemove);
+        this.props.manager.addEventListener("shellLoad", this.invalidate);
+        // Keybased events
+        window.addEventListener("keypress", this.onKeypress, true);
     }
 
     componentDidMount() {
@@ -144,9 +198,10 @@ export default class CADViewer extends React.Component {
 
     componentWillUnmount() {
         window.removeEventListener("resize", this.handleResize);
-        this.props.dispatcher.removeEventListener("model:add", this.onModelAdd);
-        this.props.dispatcher.removeEventListener("model:remove", this.onModelRemove);
-        this.props.dispatcher.removeEventListener("shellLoad", this.invalidate);
+        this.props.manager.removeEventListener("model:add", this.onModelAdd);
+        this.props.manager.removeEventListener("model:remove", this.onModelRemove);
+        this.props.manager.removeEventListener("shellLoad", this.invalidate);
+        window.removeEventListener("keypress", this.onKeypress);
     }
 
     handleResize() {
@@ -203,7 +258,7 @@ export default class CADViewer extends React.Component {
             this.drawScene();
             this.controls.update();
             // Tell anyone listening to update their view
-            this.props.dispatcher.dispatchEvent({ type: 'render:update' });
+            this.props.manager.dispatchEvent({ type: 'render:update' });
         }
     }
 
@@ -253,16 +308,17 @@ export default class CADViewer extends React.Component {
             compassParentId="cadjs-canvas"
             camera={this.camera}
             controls={this.controls}
-            dispatcher={this.props.dispatcher}
+            dispatcher={this.props.manager}
         /> : undefined;
         return <div>
             <canvas id="cadjs-canvas" />
             {compass}
-            <LoadQueueView dispatcher={this.props.dispatcher} />
+            <LoadQueueView dispatcher={this.props.manager} />
+            <StepTreeView dispatcher={this.props.manager} />
         </div>;
     }
 };
 
 CADViewer.propTypes = {
-    dispatcher: React.PropTypes.object.isRequired
+    manager: React.PropTypes.object.isRequired
 };

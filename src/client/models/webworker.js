@@ -748,7 +748,7 @@ self.addEventListener("message", function(e) {
     var xhr = new XMLHttpRequest();
     // Determine data type
     var parts = url.split('.');
-    var dataType = parts[parts.length-1].toLowerCase();
+    var dataType = e.data.dataType;
     parts = url.split("/");
     xhr.addEventListener("load", function() {
         // Handle 404 in loadend
@@ -809,6 +809,7 @@ self.addEventListener("message", function(e) {
     xhr.open("GET", url, true);
     if (dataType == 'tyson'){
         xhr.responseType = 'arraybuffer';
+        xhr.setRequestHeader('content-type', 'application/arraybuffer');
     }
     // Go get it
     try {

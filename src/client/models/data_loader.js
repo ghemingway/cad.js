@@ -20,6 +20,7 @@ export default class DataLoader extends THREE.EventDispatcher {
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
         this._shells = [];
+        this._annotations = [];
 
         var self = this;
         this._workers = [];     // List of workers
@@ -158,7 +159,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     workerMessage(event) {
-        var req, shell;
+        var req, shell, anno;
         //console.log("Worker Message: " + event.data.type);
         // Find the request this message corresponds to
         if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
@@ -178,8 +179,9 @@ export default class DataLoader extends THREE.EventDispatcher {
                 break;
             case "annotationLoad":
                 data = JSON.parse(event.data.data);
-                req.annotation.addGeometry(data);
-                this.dispatchEvent({ type: "shellLoad", file: event.data.file });
+                anno = this._annotations[event.data.file];
+                anno.addGeometry(data);
+                this.dispatchEvent({ type: "annotationLoad", file: event.data.file });
                 break;
             case "shellLoad":
                 shell = this._shells[event.data.id];
@@ -215,7 +217,8 @@ export default class DataLoader extends THREE.EventDispatcher {
         var data = {
             url: req.baseURL + '/' + req.type + '/' + req.path,
             workerID: req.workerID,
-            type: req.type
+            type: req.type,
+            dataType: req.dataType ? req.dataType : 'json'
         };
         if (data.type === "shell") data.shellSize = req.shellSize;
         worker.postMessage(data);
@@ -230,16 +233,15 @@ export default class DataLoader extends THREE.EventDispatcher {
         var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Handle batches
-        var batchExtension = '.json';
-        if (doc.useTyson) {
-            batchExtension = '.tyson';
-        }
-        // Do we have batches
+        var batchExtension = doc.useTyson ? 'tyson' : 'json';
+        // Do we have batches???
         if (doc.batches && doc.batches > 0) {
             for (var i = 0; i < doc.batches; i++) {
                 this.addRequest({
-                    url: req.base + "batch" + i + batchExtension,
-                    validateType: "batch"
+                    path: i,
+                    baseURL: req.base,
+                    type: "batch",
+                    dataType: batchExtension
                 });
             }
         }
@@ -307,6 +309,7 @@ export default class DataLoader extends THREE.EventDispatcher {
             var anno = new Annotation(id, assembly, parent);
             // Have we already loaded this annotation - if not, request the shell be loaded?
             if (!alreadyLoaded) {
+                this._annotations[id] = anno;
                 this.addRequest({
                     path: annoJSON.id,
                     baseURL: req.base,
@@ -332,7 +335,7 @@ export default class DataLoader extends THREE.EventDispatcher {
             if (!alreadyLoaded) {
                 // Push the shell for later completion
                 this._shells[id] = shell;
-                //                console.log(this._shells);
+                //console.log(this._shells);
                 if (!doc.batches || doc.batches === 0) {
                     this.addRequest({
                         path: shellJSON.id,

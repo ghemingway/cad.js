@@ -48,26 +48,16 @@ export default class CADManager extends THREE.EventDispatcher {
 
     bindEvents() {
         var self = this;
-        this._loader.addEventListener("addRequest", function(event) {
+        // Set up handling of load events - pass them from the data-loader on
+        var handler = function(event) {
             self.dispatchEvent(event);
-        });
-        this._loader.addEventListener("loadComplete", function(event) {
-            self.dispatchEvent(event);
-        });
-        this._loader.addEventListener("parseComplete", function(event) {
-            self.dispatchEvent(event);
-        });
-        this._loader.addEventListener("shellLoad", function(event) {
-            self.dispatchEvent(event);
-        //    // Make sure to redraw the model
-        //    self._viewer.invalidate();
-        });
-        this._loader.addEventListener("workerFinish", function(event) {
-            self.dispatchEvent(event);
-        });
-        this._loader.addEventListener("loadProgress", function(event) {
-            self.dispatchEvent(event);
-        });
+        };
+        this._loader.addEventListener("addRequest", handler);
+        this._loader.addEventListener("loadComplete", handler);
+        this._loader.addEventListener("parseComplete", handler);
+        this._loader.addEventListener("shellLoad", handler);
+        this._loader.addEventListener("workerFinish", handler);
+        this._loader.addEventListener("loadProgress", handler);
 
         //
         //// Need to turn mouse selection on and off to not interfere with click drag view control
@@ -90,92 +80,15 @@ export default class CADManager extends THREE.EventDispatcher {
         //    }
         //}, false);
         //
-        //// Keybased events
-        //window.addEventListener("keypress", function(event) {
-        //    var node, obj;
-        //    switch(event.keyCode || event.charCode || event.which) {
-        //        // Explode on 'x' key pressed
-        //        case 120:
-        //            self.explode(self.getExplodeDistance());
-        //            break;
-        //        // Unexplode on 's' key pressed
-        //        case 115:
-        //            self.explode(-self.getExplodeDistance());
-        //            break;
-        //        // 'q' unselects all tree elements
-        //        case 113:
-        //            self._parts[0].hideAllBoundingBoxes();
-        //            self.tree.deselect_all();
-        //            self._viewer.invalidate();
-        //            break;
-        //        // 'o' to toggle transparency
-        //        case 111:
-        //            node = self.tree.get_selected(false);
-        //            obj = self._parts[0].getByID(node[0]);
-        //            if (obj) {
-        //                obj.toggleTransparency();
-        //            } else {
-        //                self._parts[0].toggleTransparency();
-        //            }
-        //            self._viewer.invalidate();
-        //            break;
-        //        // 'z' to zoomToFit
-        //        case 122:
-        //            node = self.tree.get_selected(false);
-        //            obj = self._parts[0].getByID(node[0]);
-        //            if (!obj) {
-        //                obj = self._parts[0];
-        //            }
-        //            self._viewer.zoomToFit(obj);
-        //            break;
-        //        // 'j' hide/show element
-        //        case 106:
-        //            node = self.tree.get_selected(false);
-        //            obj = self._parts[0].getByID(node[0]);
-        //            if (obj) {
-        //                obj.toggleVisibility();
-        //                self._viewer.invalidate();
-        //            }
-        //            break;
-        //    }
-        //}, true);
+    }
+
+    getTree() {
+        var keys = _.keys(this._models);
+        return keys.length > 0 ? this._models[keys[0]].getTree() : {};
     }
 }
 
 /*
-CADjs.prototype.load = function(resourceURL) {
-    var self = this;
-    // Initialize the assembly
-    this._loader.load(resourceURL, "assembly", function(err, part) {
-        if (err) {
-            console.log('Load error: ' + resourceURL);
-            //// Popup message for user to handle
-            //$("#dialog").dialog({
-            //    autoOpen: true,
-            //    buttons: [ { text: "Ok", click: function() { $(this).dialog("close"); } } ],
-            //    modal: true,
-            //    title: "CAD.js Load Error - " + err.status
-            //});
-            //$("#dialog-content").text("Error loading model: " + err.file);
-        } else {
-            // Add the part to the list
-            self._rootAssembly = part;
-            // calculate the scene's radius for draw distance calculations
-            self._viewer.updateSceneBoundingBox(part.getBoundingBox());
-            // center the view
-            self._viewer.zoomToFit(part);
-            // Update the tree
-            self.renderTree();
-            // Get the rest of the files
-            self._loader.runLoadQueue();
-        }
-    });
-};
-
-CADjs.prototype.render = function () {
-    this._rootAssembly.render();
-};
-
 CADjs.prototype.onClick = function(event) {
     if (!this._rootAssembly) {
         return;

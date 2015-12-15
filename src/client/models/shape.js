@@ -129,7 +129,7 @@ export default class Shape extends THREE.EventDispatcher {
     addAnnotationGeometry(lineGeometries) {
         var CADjs = this.getCADjs(),
             material = new THREE.LineBasicMaterial({
-                color: CADjs.getThemeValue('annotationColor'),
+                color: 'red',
                 linewidth: 1
             });
         for (var i = 0; i < lineGeometries.length; i++) {

@@ -13,7 +13,10 @@ class QueueItem extends React.Component {
     }
 
     render() {
-        return <li>{this.props.name}</li>;
+        return <li>
+            <span>{this.props.name}</span>
+            <span className="pull-right">{this.props.loaded}</span>
+        </li>;
     }
 }
 
@@ -28,27 +31,24 @@ export default class LoadQueueView extends React.Component {
     }
 
     onQueueEvent(ev) {
+        var queue;
         if(ev.type === 'addRequest') {
             this.setState({ queue: this.state.queue.concat({
                 name: ev.path,
-                percent: 0,
+                loaded: '0%',
                 status: 'loading'
             }) });
         } else if (ev.type === 'loadProgress') {
-            //console.log(ev);
-            //var id = event.file.split(".")[0];
-            //progressValues[progressIdMap[id]] = 1;
-            //progressRing.update(progressValues);
-            //// Is this the index file
-            //if (id === "index") {
-            //    $("li#index").remove();
-            //} else {
-            //    // Change the file status to 'parsing'
-            //    $("li#" + id).text(event.file + ": Parsing");
-            //}
+            queue = _.map(this.state.queue, function(item) {
+                if (item.name == ev.file) {
+                    item.loaded = ev.loaded + '%';
+                }
+                return item;
+            });
+            this.setState({ queue: queue });
         } else if (ev.type === 'loadComplete') {
-            var queue = _.filter(this.state.queue, function(file) {
-                return file.name !== ev.file;
+            queue = _.filter(this.state.queue, function(file) {
+                return file.name != ev.file;
             });
             this.setState({ queue: queue });
         }
@@ -73,11 +73,14 @@ export default class LoadQueueView extends React.Component {
 
     render() {
         var items = this.state.queue.map(function(item) {
-            return <QueueItem key={item.name} name={item.name} />;
+            return <QueueItem key={item.name} name={item.name} loaded={item.loaded} />;
         });
         var style = items.length > 0 ? 'load-queue' : 'load-queue out';
         return <div className={style}>
-                <div className="header">Downloads ({items.length}):</div>
+                <div className="header">
+                    <span>Downloads&nbsp;</span>
+                    <span>({items.length}):</span>
+                </div>
                 <ul>{items}</ul>
             </div>
     }

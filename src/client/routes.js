@@ -26,7 +26,7 @@ module.exports = Backbone.Router.extend({
         var self = this;
         // Render the root CAD view
         ReactDOM.render(<CADView
-            dispatcher={this.app.cadManager}
+            manager={this.app.cadManager}
             viewContainerId='cadjs-view'
             root3DObject={this.app._root3DObject}
         />, document.getElementById('cadjs-view'), function() {

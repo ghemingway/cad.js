@@ -1,0 +1,27 @@
+.step-tree {
+  font-size: 8px;
+  width: 225px;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  max-height: 100%;
+  overflow: auto;
+  background-color: #222;
+  opacity: .2;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 5px;
+  transition: opacity .2s;
+  padding: 1ex;
+
+  ul {
+    margin-left: 5px;
+    margin-right: 0;
+    padding-left: 10px;
+    padding-right: 0;
+  }
+}
+
+.step-tree:hover {
+  opacity: 1;
+}
