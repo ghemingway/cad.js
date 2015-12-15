@@ -185,11 +185,15 @@ export default class DataLoader extends THREE.EventDispatcher {
                 break;
             case "shellLoad":
                 shell = this._shells[event.data.id];
-                data = event.data.data;
-                // Remove the reference to the shell
-                delete this._shells[event.data.id];
-                shell.addGeometry(data.position, data.normals, data.colors);
-                this.dispatchEvent({ type: "shellLoad", file: event.data.file });
+                if (!shell) {
+                    console.log('DataLoader.ShellLoad: invalid shell ID' + event.data.id);
+                } else {
+                    data = event.data.data;
+                    // Remove the reference to the shell
+                    delete this._shells[event.data.id];
+                    shell.addGeometry(data.position, data.normals, data.colors);
+                    this.dispatchEvent({type: "shellLoad", file: event.data.file});
+                }
                 break;
             case "workerFinish":
                 this.dispatchEvent({ type: "workerFinish", file: event.data.file });

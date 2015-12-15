@@ -24,6 +24,7 @@
     "jade": "latest",
     "joi": "latest",
     "jquery": "latest",
+    "jstree": "^3.2.1",
     "lodash": "latest",
     "method-override": "latest",
     "morgan": "latest",

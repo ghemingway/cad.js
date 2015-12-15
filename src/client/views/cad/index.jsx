@@ -34,8 +34,6 @@ export default class CADViewer extends React.Component {
     onModelAdd(event) {
         console.log('ModelAdd: ' + event.path);
         var model = this.props.manager._models[event.path];
-        //console.log(model);
-        //if (this.type)
         // Add the model to the scene
         this.add3DObject(model.getObject3D(), 'geometry');
         this.add3DObject(model.getOverlay3D(), 'overlay');
@@ -52,51 +50,51 @@ export default class CADViewer extends React.Component {
 
     onKeypress(event) {
         console.log(event.keyCode);
-    var node, obj;
-    switch(event.keyCode || event.charCode || event.which) {
-        // Explode on 'x' key pressed
-        case 120:
-            this.explode(this.getExplodeDistance());
-            break;
-        // Unexplode on 's' key pressed
-        case 115:
-            this.explode(-this.getExplodeDistance());
-            break;
-        // 'q' unselects all tree elements
-        case 113:
-            this._parts[0].hideAllBoundingBoxes();
-            this.tree.deselect_all();
-            this._viewer.invalidate();
-            break;
-        // 'o' to toggle transparency
-        case 111:
-            node = this.tree.get_selected(false);
-            obj = this._parts[0].getByID(node[0]);
-            if (obj) {
-                obj.toggleTransparency();
-            } else {
-                this._parts[0].toggleTransparency();
-            }
-            this._viewer.invalidate();
-            break;
-        // 'z' to zoomToFit
-        case 122:
-            node = this.tree.get_selected(false);
-            obj = this._parts[0].getByID(node[0]);
-            if (!obj) {
-                obj = this._parts[0];
-            }
-            this._viewer.zoomToFit(obj);
-            break;
-        // 'j' hide/show element
-        case 106:
-            node = this.tree.get_selected(false);
-            obj = this._parts[0].getByID(node[0]);
-            if (obj) {
-                obj.toggleVisibility();
+        var node, obj;
+        switch(event.keyCode || event.charCode || event.which) {
+            // Explode on 'x' key pressed
+            case 120:
+                this.explode(this.getExplodeDistance());
+                break;
+            // Unexplode on 's' key pressed
+            case 115:
+                this.explode(-this.getExplodeDistance());
+                break;
+            // 'q' unselects all tree elements
+            case 113:
+                this._parts[0].hideAllBoundingBoxes();
+                this.tree.deselect_all();
                 this._viewer.invalidate();
-            }
-            break;
+                break;
+            // 'o' to toggle transparency
+            case 111:
+                node = this.tree.get_selected(false);
+                obj = this._parts[0].getByID(node[0]);
+                if (obj) {
+                    obj.toggleTransparency();
+                } else {
+                    this._parts[0].toggleTransparency();
+                }
+                this._viewer.invalidate();
+                break;
+            // 'z' to zoomToFit
+            case 122:
+                node = this.tree.get_selected(false);
+                obj = this._parts[0].getByID(node[0]);
+                if (!obj) {
+                    obj = this._parts[0];
+                }
+                this._viewer.zoomToFit(obj);
+                break;
+            // 'j' hide/show element
+            case 106:
+                node = this.tree.get_selected(false);
+                obj = this._parts[0].getByID(node[0]);
+                if (obj) {
+                    obj.toggleVisibility();
+                    this._viewer.invalidate();
+                }
+                break;
         }
     }
 
@@ -310,11 +308,12 @@ export default class CADViewer extends React.Component {
             controls={this.controls}
             dispatcher={this.props.manager}
         /> : undefined;
+        var treeViewData = this.props.manager.getTree();
         return <div>
             <canvas id="cadjs-canvas" />
             {compass}
             <LoadQueueView dispatcher={this.props.manager} />
-            <StepTreeView dispatcher={this.props.manager} />
+            <StepTreeView data={treeViewData} />
         </div>;
     }
 };

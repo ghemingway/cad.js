@@ -80,11 +80,11 @@ var TYSON = (function () {
         // BEGIN SNIP
 
         var pos = 0;
-        var bytesU8 = new stdlib.Uint8Array(heap);
-        var bytesD32 = new stdlib.Float32Array(heap);
-        var bytesD64 = new stdlib.Float64Array(heap);
+        var bytesU8 = new Uint8Array(heap);
+        var bytesD32 = new Float32Array(heap);
+        var bytesD64 = new Float64Array(heap);
 
-        var imul = stdlib.Math.imul;
+        var imul = Math.imul;
         var pushNull = imports.pushNull;
         var pushTrue = imports.pushTrue;
         var pushFalse = imports.pushFalse;
@@ -484,7 +484,7 @@ var TYSON = (function () {
             getPos:getPos,
             setPos:setPos
         };
-    }
+    };
 
     var TYSON = function TYSON (buffer) {
         var view = new DataView(buffer);

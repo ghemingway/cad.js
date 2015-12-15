@@ -11,80 +11,39 @@ require('./step_tree.scss');
 export default class StepTreeView extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            node: undefined
-        };
-        this.onModelLoad = this.onModelLoad.bind(this);
-    }
-
-    onModelLoad() {
-        var data = this.props.dispatcher.getTree();
-        this.setState({ node: data });
     }
 
     componentDidMount() {
-        this.props.dispatcher.addEventListener('model:add', this.onModelLoad);
         this._treeContainerSelector = $('#step-tree');
-    }
-
-    componentWillUnmount() {
-        this.props.dispatcher.removeEventListener('model:add', this.onModelLoad);
-    }
-
-    componentDidUpdate() {
-        var self = this;
-        var geometryOnly = false;
-        var treeData = this.state.node;
-        if (this.tree) {
-            this.tree.destroy();
-        }
         this.tree = $.jstree.create(this._treeContainerSelector, {
             //plugins : [ 'contextmenu' ],
             core: {
-                data: [ treeData ],
+                data: [this.props.data],
                 animation: 50,
                 themes: {
                     icons: false
                 }
-            }//,
-            //contextmenu: {
-            //    items: function(menuItem) {
-            //        var obj = self._parts[0].getByID(menuItem.id),
-            //            menu = {
-            //                focusOn: {
-            //                    label: "Focus On",
-            //                    action: function() {
-            //                        if (obj) {
-            //                            self._viewer.zoomToFit(obj);
-            //                        }
-            //                    }
-            //                }
-            //            };
-            //        if (obj.getObject3D().visible) {
-            //            menu.hide = {
-            //                label: "Hide",
-            //                action: function() {
-            //                    if (obj) {
-            //                        obj.hide();
-            //                        self._viewer.invalidate();
-            //                    }
-            //                }
-            //            };
-            //        } else {
-            //            menu.show = {
-            //                label: "Show",
-            //                action: function() {
-            //                    if (obj) {
-            //                        obj.show();
-            //                        self._viewer.invalidate();
-            //                    }
-            //                }
-            //            };
-            //        }
-            //        return menu;
-            //    }
-            //}
+            }
         });
+
+        this._treeContainerSelector.on("changed.jstree", function (e, data) {
+            console.log(data.selected);
+        });
+//        this._treeContainerSelector.on('select_node.jstree deselect_node.jstree', function(event, data) {
+//            console.log(event);
+//            console.log(data);
+//            //self._parts[0].hideAllBoundingBoxes();
+//            //self._parts[0].clearHighlights();
+////            for (var i = 0; i < data.selected.length; i++) {
+////                var obj = self._parts[0].getByID(data.selected[i]);
+////                if (obj) {
+//////                    console.log(obj.getID());
+////                    obj.showBoundingBox();
+////                    self._viewer.invalidate();
+////                    //obj.highlight(0xff0000);
+////                }
+////            }
+//        });
     }
 
     render() {

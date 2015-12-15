@@ -41,7 +41,7 @@ export default class LoadQueueView extends React.Component {
         } else if (ev.type === 'loadProgress') {
             queue = _.map(this.state.queue, function(item) {
                 if (item.name == ev.file) {
-                    item.loaded = ev.loaded + '%';
+                    item.loaded = ev.loaded.toFixed(2) + '%';
                 }
                 return item;
             });

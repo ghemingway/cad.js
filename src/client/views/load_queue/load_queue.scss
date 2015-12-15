@@ -2,7 +2,7 @@
 .load-queue {
   border-top: 1px solid #555;
   border-left: 1px solid #555;
-  opacity: .6;
+  opacity: .8;
   background-color: #222;
   position: absolute;
   bottom: 0;
@@ -26,6 +26,8 @@
     padding-left: 20px;
 
     li {
+      color: #fff;
+
       font-size: 12pt;
       width: 100%;
     }

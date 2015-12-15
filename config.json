@@ -1,5 +1,5 @@
 {
-  "host": "localhost",
+  "host": "10.66.235.229",
   "port": 8080,
   "protocol": "http",
   "sessionCookieAge": 10000000,
