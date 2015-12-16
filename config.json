@@ -7,8 +7,8 @@
   "fetchDuration": 300,
   "api_version": "v1",
   "redis": {
-    "host": "127.0.0.1",
-    "port": 6379,
+    "host": "192.168.99.100",
+    "port": 32768,
     "database": 0
   },
   "security": {

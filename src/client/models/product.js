@@ -71,11 +71,11 @@ export default class Product extends THREE.EventDispatcher {
         return this._stepFile;
     }
 
-    getTree() {
+    getTree(root) {
         // Check if only geometry-aligned Products get added to tree
         var children = [], tmpChild;
         for (var i = 0; i < this._shapes.length; i++) {
-            tmpChild = this._shapes[i].getTree();
+            tmpChild = this._shapes[i].getTree(root);
             if (tmpChild) {
                 children.push(tmpChild);
             }
@@ -84,10 +84,10 @@ export default class Product extends THREE.EventDispatcher {
             return undefined;
         } else {
             return {
-                id          : this._id,
+                id          : root + ':' + this._id,
                 text        : this._name,
+                collapsed   : false,
                 state       : {
-                    opened    : true,
                     disabled  : false,
                     selected  : false
                 },

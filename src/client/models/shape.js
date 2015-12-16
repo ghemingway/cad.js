@@ -196,11 +196,11 @@ export default class Shape extends THREE.EventDispatcher {
         }
     };
 
-    getTree() {
+    getTree(root) {
         // Check if only geometry-aligned Shapes get added to tree
         var children = [], tmpChild;
         for (var i = 0; i < this._children.length; i++) {
-            tmpChild = this._children[i].getTree();
+            tmpChild = this._children[i].getTree(root);
             if (tmpChild) {
                 children.push(tmpChild);
             }
@@ -216,10 +216,10 @@ export default class Shape extends THREE.EventDispatcher {
             }
             // Don't show children if this is an instance
             return {
-                id: id,
-                text: this.name,
+                id          : root + ':' + id,
+                text        : this.name,
+                collapsed   : this._instanceID === 0,
                 state: {
-                    opened: this._instanceID === 0,
                     disabled: false,
                     selected: false
                 },

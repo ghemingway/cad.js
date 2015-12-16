@@ -172,19 +172,19 @@ export default class Assembly extends THREE.EventDispatcher {
         this.dispatchEvent({ type: "_clearOpacity" });
     }
 
-    getTree() {
+    getTree(root) {
         var node = {
-            id          : "id0",
+            id          : root,
             text        : this.name(),
+            collapsed   : false,
             state       : {
-                opened    : true,
                 disabled  : false,
                 selected  : false
             },
             children    : []  // array of strings or objects
         };
         if (this._product) {
-            node.children.push(this._product.getTree());
+            node.children.push(this._product.getTree(root));
         }
         return node;
     }

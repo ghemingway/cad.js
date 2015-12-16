@@ -9,7 +9,7 @@ import React            from 'react';
 import ViewerControls   from './viewer_controls';
 import CompassView      from '../compass/compass';
 import LoadQueueView    from '../load_queue';
-import StepTreeView     from '../step_tree/step_tree';
+import ModelTreeView    from '../model_tree/model_tree';
 
 // Import shaders
 require('./shaders/CopyShader');
@@ -24,11 +24,14 @@ require('./shaders/ShaderPass');
 export default class CADViewer extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            modelTree: {}
+        };
         this.handleResize = this.handleResize.bind(this);
         this.onModelAdd = this.onModelAdd.bind(this);
         this.onModelRemove = this.onModelRemove.bind(this);
         this.invalidate = this.invalidate.bind(this);
-        this.onKeypress= this.onKeypress.bind(this);
+        this.onKeypress = this.onKeypress.bind(this);
     }
 
     onModelAdd(event) {
@@ -42,10 +45,16 @@ export default class CADViewer extends React.Component {
         this.updateSceneBoundingBox(model.getBoundingBox());
         // center the view
         this.zoomToFit(model);
+        // Update the model tree
+        var tree = this.props.manager.getTree();
+        this.setState({ modelTree:tree });
     }
 
     onModelRemove(event) {
         console.log('ModelRemove: ' + event.path);
+        // Update the model tree
+        var tree = this.props.manager.getTree();
+        this.setState({ modelTree: tree });
     }
 
     onKeypress(event) {
@@ -308,12 +317,11 @@ export default class CADViewer extends React.Component {
             controls={this.controls}
             dispatcher={this.props.manager}
         /> : undefined;
-        var treeViewData = this.props.manager.getTree();
         return <div>
             <canvas id="cadjs-canvas" />
             {compass}
             <LoadQueueView dispatcher={this.props.manager} />
-            <StepTreeView data={treeViewData} />
+            <ModelTreeView dispatcher={this.props.manager} tree={this.state.modelTree} />
         </div>;
     }
 };

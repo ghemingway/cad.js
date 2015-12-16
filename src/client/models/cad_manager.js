@@ -84,7 +84,7 @@ export default class CADManager extends THREE.EventDispatcher {
 
     getTree() {
         var keys = _.keys(this._models);
-        return keys.length > 0 ? this._models[keys[0]].getTree() : {};
+        return keys.length > 0 ? this._models[keys[0]].getTree(keys[0]) : {};
     }
 }
 
