@@ -263,10 +263,16 @@ export default class DataLoader extends THREE.EventDispatcher {
         console.log('Process NC: ' + doc.workingstep);
         var nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
         _.each(doc.geom, function(geomData) {
-            console.log(geomData.usage);
-            if (geomData.usage === 'asis') {}
-            //var geom = self.buildGeomJSON();
-            //nc.addGeom(geom);
+            if (geomData.usage === 'asis') {
+                //var geom = self.buildGeomJSON();
+                //nc.addGeom(geom);
+            } else if (geomData.usage === 'tobe') {
+
+            } else if (geomData.usage === 'cutter') {
+
+            } else if (geomData.usage === 'toolpath') {
+                
+            }
         });
         req.callback(undefined, nc);
     }

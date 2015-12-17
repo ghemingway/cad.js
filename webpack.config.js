@@ -7,7 +7,7 @@ module.exports = {
     debug: true,
     devtool: 'source-map',
     sourceMapFileName: "[file].map",
-    context: __dirname + "/src/client",
+    context: path.join(__dirname, "/src/client"),
     entry: {
         main: "./main",
         webworker: "./models/webworker"
