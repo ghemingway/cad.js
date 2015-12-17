@@ -16,6 +16,7 @@ export default class Assembly extends THREE.EventDispatcher {
         this._objects = [];
         this._product = undefined;
         this.type = 'assembly';
+        this.raycaster = new THREE.Raycaster();
     }
 
     getCADjs() {
@@ -203,15 +204,11 @@ export default class Assembly extends THREE.EventDispatcher {
 
     select(camera, mouseX, mouseY) {
         if (!this._product) return undefined;
-        mouseX = (mouseX / window.innerWidth) * 2 - 1;
-        mouseY = -(mouseY / window.innerHeight) * 2 + 1;
-        // Convert mouse-space to global
-        var vector = new THREE.Vector3(mouseX, mouseY, .999);
-        vector.project(camera);
-        // Cast ray from camera, pointed towards click point
-        vector.sub(camera.position).normalize();
-        var raycaster = new THREE.Raycaster(camera.position, vector);
-        var intersections = raycaster.intersectObjects(this._product.getObject3D().children, true);
+        var mouse = new THREE.Vector2();
+        mouse.x = (mouseX / window.innerWidth) * 2 - 1;
+        mouse.y = -(mouseY / window.innerHeight) * 2 + 1;
+        this.raycaster.setFromCamera(mouse, camera);
+        var intersections = this.raycaster.intersectObjects(this._product.getObject3D().children, true);
         // Did we hit anything?
         var object = undefined;
         if (intersections.length > 0) {
@@ -239,9 +236,7 @@ export default class Assembly extends THREE.EventDispatcher {
         }
         // Create the new box buffer
         var geometry = new THREE.BufferGeometry();
-        geometry.addAttribute( 'position', new THREE.BufferAttribute(36, 3) );
-
-        var positions = geometry.attributes.position.array;
+        var positions = new Float32Array(108);
         //Front face bottom
         positions[0]  = box.min.x;
         positions[1]  = box.min.y;
@@ -329,12 +324,13 @@ export default class Assembly extends THREE.EventDispatcher {
         positions[69] = box.max.x;
         positions[70] = box.max.y;
         positions[71] = box.max.z;
+        geometry.addAttribute( 'position', new THREE.BufferAttribute(36, 3) );
 
         // Return the new Bounding Box Geometry
         var material = new THREE.LineBasicMaterial({
             linewidth: 2,
-            color: this.getCADjs().getThemeValue('boundingBoxColor')
+            color: 0xaaaaaa
         });
-        return new THREE.Line(geometry, material, THREE.LinePieces);
+        return new THREE.Line(geometry, material);
     }
 };

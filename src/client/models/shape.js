@@ -4,7 +4,7 @@
 "use strict";
 
 
-//var THREE = require('three');
+import Assembly from './assembly';
 
 /********************************* Shape Class ********************************/
 
@@ -335,7 +335,7 @@ export default class Shape extends THREE.EventDispatcher {
     showBoundingBox() {
         var bounds = this.getBoundingBox(false);
         if (!this.bbox && !bounds.empty()) {
-            this.bbox = this._assembly.buildBoundingBox(bounds);
+            this.bbox = Assembly.buildBoundingBox(bounds);
         }
         if (this.bbox) {
             var self = this;

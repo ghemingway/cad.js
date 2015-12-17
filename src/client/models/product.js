@@ -12,7 +12,6 @@ export default class Product extends THREE.EventDispatcher {
         assembly.makeChild(id, this);
         this._id = id;
         this._assembly = assembly;
-        this._stepFile = stepFile;
         this._name = name;
         this._isRoot = isRoot;
         this._shapes = [];
@@ -65,10 +64,6 @@ export default class Product extends THREE.EventDispatcher {
         this._object3D.applyMatrix(matrix);
         this._overlay3D.applyMatrix(matrix);
         this._annotation3D.applyMatrix(matrix);
-    }
-
-    getStepFile() {
-        return this._stepFile;
     }
 
     getTree(root) {

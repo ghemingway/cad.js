@@ -27,11 +27,14 @@ export default class CADViewer extends React.Component {
         this.state = {
             modelTree: {}
         };
-        this.handleResize = this.handleResize.bind(this);
-        this.onModelAdd = this.onModelAdd.bind(this);
-        this.onModelRemove = this.onModelRemove.bind(this);
-        this.invalidate = this.invalidate.bind(this);
-        this.onKeypress = this.onKeypress.bind(this);
+        this.change = false;
+        this.handleResize   = this.handleResize.bind(this);
+        this.onModelAdd     = this.onModelAdd.bind(this);
+        this.onModelRemove  = this.onModelRemove.bind(this);
+        this.invalidate     = this.invalidate.bind(this);
+        this.onKeypress     = this.onKeypress.bind(this);
+        this.onMouseUp      = this.onMouseUp.bind(this);
+        this.onMouseMove    = this.onMouseMove.bind(this);
     }
 
     onModelAdd(event) {
@@ -177,6 +180,7 @@ export default class CADViewer extends React.Component {
 
         // CONTROL EVENT HANDLERS
         this.controls.addEventListener('change', function() {
+            self.change = true;
             var x0 = self.sceneCenter,
                 x1 = self.camera.position,
                 x2 = self.controls.target,
@@ -191,6 +195,7 @@ export default class CADViewer extends React.Component {
         });
         this.controls.addEventListener("start", function() {
             self.continuousRendering = true;
+            self.change = false;
         });
         this.controls.addEventListener("end", function() {
             self.invalidate();
@@ -310,6 +315,73 @@ export default class CADViewer extends React.Component {
         this.sceneRadius = newBoundingBox.size().length()/2;
     };
 
+    onClick(event) {
+        var self = this;
+        if (_.size(this.props.manager._models) === 0) {
+            return;
+        }
+        // Clear selections if meta key not pressed
+        if (!event.metaKey) {
+            _.each(this.props.manager._models, function(model) {
+                model.hideAllBoundingBoxes();
+            });
+            console.log('Deselect all tree elements');
+            //this.tree.deselect_all();
+        }
+        var obj = _.reduce(this.props.manager._models, function(memo, model) {
+            var val = model.select(self.camera, event.clientX, event.clientY);
+            return memo || val;
+        }, undefined);
+        // Did we find an object
+        if (obj) {
+            obj = obj.getNamedParent();
+            // Yes, go highlight it in the tree
+            console.log('Select node: ' + obj.getID());
+            //var node = this.tree.get_node(obj.getID());
+            //this.tree.select_node(node);
+            // Show the bounding box
+            obj.showBoundingBox();
+            self.invalidate();
+        }
+        this.invalidate();
+    }
+
+    onMouseUp(event) {
+        if (!this.change) {
+            this.onClick(event);
+        }
+        this.change = false;
+    }
+
+    onMove(event) {
+        var obj, self = this;
+        if (_.size(this.props.manager._models) > 0) {
+            _.each(this.props.manager._models, function(model) {
+                model.clearHighlights();
+            });
+            obj = _.reduce(this.props.manager._models, function(memo, model) {
+                var val = model.select(self.camera, event.clientX, event.clientY);
+                return memo || val;
+            }, undefined);
+            // Did we find an object
+            if (obj) {
+                obj = obj.getNamedParent();
+                // Yes, go highlight it in the tree
+                obj.highlight(0xffff60);
+            }
+        }
+        if (obj != this._lastHovered) {
+            this.invalidate();
+        }
+        this._lastHovered = obj;
+    }
+
+    onMouseMove(event) {
+        if (!this.change) {
+            this.onMove(event);
+        }
+    }
+
     render() {
         var compass = this.camera ? <CompassView
             compassParentId="cadjs-canvas"
@@ -318,7 +390,7 @@ export default class CADViewer extends React.Component {
             dispatcher={this.props.manager}
         /> : undefined;
         return <div>
-            <canvas id="cadjs-canvas" />
+            <canvas id="cadjs-canvas" onMouseUp={this.onMouseUp} onMouseMove={this.onMouseMove} />
             {compass}
             <LoadQueueView dispatcher={this.props.manager} />
             <ModelTreeView dispatcher={this.props.manager} tree={this.state.modelTree} />
