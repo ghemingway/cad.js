@@ -42,7 +42,7 @@ export default class Shape extends THREE.EventDispatcher {
 
     getCADjs() {
         return this._assembly.getCADjs();
-    };
+    }
 
     instance(source, assembly, parent, transform) {
         // Setup instance info
@@ -75,7 +75,7 @@ export default class Shape extends THREE.EventDispatcher {
             this._annotation3D.add(shape.getAnnotation3D());
             this._children.push(shape);
         }
-    };
+    }
 
     addChild(childShape) {
         var self = this;
@@ -88,7 +88,7 @@ export default class Shape extends THREE.EventDispatcher {
         this._object3D.add(childShape.getObject3D());
         this._overlay3D.add(childShape.getOverlay3D());
         this._annotation3D.add(childShape.getAnnotation3D());
-    };
+    }
 
     addAnnotation(annotation) {
         var self = this;
@@ -97,7 +97,7 @@ export default class Shape extends THREE.EventDispatcher {
             var anno = event.annotation;
             self.addAnnotationGeometry(anno.getGeometry());
         });
-    };
+    }
 
     addShell(shell) {
         var self = this;
@@ -106,7 +106,7 @@ export default class Shape extends THREE.EventDispatcher {
             var shell = event.shell;
             self.addShellGeometry(shell.getGeometry());
         });
-    };
+    }
 
     setProduct(product) {
         this._product = product;
@@ -114,7 +114,7 @@ export default class Shape extends THREE.EventDispatcher {
         for (var i = 0; i < this._instances.length; i++) {
             this._instances[i].setProduct(product);
         }
-    };
+    }
 
     addShellGeometry(geometry) {
         var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
@@ -124,7 +124,7 @@ export default class Shape extends THREE.EventDispatcher {
         mesh.userData = this;
         this._object3D.add(mesh);
         this.dispatchEvent({type: "shapeLoaded"});
-    };
+    }
 
     addAnnotationGeometry(lineGeometries) {
         var material = new THREE.LineBasicMaterial({
@@ -138,27 +138,27 @@ export default class Shape extends THREE.EventDispatcher {
             this._annotation3D.add(lines);
         }
         this.dispatchEvent({type: "shapeLoaded"});
-    };
+    }
 
     getObject3D() {
         return this._object3D;
-    };
+    }
 
     getOverlay3D() {
         return this._overlay3D;
-    };
+    }
 
     getAnnotation3D() {
         return this._annotation3D;
-    };
+    }
 
     getName() {
         return "Shape";
-    };
+    }
 
     getID() {
         return this._id + "_" + this._instanceID;
-    };
+    }
 
     getSize() {
         if (!this._size) {
@@ -172,14 +172,14 @@ export default class Shape extends THREE.EventDispatcher {
             }
         }
         return this._size;
-    };
+    }
 
     getLabel() {
         if (this._product) {
             return this._product.getProductName();
         }
         return "";
-    };
+    }
 
     getNamedParent(includeSelf) {
         if (includeSelf === undefined) includeSelf = true;
@@ -193,7 +193,7 @@ export default class Shape extends THREE.EventDispatcher {
             }
             return obj;
         }
-    };
+    }
 
     getTree(root) {
         // Check if only geometry-aligned Shapes get added to tree
@@ -225,7 +225,7 @@ export default class Shape extends THREE.EventDispatcher {
                 children: children
             };
         }
-    };
+    }
 
     getBoundingBox(transform) {
         if (!this.boundingBox) {
@@ -247,7 +247,7 @@ export default class Shape extends THREE.EventDispatcher {
             bounds.applyMatrix4(this._transform);
         }
         return bounds;
-    };
+    }
 
     toggleVisibility() {
         if (this._object3D.visible) {
@@ -256,7 +256,7 @@ export default class Shape extends THREE.EventDispatcher {
             this.show();
         }
         return this._object3D.visible;
-    };
+    }
 
     isTransparent() {
         // returns true if object or any children are transparent
@@ -271,7 +271,7 @@ export default class Shape extends THREE.EventDispatcher {
             this._object3D.traverse(testObject);
         }
         return transparent;
-    };
+    }
 
     toggleTransparency() {
         if (this.isTransparent()) {
@@ -279,21 +279,21 @@ export default class Shape extends THREE.EventDispatcher {
         } else {
             this.setOpacity(0.5);
         }
-    };
+    }
 
     hide() {
         this._object3D.traverse(function (object) {
             object.visible = false;
         });
         this.hideAnnotations();
-    };
+    }
 
     show() {
         this._object3D.traverse(function (object) {
             object.visible = true;
         });
         this.showAnnotations();
-    };
+    }
 
     highlight(colorHex) {
         var self = this;
@@ -307,19 +307,19 @@ export default class Shape extends THREE.EventDispatcher {
                 });
             }
         });
-    };
+    }
 
     showAnnotations() {
         this._annotation3D.traverse(function (object) {
             object.visible = true;
         });
-    };
+    }
 
     hideAnnotations() {
         this._annotation3D.traverse(function (object) {
             object.visible = false;
         });
-    };
+    }
 
     setOpacity(opacity) {
         this._object3D.traverse(function (object) {
@@ -329,7 +329,7 @@ export default class Shape extends THREE.EventDispatcher {
                 object.material.uniforms['opacity'].value = opacity;
             }
         });
-    };
+    }
 
     showBoundingBox() {
         var bounds = this.getBoundingBox(false);
@@ -346,14 +346,14 @@ export default class Shape extends THREE.EventDispatcher {
             this._overlay3D.add(this.bbox);
         }
         this.showAnnotations();
-    };
+    }
 
     hideBoundingBox() {
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._overlay3D.remove(this.bbox);
         this.hideAnnotations();
-    };
+    }
 
     getCentroid(world) {
         if (world === undefined) world = true;
@@ -363,7 +363,7 @@ export default class Shape extends THREE.EventDispatcher {
             bbox.max.applyMatrix4(this._object3D.matrixWorld);
         }
         return bbox.center();
-    };
+    }
 
     explode(distance, timeS) {
         var i, child;
@@ -409,16 +409,16 @@ export default class Shape extends THREE.EventDispatcher {
         if (this._explodeDistance === 0) {
             this.resetExplode();
         }
-    };
+    }
 
     _explodeStep(distance, step) {
 
-    };
+    }
 
     _updateAnimation() {
         if (this._explodeStepRemain > 0) {
         }
-    };
+    }
 
     resetExplode() {
         if (this._explodeDistance) {
@@ -428,11 +428,11 @@ export default class Shape extends THREE.EventDispatcher {
             this._explodeStates = undefined;
             this._exploseStep = undefined;
         }
-    };
+    }
 
     translateOnAxis(axis, magnitude) {
         this.getObject3D().translateOnAxis(axis, magnitude);
         this.getOverlay3D().translateOnAxis(axis, magnitude);
         this.getAnnotation3D().translateOnAxis(axis, magnitude);
-    };
+    }
 };

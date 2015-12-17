@@ -15,6 +15,7 @@ export default class NC extends THREE.EventDispatcher {
         this._loader = loader;
         this._objects = [];
         this.type = 'nc';
+        this.raycaster = new THREE.Raycaster();
         this._object3D = new THREE.Object3D();
         this._overlay3D = new THREE.Object3D();
         this._annotation3D = new THREE.Object3D();
@@ -124,6 +125,41 @@ export default class NC extends THREE.EventDispatcher {
         this.dispatchEvent({ type: "_hideBounding" });
     }
 
+    getNamedParent(includeSelf) {
+        return undefined;
+        if (includeSelf === undefined) includeSelf = true;
+        if (includeSelf && this._product) {
+            return this;
+        } else {
+            //var obj = this._parent;
+            //while (!obj.product && obj.parent) {
+            //    obj = obj.parent;
+            //}
+            //return obj;
+        }
+    }
+
     select(camera, mouseX, mouseY) {
+        var mouse = new THREE.Vector2();
+        mouse.x = (mouseX / window.innerWidth) * 2 - 1;
+        mouse.y = -(mouseY / window.innerHeight) * 2 + 1;
+        this.raycaster.setFromCamera(mouse, camera);
+        var intersections = this.raycaster.intersectObjects(this._object3D.children, true);
+        // Did we hit anything?
+        var object = undefined;
+        if (intersections.length > 0) {
+            var hit = undefined;
+            for (var i = 0; i < intersections.length; i++) {
+                if (intersections[i].object.visible) {
+                    if (!hit || intersections[i].distance < hit.distance) {
+                        hit = intersections[i];
+                    }
+                }
+            }
+            if (hit) {
+                object = hit.object.userData;
+            }
+        }
+        return object;
     }
 }

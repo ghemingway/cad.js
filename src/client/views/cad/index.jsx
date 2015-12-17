@@ -363,6 +363,7 @@ export default class CADViewer extends React.Component {
             }, undefined);
             // Did we find an object
             if (obj) {
+                console.log(obj);
                 obj = obj.getNamedParent();
                 // Yes, go highlight it in the tree
                 obj.highlight(0xffff60);
