@@ -23,8 +23,8 @@ module.exports = {
         loaders: [
             { test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
             // required to write "require('./style.css')"
-            { test: /\.scss$/, loader: "style!css!sass-loader" },
-            { test: /\.css$/,  loader: "style-loader!css-loader" },
+            { test: /\.scss$/, loader: "style-loader!css-loader?sourceMap!sass-loader?sourceMap" },
+            { test: /\.css$/,  loader: "style-loader!css-loader?sourceMap" },
             { test: /\.png$/,  loader: "url-loader?mimetype=image/png" },
             { test: /\.gif$/,  loader: "url-loader?mimetype=image/gif" },
 

@@ -29,6 +29,10 @@ var _fetch = function(req, res) {
         dirPath = path.join(__dirname, '../../../../data/' + req.params.modelId);
         filename = 'index.json';
         app.logger.debug('Assembly: ' + filename);
+    } else if (req.params.ncId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
+        filename = 'state.json';
+        app.logger.debug('NC: ' + filename);
     } else if (req.params.shellId) {
         dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
         filename = 'shell_' + req.params.shellId + '.json';
@@ -77,6 +81,7 @@ module.exports = function(globalApp) {
     }
     app.router.get('/v1/model/resolve/*',                           app._storage.resolve);
     app.router.get('/v1/assembly/:modelId',                         app._storage.fetch);
+    app.router.get('/v1/nc/:ncId',                                  app._storage.fetch);
     app.router.get('/v1/assembly/:assemblyId/batch/:batchId',       app._storage.fetch);
     app.router.get('/v1/assembly/:assemblyId/shell/:shellId',       app._storage.fetch);
     app.router.get('/v1/assembly/:assemblyId/annotation/:annoId',   app._storage.fetch);

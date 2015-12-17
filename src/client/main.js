@@ -35,7 +35,8 @@ var App  = function() {
     // Begin routing the application
     var startRouting = function() {
         Backbone.history.start({ pushState: true });
-        self._router.navigate(window.location.pathname, {trigger: true});
+        var url = window.location.pathname + (window.location.search ? window.location.search : '');
+        self._router.navigate(url, { trigger: true });
     };
     startRouting();
 };

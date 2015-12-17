@@ -5,6 +5,7 @@
 
 
 import Assembly            from './assembly';
+import NC                  from './nc';
 import Product             from './product';
 import Shape               from './shape';
 import Shell               from './shell';
@@ -174,8 +175,13 @@ export default class DataLoader extends THREE.EventDispatcher {
         var data;
         switch (event.data.type) {
             case "rootLoad":
-                // Handle the assembly
-                this.buildAssemblyJSON(event.data.data, req);
+                if (req.type === 'assembly') {
+                    // Handle the assembly
+                    this.buildAssemblyJSON(event.data.data, req);
+                } else if (req.type === 'nc') {
+                    // Handle the nc file
+                    this.buildNCStateJSON(event.data.data, req);
+                }
                 break;
             case "annotationLoad":
                 data = JSON.parse(event.data.data);
@@ -250,6 +256,19 @@ export default class DataLoader extends THREE.EventDispatcher {
             }
         }
         req.callback(undefined, assembly);
+    }
+
+    buildNCStateJSON(jsonText, req) {
+        var doc = JSON.parse(jsonText);
+        console.log('Process NC: ' + doc.workingstep);
+        var nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
+        _.each(doc.geom, function(geomData) {
+            console.log(geomData.usage);
+            if (geomData.usage === 'asis') {}
+            //var geom = self.buildGeomJSON();
+            //nc.addGeom(geom);
+        });
+        req.callback(undefined, nc);
     }
 
     buildProductJSON(req, doc, assembly, id, isRoot) {

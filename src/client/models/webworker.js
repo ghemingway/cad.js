@@ -621,6 +621,16 @@ function processAssembly(url, workerID, data) {
     });
 }
 
+function processNCState(url, workerID, data) {
+    // All we really need to do is pass this back to the main thread
+    self.postMessage({
+        type: "rootLoad",
+        url: url,
+        data: data,
+        workerID: workerID
+    });
+}
+
 function processAnnotation(url, workerID, data) {
     var parts = url.split("/");
     // All we really need to do is pass this back to the main thread
@@ -778,6 +788,9 @@ self.addEventListener("message", function(e) {
                         processBatchTYSON(url, workerID, xhr.response);
                         break;
                 }
+                break;
+            case "nc":
+                processNCState(url, workerID, xhr.responseText);
                 break;
             case "assembly":
                 processAssembly(url, workerID, xhr.responseText);

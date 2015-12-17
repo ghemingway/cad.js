@@ -22,7 +22,8 @@ module.exports = Backbone.Router.extend({
         console.log('Landing path');
     },
 
-    _model: function(modelID) {
+    _model: function(modelID, query) {
+        var type = query ? query.split('=')[1] : 'assembly';
         var self = this;
         // Render the root CAD view
         ReactDOM.render(<CADView
@@ -35,7 +36,7 @@ module.exports = Backbone.Router.extend({
                 type: 'setModel',
                 path: modelID,
                 baseURL: self.app._services.api_endpoint + self.app._services.version,
-                modelType: 'assembly'
+                modelType: type
             });
         });
     },

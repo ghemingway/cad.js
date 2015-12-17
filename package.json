@@ -30,6 +30,7 @@
     "morgan": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-ui-tree": "^2.4.1",
     "redis": "latest",
     "serve-favicon": "latest",
     "serve-static": "latest",
