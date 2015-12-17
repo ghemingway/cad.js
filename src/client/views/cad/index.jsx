@@ -38,7 +38,6 @@ export default class CADViewer extends React.Component {
     }
 
     onModelAdd(event) {
-        console.log('ModelAdd: ' + event.path);
         var model = this.props.manager._models[event.path];
         // Add the model to the scene
         this.add3DObject(model.getObject3D(), 'geometry');
@@ -91,12 +90,12 @@ export default class CADViewer extends React.Component {
                 break;
             // 'z' to zoomToFit
             case 122:
-                node = this.tree.get_selected(false);
-                obj = this._parts[0].getByID(node[0]);
-                if (!obj) {
-                    obj = this._parts[0];
-                }
-                this._viewer.zoomToFit(obj);
+                //node = this.tree.get_selected(false);
+                //obj = this._parts[0].getByID(node[0]);
+                //if (!obj) {
+                //    obj = this._parts[0];
+                //}
+                this.zoomToFit(obj);
                 break;
             // 'j' hide/show element
             case 106:
@@ -294,21 +293,20 @@ export default class CADViewer extends React.Component {
         this.invalidate();
     }
 
-    update() {
-        if (this.autoAntialiasing) {
-            console.log('Viewer.update');
-            this.renderer.clear();
-            this.renderer.render(this.geometryScene, this.camera);
-        } else {
-            //depthPassPlugin.enabled = true;
-            this.renderer.render(this.geometryScene, this.camera, this.composer.renderTarget2, true);
-            //depthPassPlugin.enabled = false;
-            this.composer.render(0.5);
-        }
-        this.renderer.clear(false, true, false);
-        this.renderer.render(this.overlayScene, this.camera);
-        this.renderer.render(this.annotationScene, this.camera);
-    };
+    //update() {
+    //    if (this.autoAntialiasing) {
+    //        this.renderer.clear();
+    //        this.renderer.render(this.geometryScene, this.camera);
+    //    } else {
+    //        //depthPassPlugin.enabled = true;
+    //        this.renderer.render(this.geometryScene, this.camera, this.composer.renderTarget2, true);
+    //        //depthPassPlugin.enabled = false;
+    //        this.composer.render(0.5);
+    //    }
+    //    this.renderer.clear(false, true, false);
+    //    this.renderer.render(this.overlayScene, this.camera);
+    //    this.renderer.render(this.annotationScene, this.camera);
+    //};
 
     updateSceneBoundingBox(newBoundingBox) {
         this.sceneCenter.copy(newBoundingBox.center());

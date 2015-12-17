@@ -127,11 +127,10 @@ export default class Shape extends THREE.EventDispatcher {
     };
 
     addAnnotationGeometry(lineGeometries) {
-        var CADjs = this.getCADjs(),
-            material = new THREE.LineBasicMaterial({
-                color: 'red',
-                linewidth: 1
-            });
+        var material = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            linewidth: 1
+        });
         for (var i = 0; i < lineGeometries.length; i++) {
             var geometry = lineGeometries[i];
             var lines = new THREE.Line(geometry, material, THREE.LineStrip);

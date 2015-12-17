@@ -20,23 +20,38 @@ export default class NC extends THREE.EventDispatcher {
         this._annotation3D = new THREE.Object3D();
     }
 
-    addGeom(geom) {
-        //shape.setProduct(this);
-        this._objects.push(geom);
-        if (this._isRoot) {
-            var self = this;
-            this._object3D.add(geom.getObject3D());
-            this._overlay3D.add(geom.getOverlay3D());
-            this._annotation3D.add(geom.getAnnotation3D());
-            geom.addEventListener("loaded", function(event) {
-                console.log(event);
-                self.dispatchEvent({ type: "geom:loaded", shell: event.shell });
-            });
-        }
+    addModel(model, type, id, transform, bbox) {
+        console.log('Add Model(' + type + '): ' + id);
+        var self = this;
+        // Setup 3D object holder
+        var obj = {
+            model: model,
+            type: type,
+            id: id,
+            object3D: new THREE.Object3D(),
+            transform: (new THREE.Matrix4()).copy(transform),
+            bbox: bbox
+        };
+        obj.object3D.applyMatrix(obj.transform);
+        obj.overlay3D = obj.object3D.clone();
+        obj.annotation3D = obj.object3D.clone();
+        // Save the object
+        this._objects[id] = obj;
+        this._object3D.add(obj.object3D);
+        this._overlay3D.add(obj.overlay3D);
+        this._annotation3D.add(obj.annotation3D);
+        model.addEventListener("shellEndLoad", function (event) {
+            var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
+            var mesh = new THREE.SkinnedMesh(event.shell.getGeometry(), material, false);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData = self;
+            obj.object3D.add(mesh);
+        });
     }
 
     makeChild(id, fallback) {
-//        console.log("Assembly.makeChild: " + id);
+        //console.log("NC.makeChild: " + id);
         if (!id) {
             throw new Error("null id");
         }
@@ -61,11 +76,14 @@ export default class NC extends THREE.EventDispatcher {
     };
 
     getBoundingBox() {
+        var self = this;
         if (!this.boundingBox) {
             this.boundingBox = new THREE.Box3();
-            for (var i = 0; i < this._objects.length; i++) {
-                this.boundingBox.union(this._objects[i].getBoundingBox(true));
-            }
+            var keys = _.keys(this._objects);
+            _.each(keys, function(key) {
+                var object = self._objects[key];
+                self.boundingBox.union(object.bbox);
+            });
         }
         return this.boundingBox.clone();
     }
@@ -82,17 +100,28 @@ export default class NC extends THREE.EventDispatcher {
             children    : []
         };
         // Gen tree for all children
-        for (var i = 0; i < this._objects.length; i++) {
-            var tmpChild = this._objects[i].getTree(root);
-            if (tmpChild) {
-                node.push(tmpChild);
-            }
-        }
+        var keys = _.keys(this._objects);
+        _.each(keys, function(key) {
+            var tmpNode = {
+                id          : key,
+                text        : key,
+                collapsed   : false,
+                state       : {
+                    disabled  : false,
+                    selected  : false
+                }
+            };
+            node.children.push(tmpNode);
+        });
         return node;
     }
 
     clearHighlights() {
         this.dispatchEvent({ type: "_clearHighlights" });
+    }
+
+    hideAllBoundingBoxes() {
+        this.dispatchEvent({ type: "_hideBounding" });
     }
 
     select(camera, mouseX, mouseY) {

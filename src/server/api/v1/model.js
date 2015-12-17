@@ -25,29 +25,38 @@ var _resolve = function(req, res) {
  */
 var _fetch = function(req, res) {
     var dirPath, filename;
-    if (req.params.modelId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.modelId);
+
+    // Handle assemblies
+    if (req.params.assemblyId && req.params.shellId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        filename = 'shell_' + req.params.shellId + '.json';
+        app.logger.debug('Assembly Shell: ' + filename);
+    } else if (req.params.assemblyId && req.params.annoId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        filename = 'annotation_' + req.params.annoId + '.json';
+        app.logger.debug('Assembly Annotation: ' + filename);
+    } else if (req.params.assemblyId && req.params.batchId) {
+        var type = req.headers['content-type'] === 'application/arraybuffer' ? '.tyson' : '.json';
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        filename = 'batch' + req.params.batchId + type;
+        app.logger.debug('Assembly Batch: ' + filename);
+    } else if (req.params.assemblyId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
         filename = 'index.json';
         app.logger.debug('Assembly: ' + filename);
+    }
+
+    // Handle NC files
+    if (req.params.ncId && req.params.shellId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
+        filename = req.params.shellId + '.json';
+        app.logger.debug('NC Shell: ' + filename);
     } else if (req.params.ncId) {
         dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
         filename = 'state.json';
         app.logger.debug('NC: ' + filename);
-    } else if (req.params.shellId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
-        filename = 'shell_' + req.params.shellId + '.json';
-        app.logger.debug('Shell: ' + filename);
-    } else if (req.params.annoId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
-        filename = 'annotation_' + req.params.annoId + '.json';
-        app.logger.debug('Annotation: ' + filename);
-    } else if (req.params.batchId) {
-        var type = req.headers['content-type'] === 'application/arraybuffer' ? '.tyson' : '.json';
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
-        filename = 'batch' + req.params.batchId + type;
-        app.logger.debug('Batch: ' + filename);
     }
-    res.status(200).sendFile(filename, { root: dirPath });
+        res.status(200).sendFile(filename, { root: dirPath });
 };
 
 
@@ -80,10 +89,11 @@ module.exports = function(globalApp) {
         app._auth.list = _.has(plugin, 'list') ? plugin.list: app._auth.list;
     }
     app.router.get('/v1/model/resolve/*',                           app._storage.resolve);
-    app.router.get('/v1/assembly/:modelId',                         app._storage.fetch);
-    app.router.get('/v1/nc/:ncId',                                  app._storage.fetch);
+    app.router.get('/v1/assembly/:assemblyId',                      app._storage.fetch);
     app.router.get('/v1/assembly/:assemblyId/batch/:batchId',       app._storage.fetch);
     app.router.get('/v1/assembly/:assemblyId/shell/:shellId',       app._storage.fetch);
     app.router.get('/v1/assembly/:assemblyId/annotation/:annoId',   app._storage.fetch);
+    app.router.get('/v1/nc/:ncId',                                  app._storage.fetch);
+    app.router.get('/v1/nc/:ncId/shell/:shellId',                   app._storage.fetch);
     app.router.get('/v1/models',                app._storage.list);
 };

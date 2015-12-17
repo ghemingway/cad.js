@@ -110,7 +110,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     /************** DataLoader Class Functions ****************************/
 
     load(req, callback) {
-        req.base = req.baseURL + '/assembly/' + req.path;
+        req.base = req.baseURL + '/' + req.type + '/' + req.path;
         this.addRequest(req, function(err, model) {
             callback(err, model);
         });
@@ -220,7 +220,6 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     initRequest(req) {
-        //console.log('InitRequest: ' + req.path);
         // Fetch the worker to use
         var worker = this._workers[req.workerID];
         // Send the request to the worker
@@ -259,19 +258,26 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     buildNCStateJSON(jsonText, req) {
+        var self = this;
         var doc = JSON.parse(jsonText);
-        console.log('Process NC: ' + doc.workingstep);
+        //console.log('Process NC: ' + doc.workingstep);
         var nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
         _.each(doc.geom, function(geomData) {
-            if (geomData.usage === 'asis') {
-                //var geom = self.buildGeomJSON();
-                //nc.addGeom(geom);
-            } else if (geomData.usage === 'tobe') {
-
-            } else if (geomData.usage === 'cutter') {
-
+            var color = DataLoader.parseColor("7d7d7d");
+            if (geomData.usage === 'asis' || geomData.usage === 'tobe' || geomData.usage === 'cutter') {
+                var transform = DataLoader.parseXform(geomData.xform, true);
+                var boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
+                var shell = new Shell(geomData.id, nc, nc, geomData.size, color, boundingBox);
+                nc.addModel(shell, geomData.usage, geomData.id, transform, boundingBox);
+                // Push the shell for later completion
+                self._shells[geomData.shell] = shell;
+                self.addRequest({
+                    path: geomData.shell.split('.')[0],
+                    baseURL: req.base,
+                    type: "shell"
+                });
             } else if (geomData.usage === 'toolpath') {
-                
+                //console.log('toolpath');
             }
         });
         req.callback(undefined, nc);
