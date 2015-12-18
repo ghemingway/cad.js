@@ -13,6 +13,7 @@ import ModelTreeView    from '../model_tree/model_tree';
 
 // Import shaders
 require('./shaders/CopyShader');
+require('./shaders/MaskPass');
 require('./shaders/EffectComposer');
 require('./shaders/FXAAShader');
 require('./shaders/VelvetyShader');
@@ -248,7 +249,7 @@ export default class CADViewer extends React.Component {
             //depthPassPlugin.enabled = false;
             this.composer.render(0.5);
         }
-        this.renderer.clear(false, true, false);
+        //this.renderer.clear(false, true, false);
         this.renderer.render(this.overlayScene, this.camera);
         this.renderer.render(this.annotationScene, this.camera);
     }

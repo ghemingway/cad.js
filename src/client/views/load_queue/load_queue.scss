@@ -7,7 +7,8 @@
   position: absolute;
   bottom: 0;
   right: 5px;
-  border-radius: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   width: 270px;
   transition: opacity .4s, bottom .4s;
 
@@ -23,13 +24,27 @@
 
   ul {
     list-style-type: none;
-    padding-left: 20px;
+    padding-right: 0;
 
     li {
       color: #fff;
-
-      font-size: 12pt;
+      font-size: 10pt;
       width: 100%;
+      margin-left: -5px;
+
+      .filename {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .fileperc {
+        text-align: right;
+        margin: 0;
+        padding: 0;
+      }
     }
   }
 }

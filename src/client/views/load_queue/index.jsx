@@ -13,9 +13,9 @@ class QueueItem extends React.Component {
     }
 
     render() {
-        return <li>
-            <span>{this.props.name}</span>
-            <span className="pull-right">{this.props.loaded}</span>
+        return <li className="row">
+            <span className="filename col-xs-8">{this.props.name}</span>
+            <span className="fileperc col-xs-4 pull-right">{this.props.loaded}</span>
         </li>;
     }
 }
@@ -81,7 +81,7 @@ export default class LoadQueueView extends React.Component {
                     <span>Downloads&nbsp;</span>
                     <span>({items.length}):</span>
                 </div>
-                <ul>{items}</ul>
+                <ul className="container-fluid">{items}</ul>
             </div>
     }
 }

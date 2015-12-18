@@ -185,11 +185,14 @@ export default class DataLoader extends THREE.EventDispatcher {
                 }
                 break;
             case "annotationLoad":
-                console.log('Loading: ' + event.data.file);
                 data = JSON.parse(event.data.data);
                 anno = this._annotations[event.data.file];
-                anno.addGeometry(data);
-                this.dispatchEvent({ type: "annotationLoad", file: event.data.file });
+                if (!anno) {
+                    console.log('DataLoader.AnnotationlLoad: invalid annotation ID' + event.data.file);
+                } else {
+                    anno.addGeometry(data);
+                    this.dispatchEvent({type: "annotationLoad", file: event.data.file});
+                }
                 break;
             case "shellLoad":
                 shell = this._shells[event.data.id];
