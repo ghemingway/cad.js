@@ -60,7 +60,6 @@ export default class CADViewer extends React.Component {
     }
 
     onKeypress(event) {
-        console.log(event.keyCode);
         var node, obj;
         switch(event.keyCode || event.charCode || event.which) {
             // Explode on 'x' key pressed
@@ -223,7 +222,7 @@ export default class CADViewer extends React.Component {
         this.composer.reset();
         this.controls.handleResize();
         this.controls.dispatchEvent({ type: 'change' });
-        this.update();
+        this.drawScene();
     }
 
     zoomToFit(object) {
@@ -334,7 +333,6 @@ export default class CADViewer extends React.Component {
         if (obj) {
             obj = obj.getNamedParent();
             // Yes, go highlight it in the tree
-            console.log('Select node: ' + obj.getID());
             //var node = this.tree.get_node(obj.getID());
             //this.tree.select_node(node);
             // Show the bounding box
@@ -363,7 +361,6 @@ export default class CADViewer extends React.Component {
             }, undefined);
             // Did we find an object
             if (obj) {
-                console.log(obj);
                 obj = obj.getNamedParent();
                 // Yes, go highlight it in the tree
                 obj.highlight(0xffff60);

@@ -132,12 +132,11 @@ export default class Shape extends THREE.EventDispatcher {
             linewidth: 1
         });
         for (var i = 0; i < lineGeometries.length; i++) {
-            var geometry = lineGeometries[i];
-            var lines = new THREE.Line(geometry, material, THREE.LineStrip);
+            var lines = new THREE.Line(lineGeometries[i], material);
             lines.visible = false;
             this._annotation3D.add(lines);
         }
-        this.dispatchEvent({type: "shapeLoaded"});
+        this.dispatchEvent({ type: "shapeLoaded" });
     }
 
     getObject3D() {

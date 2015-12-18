@@ -92,15 +92,14 @@ APIServer.prototype._setRoutes = function() {
  * Static Site
  */
 APIServer.prototype._setSite = function() {
-    var self = this;
+    var endpoint = this.config.host ? this.config.protocol + '://' + this.config.host + ':' + this.config.port : '';
     var services = {
-        api_endpoint: this.config.protocol + '://' + this.config.host + ':' + this.config.port,
+        api_endpoint: endpoint,
         socket: "/",
         version: '/v1',
         auth: "/v1/session",
         model: "/v1/model"
     };
-
     // Serve the root client framework - customized as needed
     var _serveRoot = function (req, res) {
         var appConfig = {

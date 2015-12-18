@@ -11,7 +11,6 @@ export default class Annotation extends THREE.EventDispatcher {
         super();
         var ret = assembly.makeChild(id, this);
         if (!ret) {
-//      console.log("Make new annotation: " + id);
             this._id = id;
             this._assembly = assembly;
             this._geometry = undefined;
@@ -24,14 +23,11 @@ export default class Annotation extends THREE.EventDispatcher {
     }
 
     addGeometry(data) {
-    //        console.log("Annotation.addGeometry: " + data.lines.length);
         this._lines =_.map(data.lines, function(line) {
-            var linestrip = new THREE.BufferGeometry();
-            //linestrip.addAttribute('position', Float32Array, line.length / 3, 3);
-            //linestrip.attributes.position.array.set(line);
-            linestrip.addAttribute('position', new THREE.BufferAttribute(line, 3));
-            linestrip.attributes.position.array = line;
-            return linestrip;
+            var geometry = new THREE.BufferGeometry();
+            var vertices = Float32Array.from(line);
+            geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            return geometry;
         });
         // All done - signal completion
         this.dispatchEvent({ type: "annotationEndLoad", annotation: this });

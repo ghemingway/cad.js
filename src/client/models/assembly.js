@@ -235,7 +235,7 @@ export default class Assembly extends THREE.EventDispatcher {
         }
         // Create the new box buffer
         var geometry = new THREE.BufferGeometry();
-        var positions = new Float32Array(108);
+        var positions = new Float32Array(72);
         //Front face bottom
         positions[0]  = box.min.x;
         positions[1]  = box.min.y;
@@ -264,10 +264,8 @@ export default class Assembly extends THREE.EventDispatcher {
         positions[21] = box.max.x;
         positions[22] = box.max.y;
         positions[23] = box.min.z;
-
         // Lower left ->
         positions[24] = box.min.x;
-
         positions[25] = box.min.y;
         positions[26] = box.min.z;
         positions[27] = box.min.x;
@@ -294,7 +292,6 @@ export default class Assembly extends THREE.EventDispatcher {
         positions[45] = box.max.x;
         positions[46] = box.max.y;
         positions[47] = box.max.z;
-
         // Back face bottom
         positions[48] = box.min.x;
         positions[49] = box.min.y;
@@ -323,13 +320,12 @@ export default class Assembly extends THREE.EventDispatcher {
         positions[69] = box.max.x;
         positions[70] = box.max.y;
         positions[71] = box.max.z;
-        geometry.addAttribute( 'position', new THREE.BufferAttribute(36, 3) );
-
+        geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
         // Return the new Bounding Box Geometry
         var material = new THREE.LineBasicMaterial({
             linewidth: 2,
-            color: 0xaaaaaa
+            color: 0x0000ff
         });
-        return new THREE.Line(geometry, material);
+        return new THREE.LineSegments(geometry, material);
     }
 };
