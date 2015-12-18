@@ -52,12 +52,48 @@ export default class CADManager extends THREE.EventDispatcher {
         var handler = function(event) {
             self.dispatchEvent(event);
         };
+
+        var selectHandler = function(event) {
+            var ids = event.id.split(':');
+            var model = self._models[ids[0]];
+            if (model) {
+                var obj = model.getByID(ids[1]);
+                if (!event.meta) {
+                    model.hideAllBoundingBoxes();
+                }
+                if (obj) {
+                    obj.showBoundingBox();
+                } else {
+                    model.showBoundingBox();
+                }
+                self.dispatchEvent({ type: 'invalidate', options: { tree: true } } );
+            }
+        };
+
+        var visibilityHandler = function(event) {
+            var keys = _.keys(this._models);
+            _.each(keys, function(key) {
+                self._models[key].dispatchEvent(event);
+            });
+        };
+
+        var opacityHandler = function(event) {
+            var keys = _.keys(this._models);
+            _.each(keys, function(key) {
+                self._models[key].dispatchEvent(event);
+            });
+        };
+
         this._loader.addEventListener("addRequest", handler);
         this._loader.addEventListener("loadComplete", handler);
         this._loader.addEventListener("parseComplete", handler);
         this._loader.addEventListener("shellLoad", handler);
         this._loader.addEventListener("workerFinish", handler);
         this._loader.addEventListener("loadProgress", handler);
+        // Listen for someone asking for stuff
+        this.addEventListener("select",     selectHandler);
+        this.addEventListener("visibility", visibilityHandler);
+        this.addEventListener("opacity",    opacityHandler);
     }
 
     getTree() {

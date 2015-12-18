@@ -25,7 +25,8 @@ export default class CADViewer extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            modelTree: {}
+            modelTree: {},
+            selected: []
         };
         this.change = false;
         this.handleResize   = this.handleResize.bind(this);
@@ -64,28 +65,22 @@ export default class CADViewer extends React.Component {
         switch(event.keyCode || event.charCode || event.which) {
             // Explode on 'x' key pressed
             case 120:
-                this.explode(this.getExplodeDistance());
+                this.explode(this.manager.getExplodeDistance());
                 break;
             // Unexplode on 's' key pressed
             case 115:
-                this.explode(-this.getExplodeDistance());
+                this.explode(-this.manager.getExplodeDistance());
                 break;
             // 'q' unselects all tree elements
             case 113:
                 this._parts[0].hideAllBoundingBoxes();
                 this.tree.deselect_all();
-                this._viewer.invalidate();
+                this.invalidate();
                 break;
             // 'o' to toggle transparency
             case 111:
-                node = this.tree.get_selected(false);
-                obj = this._parts[0].getByID(node[0]);
-                if (obj) {
-                    obj.toggleTransparency();
-                } else {
-                    this._parts[0].toggleTransparency();
-                }
-                this._viewer.invalidate();
+                this.props.manager.dispatchEvent({ type: 'opacity' });
+                this.invalidate();
                 break;
             // 'z' to zoomToFit
             case 122:
@@ -98,12 +93,8 @@ export default class CADViewer extends React.Component {
                 break;
             // 'j' hide/show element
             case 106:
-                node = this.tree.get_selected(false);
-                obj = this._parts[0].getByID(node[0]);
-                if (obj) {
-                    obj.toggleVisibility();
-                    this._viewer.invalidate();
-                }
+                this.props.manager.dispatchEvent({ type: 'visibility' });
+                this.invalidate();
                 break;
         }
     }
@@ -120,6 +111,7 @@ export default class CADViewer extends React.Component {
         this.props.manager.addEventListener("model:add", this.onModelAdd);
         this.props.manager.addEventListener("model:remove", this.onModelRemove);
         this.props.manager.addEventListener("shellLoad", this.invalidate);
+        this.props.manager.addEventListener("invalidate", this.invalidate);
         // Keybased events
         window.addEventListener("keypress", this.onKeypress, true);
     }
@@ -208,14 +200,13 @@ export default class CADViewer extends React.Component {
 
     componentWillUnmount() {
         window.removeEventListener("resize", this.handleResize);
+        window.removeEventListener("keypress", this.onKeypress);
         this.props.manager.removeEventListener("model:add", this.onModelAdd);
         this.props.manager.removeEventListener("model:remove", this.onModelRemove);
         this.props.manager.removeEventListener("shellLoad", this.invalidate);
-        window.removeEventListener("keypress", this.onKeypress);
     }
 
     handleResize() {
-        //console.log('CADViewer Resize');
         this.renderPassFXAA.uniforms['resolution'].value.set(1 / this.canvasParent.offsetWidth, 1 / this.canvasParent.offsetHeight);
         this.renderer.setSize(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight);
         this.camera.aspect = this.canvasParent.offsetWidth / this.canvasParent.offsetHeight;
@@ -272,7 +263,12 @@ export default class CADViewer extends React.Component {
         }
     }
 
-    invalidate() {
+    invalidate(options) {
+        if (options && options.tree) {
+            // Update the model tree
+            var tree = this.props.manager.getTree();
+            this.setState({ modelTree: tree });
+        }
         this.shouldRender = true;
     }
 
@@ -292,28 +288,13 @@ export default class CADViewer extends React.Component {
         this.invalidate();
     }
 
-    //update() {
-    //    if (this.autoAntialiasing) {
-    //        this.renderer.clear();
-    //        this.renderer.render(this.geometryScene, this.camera);
-    //    } else {
-    //        //depthPassPlugin.enabled = true;
-    //        this.renderer.render(this.geometryScene, this.camera, this.composer.renderTarget2, true);
-    //        //depthPassPlugin.enabled = false;
-    //        this.composer.render(0.5);
-    //    }
-    //    this.renderer.clear(false, true, false);
-    //    this.renderer.render(this.overlayScene, this.camera);
-    //    this.renderer.render(this.annotationScene, this.camera);
-    //};
-
     updateSceneBoundingBox(newBoundingBox) {
         this.sceneCenter.copy(newBoundingBox.center());
-        this.sceneRadius = newBoundingBox.size().length()/2;
+        this.sceneRadius = newBoundingBox.size().length() / 2;
     };
 
     onClick(event) {
-        var self = this;
+        var self = this, tree;
         if (_.size(this.props.manager._models) === 0) {
             return;
         }
@@ -322,8 +303,9 @@ export default class CADViewer extends React.Component {
             _.each(this.props.manager._models, function(model) {
                 model.hideAllBoundingBoxes();
             });
-            console.log('Deselect all tree elements');
-            //this.tree.deselect_all();
+            // Update the model tree
+            tree = this.props.manager.getTree();
+            this.setState({ modelTree: tree });
         }
         var obj = _.reduce(this.props.manager._models, function(memo, model) {
             var val = model.select(self.camera, event.clientX, event.clientY);
@@ -332,12 +314,11 @@ export default class CADViewer extends React.Component {
         // Did we find an object
         if (obj) {
             obj = obj.getNamedParent();
-            // Yes, go highlight it in the tree
-            //var node = this.tree.get_node(obj.getID());
-            //this.tree.select_node(node);
             // Show the bounding box
             obj.showBoundingBox();
-            self.invalidate();
+            // Update the model tree
+            tree = this.props.manager.getTree();
+            this.setState({ modelTree: tree });
         }
         this.invalidate();
     }

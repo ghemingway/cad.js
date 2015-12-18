@@ -12,10 +12,8 @@ export default class ModelTreeView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            tree: this.props.tree,
-            active: undefined
+            tree: this.props.tree
         };
-        // Bind callbacks
         this.renderNode = this.renderNode.bind(this);
     }
 
@@ -23,15 +21,18 @@ export default class ModelTreeView extends React.Component {
         this.setState({ tree: nextProps.tree });
     }
 
-    onClickNode(node) {
-        console.log(node);
-        this.setState({ active: node });
+    onClickNode(node, event) {
+        this.props.dispatcher.dispatchEvent({
+            type: 'select',
+            id: node.id,
+            meta: event.metaKey
+        });
     }
 
     renderNode(node) {
         //console.log(this);
         var cName = 'node';
-        cName += this.state.active == node ? ' is-active' : '';
+        cName += (node.state && node.state.selected) ? ' is-active' : '';
         return <span
             id={node.id}
             className={cName}

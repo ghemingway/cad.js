@@ -17,6 +17,7 @@ export default class Shape extends THREE.EventDispatcher {
         this._parent = parent;
         this._unit = unit;
         this._instances = [];
+        this._selected = false;
         if (!ret) {
             // If we are here, this is the first one
             this._instanceID = 0;
@@ -37,11 +38,15 @@ export default class Shape extends THREE.EventDispatcher {
             this.instance(ret, assembly, parent, transform);
             ret = this;
         }
+        // Handle broadcast events
+        var self = this;
+        this._assembly.addEventListener('opacity', function() {
+            if (self._selected) self.toggleTransparency()
+        });
+        this._assembly.addEventListener('visibility', function() {
+            if (self._selected) self.toggleVisibility();
+        });
         return ret;
-    }
-
-    getCADjs() {
-        return this._assembly.getCADjs();
     }
 
     instance(source, assembly, parent, transform) {
@@ -219,7 +224,7 @@ export default class Shape extends THREE.EventDispatcher {
                 collapsed   : this._instanceID === 0,
                 state: {
                     disabled: false,
-                    selected: false
+                    selected: this._selected
                 },
                 children: children
             };
@@ -331,6 +336,7 @@ export default class Shape extends THREE.EventDispatcher {
     }
 
     showBoundingBox() {
+        this._selected = true;
         var bounds = this.getBoundingBox(false);
         if (!this.bbox && !bounds.empty()) {
             this.bbox = Assembly.buildBoundingBox(bounds);
@@ -348,6 +354,7 @@ export default class Shape extends THREE.EventDispatcher {
     }
 
     hideBoundingBox() {
+        this._selected = false;
         // Stop listening for assembly _hideBounding events
         this._assembly.removeEventListener("_hideBounding", this._eventFunc);
         this._overlay3D.remove(this.bbox);
