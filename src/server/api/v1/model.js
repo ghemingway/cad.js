@@ -51,6 +51,10 @@ var _fetch = function(req, res) {
         dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
         filename = req.params.shellId + '.json';
         app.logger.debug('NC Shell: ' + filename);
+    } else if (req.params.ncId && req.params.annoId) {
+        dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
+        filename = req.params.annoId + '.json';
+        app.logger.debug('NC Annotation: ' + filename);
     } else if (req.params.ncId) {
         dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
         filename = 'state.json';
@@ -95,5 +99,6 @@ module.exports = function(globalApp) {
     app.router.get('/v1/assembly/:assemblyId/annotation/:annoId',   app._storage.fetch);
     app.router.get('/v1/nc/:ncId',                                  app._storage.fetch);
     app.router.get('/v1/nc/:ncId/shell/:shellId',                   app._storage.fetch);
-    app.router.get('/v1/models',                app._storage.list);
+    app.router.get('/v1/nc/:ncId/annotation/:annoId',               app._storage.fetch);
+    app.router.get('/v1/models',                                    app._storage.list);
 };

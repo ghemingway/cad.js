@@ -26,10 +26,13 @@ var App  = function() {
     // Create data manager
     this.cadManager = new CADManager();
     // Establish socket connection
-    this.socket = io();
+    this.socket = io({});
     // Connect to the socket server
     this.socket.on('connect', function() {
-        //console.log('Socket client connected');
+        console.log('Socket client connected');
+    });
+    this.socket.on('nc:delta', function(msg) {
+        self.cadManager.onDelta(msg);
     });
 
     // Begin routing the application

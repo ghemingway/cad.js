@@ -36,6 +36,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     static parseBoundingBox(str) {
+        if (!str) return undefined;
         var vals = str;
         if (typeof str === "string") vals = DataLoader.parseFloatVec(str, 6);
         return new THREE.Box3(new THREE.Vector3(vals[0], vals[1], vals[2]), new THREE.Vector3(vals[3], vals[4], vals[5]));
@@ -184,6 +185,7 @@ export default class DataLoader extends THREE.EventDispatcher {
                 }
                 break;
             case "annotationLoad":
+                console.log('Loading: ' + event.data.file);
                 data = JSON.parse(event.data.data);
                 anno = this._annotations[event.data.file];
                 anno.addGeometry(data);
@@ -264,8 +266,8 @@ export default class DataLoader extends THREE.EventDispatcher {
         var nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
         _.each(doc.geom, function(geomData) {
             var color = DataLoader.parseColor("7d7d7d");
+            var transform = DataLoader.parseXform(geomData.xform, true);
             if (geomData.usage === 'asis' || geomData.usage === 'tobe' || geomData.usage === 'cutter') {
-                var transform = DataLoader.parseXform(geomData.xform, true);
                 var boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
                 var shell = new Shell(geomData.id, nc, nc, geomData.size, color, boundingBox);
                 nc.addModel(shell, geomData.usage, geomData.id, transform, boundingBox);
@@ -277,7 +279,16 @@ export default class DataLoader extends THREE.EventDispatcher {
                     type: "shell"
                 });
             } else if (geomData.usage === 'toolpath') {
-                //console.log('toolpath');
+                var annotation = new Annotation(geomData.id, nc, nc);
+                nc.addModel(annotation, geomData.usage, geomData.id, transform, undefined);
+                // Push the annotation for later completion
+                var name = geomData.polyline.split('.')[0];
+                self._annotations[name] = annotation;
+                self.addRequest({
+                    path: name,
+                    baseURL: req.base,
+                    type: "annotation"
+                });
             }
         });
         req.callback(undefined, nc);

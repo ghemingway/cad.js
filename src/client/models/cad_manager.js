@@ -94,4 +94,18 @@ export default class CADManager extends THREE.EventDispatcher {
         var keys = _.keys(this._models);
         return keys.length > 0 ? this._models[keys[0]].getTree(keys[0]) : {};
     }
+
+    onDelta(delta) {
+        var self = this;
+        var keys = _.keys(this._models);
+        _.each(keys, function(key) {
+            var model = self._models[key];
+            if (model.project === delta.project) {
+                if (model.applyDelta(delta)) {
+                    // Only redraw if there were changes
+                    self.dispatchEvent({ type: 'invalidate' });
+                }
+            }
+        });
+    }
 }
