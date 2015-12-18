@@ -38,6 +38,11 @@ export default class Shape extends THREE.EventDispatcher {
             this.instance(ret, assembly, parent, transform);
             ret = this;
         }
+        this.modelWillMount();
+        return ret;
+    }
+
+    modelWillMount() {
         // Handle broadcast events
         var self = this;
         this._assembly.addEventListener('opacity', function() {
@@ -46,7 +51,9 @@ export default class Shape extends THREE.EventDispatcher {
         this._assembly.addEventListener('visibility', function() {
             if (self._selected) self.toggleVisibility();
         });
-        return ret;
+        this._assembly.addEventListener('explode', function(event) {
+            if (self._selected) self.explode(event.step);
+        });
     }
 
     instance(source, assembly, parent, transform) {

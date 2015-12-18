@@ -61,21 +61,25 @@ export default class CADViewer extends React.Component {
     }
 
     onKeypress(event) {
-        var node, obj;
+        var obj;
         switch(event.keyCode || event.charCode || event.which) {
             // Explode on 'x' key pressed
             case 120:
-                this.explode(this.manager.getExplodeDistance());
+                //this.explode(this.manager.getExplodeDistance());
+                this.props.manager.dispatchEvent({ type: 'explode', step: 10 });
+                this.invalidate();
                 break;
             // Unexplode on 's' key pressed
             case 115:
-                this.explode(-this.manager.getExplodeDistance());
+                //this.explode(-this.manager.getExplodeDistance());
+                this.props.manager.dispatchEvent({ type: 'explode', step: -10 });
+                this.invalidate();
                 break;
             // 'q' unselects all tree elements
             case 113:
-                this._parts[0].hideAllBoundingBoxes();
-                this.tree.deselect_all();
-                this.invalidate();
+                //this._parts[0].hideAllBoundingBoxes();
+                //this.tree.deselect_all();
+                //this.invalidate();
                 break;
             // 'o' to toggle transparency
             case 111:
@@ -89,7 +93,7 @@ export default class CADViewer extends React.Component {
                 //if (!obj) {
                 //    obj = this._parts[0];
                 //}
-                this.zoomToFit(obj);
+                //this.zoomToFit(obj);
                 break;
             // 'j' hide/show element
             case 106:

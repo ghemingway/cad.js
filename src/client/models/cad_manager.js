@@ -70,14 +70,7 @@ export default class CADManager extends THREE.EventDispatcher {
             }
         };
 
-        var visibilityHandler = function(event) {
-            var keys = _.keys(this._models);
-            _.each(keys, function(key) {
-                self._models[key].dispatchEvent(event);
-            });
-        };
-
-        var opacityHandler = function(event) {
+        var msgHandler = function(event) {
             var keys = _.keys(this._models);
             _.each(keys, function(key) {
                 self._models[key].dispatchEvent(event);
@@ -92,8 +85,9 @@ export default class CADManager extends THREE.EventDispatcher {
         this._loader.addEventListener("loadProgress", handler);
         // Listen for someone asking for stuff
         this.addEventListener("select",     selectHandler);
-        this.addEventListener("visibility", visibilityHandler);
-        this.addEventListener("opacity",    opacityHandler);
+        this.addEventListener("visibility", msgHandler);
+        this.addEventListener("opacity",    msgHandler);
+        this.addEventListener("explode",    msgHandler);
     }
 
     getTree() {
