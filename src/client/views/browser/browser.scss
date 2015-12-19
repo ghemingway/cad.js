@@ -1,0 +1,14 @@
+.browser {
+  list-style-type: none;
+  background-color: #aaa;
+
+  li {
+    font-size: 15px;
+    line-height: 40px;
+
+    .filename:hover {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+}

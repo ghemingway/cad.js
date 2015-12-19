@@ -2,11 +2,48 @@
 "use strict";
 
 
-var _               = require('lodash'),
+var fs              = require('fs'),
+    _               = require('lodash'),
+    async           = require('async'),
     path            = require('path'),
     app;
 
-/***************** Session Functions *******************/
+var rootDir = '../../../../data/';
+
+/***************** File-based Backend Functions *******************/
+
+var inventoryDirectory = function(refPath, cb) {
+    var dir = path.join(__dirname, refPath);
+    fs.readdir(dir, function(err, items) {
+        async.map(items, function(item, cb) {
+            var itempath = path.join(dir, item);
+            // Get info about the item
+            fs.lstat(itempath, function(err, stat) {
+                //console.log(stat);
+                var value;
+                if (stat.isDirectory()) {
+                    fs.access(itempath + '/index.json', fs.F_OK, function (err) {
+                        value = {
+                            name: item,
+                            type: err ? 'nc' : 'assembly',
+                            size: stat.size,
+                            date_modified: stat.atime
+                        };
+                        cb(undefined, value);
+                    });
+                } else cb()
+            });
+        }, function(err, values) {
+            // Remove any undefined values
+            values = _.filter(values, function(value) {
+                return value != undefined;
+            });
+            // Return the good values
+            cb(err, values);
+        });
+    });
+};
+
 
 /* Translate a full model path to its short Id */
 var _resolve = function(req, res) {
@@ -28,35 +65,35 @@ var _fetch = function(req, res) {
 
     // Handle assemblies
     if (req.params.assemblyId && req.params.shellId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        dirPath = path.join(__dirname, rootDir + req.params.assemblyId);
         filename = 'shell_' + req.params.shellId + '.json';
         app.logger.debug('Assembly Shell: ' + filename);
     } else if (req.params.assemblyId && req.params.annoId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        dirPath = path.join(__dirname, rootDir + req.params.assemblyId);
         filename = 'annotation_' + req.params.annoId + '.json';
         app.logger.debug('Assembly Annotation: ' + filename);
     } else if (req.params.assemblyId && req.params.batchId) {
         var type = req.headers['content-type'] === 'application/arraybuffer' ? '.tyson' : '.json';
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        dirPath = path.join(__dirname, rootDir + req.params.assemblyId);
         filename = 'batch' + req.params.batchId + type;
         app.logger.debug('Assembly Batch: ' + filename);
     } else if (req.params.assemblyId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.assemblyId);
+        dirPath = path.join(__dirname, rootDir + req.params.assemblyId);
         filename = 'index.json';
         app.logger.debug('Assembly: ' + filename);
     }
 
     // Handle NC files
     if (req.params.ncId && req.params.shellId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
+        dirPath = path.join(__dirname, rootDir + req.params.ncId);
         filename = req.params.shellId + '.json';
         app.logger.debug('NC Shell: ' + filename);
     } else if (req.params.ncId && req.params.annoId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
+        dirPath = path.join(__dirname, rootDir + req.params.ncId);
         filename = req.params.annoId + '.json';
         app.logger.debug('NC Annotation: ' + filename);
     } else if (req.params.ncId) {
-        dirPath = path.join(__dirname, '../../../../data/' + req.params.ncId);
+        dirPath = path.join(__dirname, rootDir + req.params.ncId);
         filename = 'state.json';
         app.logger.debug('NC: ' + filename);
     }
@@ -66,12 +103,13 @@ var _fetch = function(req, res) {
 
 
 var _list = function(req, res) {
-    res.status(200).send([
-        { id: 'asdfasdkja', name: 'foo', date: 'May 1, 1958' },
-        { id: 'lsaosa03k', name: 'bar', date: 'April 1, 1958' },
-        { id: 's0skemsa', name: 'baz', date: 'June 1, 1958' },
-        { id: 'soskeq0cpq', name: 'boo', date: 'July 1, 1958' }
-    ]);
+    inventoryDirectory(rootDir, function(err, files) {
+        if (err) {
+            console.log(err);
+            res.status(500).send(err);
+        }
+        else res.status(200).send(files);
+    });
 };
 
 /***************** Module Export Function *******************/

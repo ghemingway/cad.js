@@ -2,15 +2,17 @@
 "use strict";
 
 
-import React from           'react';
-import ReactDOM from        'react-dom';
-import CADView from         './views/cad';
+import React                from 'react';
+import ReactDOM             from 'react-dom';
+import BrowserView          from './views/browser';
+import CADView              from './views/cad';
 
 /*************************************************************************/
 
 module.exports = Backbone.Router.extend({
     routes: {
         '':                             '_landing',
+        'browse':                       '_browse',
         ':modelID':                     '_model',
         '*path':                        '_default'
     },
@@ -20,6 +22,13 @@ module.exports = Backbone.Router.extend({
 
     _landing: function() {
         console.log('Landing path');
+    },
+
+    _browse: function() {
+        ReactDOM.render(<BrowserView
+            router={this} 
+            socket={this.app.socket}
+        />, document.getElementById('cadjs-view'));
     },
 
     _model: function(modelID, query) {
