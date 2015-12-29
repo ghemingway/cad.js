@@ -1,5 +1,6 @@
-var path =      require("path"),
-    webpack =   require("webpack");
+var path                =      require("path"),
+    webpack             =   require("webpack"),
+    ExtractTextPlugin   = require("extract-text-webpack-plugin");
 
 
 module.exports = {
@@ -22,18 +23,22 @@ module.exports = {
     module: {
         loaders: [
             { test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
-            // required to write "require('./style.css')"
-            { test: /\.scss$/, loader: "style-loader!css-loader?sourceMap!sass-loader?sourceMap" },
-            { test: /\.css$/,  loader: "style-loader!css-loader?sourceMap" },
-            { test: /\.png$/,  loader: "url-loader?mimetype=image/png" },
-            { test: /\.gif$/,  loader: "url-loader?mimetype=image/gif" },
-
+            // required to write "require('./style.scss')"
+            {
+                test: /\.scss$/,
+                loader: ExtractTextPlugin.extract("style-loader", "css-loader!sass-loader")
+            },
+            //{
+            //    test: /\.css$/,
+            //    loaders: ["style?sourceMap", "css?sourceMap"]
+            //},
+            { test: /\.png$/,           loader: "url-loader?mimetype=image/png" },
+            { test: /\.gif$/,           loader: "url-loader?mimetype=image/gif" },
             // required for bootstrap icons
             { test: /\.(woff|woff2)$/,  loader: "url-loader?prefix=font/&limit=5000&mimetype=application/font-woff" },
             { test: /\.ttf$/,           loader: "file-loader?prefix=font/" },
             { test: /\.eot$/,           loader: "file-loader?prefix=font/" },
             { test: /\.svg$/,           loader: "file-loader?prefix=font/" },
-
             // required for react jsx
             {
                 test: /\.jsx?$/,
@@ -61,6 +66,7 @@ module.exports = {
             "jQuery":   "jquery",
             "Backbone": "backbone",
             "THREE":    "three"
-        })
+        }),
+        new ExtractTextPlugin("[name].css")
     ]
 };

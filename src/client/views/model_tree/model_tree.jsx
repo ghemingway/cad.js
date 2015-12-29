@@ -57,3 +57,6 @@ export default class ModelTreeView extends React.Component {
     }
 }
 
+ModelTreeView.propTypes = {
+    dispatcher: React.PropTypes.object.isRequired
+};

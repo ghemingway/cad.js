@@ -2,8 +2,9 @@
 "use strict";
 
 
-var fs = require('fs'),
-    _ = require('lodash');
+var path            = require('path'),
+    fs              = require('fs'),
+    _               = require('lodash');
 
 /**********************************************************************************/
 
@@ -33,6 +34,8 @@ module.exports = function(configFile, environment) {
                 }
             });
         }
+        // Add root directory into the mix
+        config.rootDir = path.join(__dirname, '../../');
     } catch (err) {
         console.log('Error in node-configurator: %s', err);
         process.exit(-1);

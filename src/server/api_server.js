@@ -35,8 +35,10 @@ function APIServer() {
     // Set up the rest
     this._setExpress();
     this._setSocket();
-    this._setRoutes();
-    this._setSite();
+    var self = this;
+    this._setRoutes(function() {
+        self._setSite();
+    });
 }
 util.inherits(APIServer, CoreServer);
 
@@ -73,7 +75,7 @@ APIServer.prototype._setSocket = function() {
     redisPubSubClient.subscribe('nc:delta');
     // Socket server
     this.server = http.Server(this.express);
-    this.ioServer = io(this.server);
+    this.ioServer = io(this.server, {});
     this.ioServer.use(ioSession(this.session));
     this.ioServer.on('connection', function (socket) {
         socket.on('disconnect', function(){
@@ -91,21 +93,26 @@ APIServer.prototype._setSocket = function() {
 /*
  * Core API Routes
  */
-APIServer.prototype._setRoutes = function() {
-    require('./api/v1/session')(this);
-    require('./api/v1/model')(this);
+APIServer.prototype._setRoutes = function(cb) {
+    var self = this;
+    require('./api/v1/auth')(this, function() {
+        require('./api/v1/storage')(self, function() {
+            if (cb) cb();
+        });
+    });
 };
 
 /*
  * Static Site
  */
 APIServer.prototype._setSite = function() {
+    var self = this;
     var endpoint = this.config.host ? this.config.protocol + '://' + this.config.host + ':' + this.config.port : '';
     var services = {
         api_endpoint: endpoint,
-        socket: "/",
+        socket: "",
         version: '/v1',
-        auth: "/v1/session",
+        auth: "/v1/user",
         model: "/v1/model"
     };
     // Serve the root client framework - customized as needed
@@ -114,10 +121,7 @@ APIServer.prototype._setSite = function() {
             title: 'CAD.js',
             source: '/js/main.js',
             services: services,
-            config: {
-                embedded: false,
-                auth: false
-            }
+            config: self.config.client
         };
         res.render('base.jade', appConfig);
     };
@@ -134,7 +138,7 @@ APIServer.prototype.run = function() {
     //    self.logger.info('\tCAD.js API Server listening on: ' + self.config.port);
     //});
     this.server.listen(this.config.port, function () {
-        self.logger.info('\tCAD.js API Server listening on: ' + self.config.port);
+        self.logger.info('CAD.js API Server listening on: ' + self.config.port);
     });
 };
 

@@ -10,8 +10,10 @@ import DataLoader  from './data_loader';
 /*************************************************************************/
 
 export default class CADManager extends THREE.EventDispatcher {
-    constructor() {
+    constructor(config, socket) {
         super();
+        this.config = config;
+        this.socket = socket;
         this._models = {};
         this.addEventListener('setModel', this.load);
         // Set this to default empty assembly
@@ -88,6 +90,11 @@ export default class CADManager extends THREE.EventDispatcher {
         this.addEventListener("visibility", msgHandler);
         this.addEventListener("opacity",    msgHandler);
         this.addEventListener("explode",    msgHandler);
+        // Setup socket callbacks
+        this.onDelta = this.onDelta.bind(this);
+        if (this.config.socket && this.socket) {
+            this.socket.on('nc:delta', this.onDelta);
+        }
     }
 
     getTree() {

@@ -132,7 +132,6 @@ export default class CADViewer extends React.Component {
         });
         this.autoAntialiasing = !!this.renderer.context.getContextAttributes().antialias;
         this.renderer.setClearColor(new THREE.Color(0x000000), 1);
-        this.renderer.setSize(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight);
         this.renderer.sortObjects = true;
         this.renderer.autoClear = false;
 
@@ -201,6 +200,7 @@ export default class CADViewer extends React.Component {
         // SCREEN RESIZE
         window.addEventListener("resize", this.handleResize);
         this.animate(true);
+        this.handleResize();
     }
 
     componentWillUnmount() {

@@ -1,20 +1,22 @@
 body {
   font: 11px 'Lucida Grande', sans-serif;
-  background: #000000;
   overflow: hidden;
+  background-color: #fff;
 }
 
-.cadjs-content-container {
-  color: #eee;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.cadjs-view {
+.primary-view {
   width: 100%;
   height: 100%;
   position: absolute;
   top: 0;
   left: 0;
+}
+
+.non-initialized {
+  background:url(/img/spinner.gif) center center no-repeat;
+}
+
+.cadjs-canvas {
+  width: 100%;
+  height: 100%;
 }

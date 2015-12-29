@@ -1,0 +1,23 @@
+.login-view, .register-view {
+  h4 {
+    padding-bottom: 50px;
+  }
+
+  a {
+    text-align: center;
+    cursor: pointer;
+  }
+}
+
+.footer {
+  padding-top: 50px;
+
+  span {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  span:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
