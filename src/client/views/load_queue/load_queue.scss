@@ -1,0 +1,59 @@
+
+.load-queue {
+  border-top: 1px solid #555;
+  border-left: 1px solid #555;
+  opacity: .8;
+  background-color: #222;
+  position: absolute;
+  bottom: 0;
+  right: 5px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  width: 270px;
+  transition: opacity .4s, bottom .4s;
+
+  .header {
+    padding-left: 5px;
+    font-size: 16px;
+    color: white;
+
+    span:last-of-type {
+      color: blue;
+    }
+  }
+
+  ul {
+    list-style-type: none;
+    padding-right: 0;
+
+    li {
+      color: #fff;
+      font-size: 10pt;
+      width: 100%;
+      margin-left: -5px;
+
+      .filename {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .fileperc {
+        text-align: right;
+        margin: 0;
+        padding: 0;
+      }
+    }
+  }
+}
+
+.load-queue:hover ul {
+  display: block;
+}
+
+.load-queue.out {
+  bottom: -100%;
+  opacity: 0;
+}

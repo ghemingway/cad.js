@@ -1,0 +1,115 @@
+.model-tree {
+  position: fixed;
+  top: 10px;
+  left: -244px;
+  min-width: 250px;
+  max-width: 250px;
+  min-height: 40px;
+  color: white;
+  border: 1px solid #aaa;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  opacity: .4;
+  padding: 5px;
+  white-space: nowrap;
+  transition: left .2s, opacity .2s;
+  font-size: 10px;
+}
+
+.model-tree:hover {
+  opacity: 0.9;
+  left: 0;
+}
+
+.f-no-select {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.m-tree {
+  position: relative;
+  overflow-y: scroll;
+  max-height: 400px;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.m-draggable {
+  position: absolute;
+  opacity: 0.8;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.m-node.placeholder > * {
+  visibility: hidden;
+}
+
+.m-node.placeholder {
+  border: 1px dashed #ccc;
+}
+
+.m-node .inner {
+  position: relative;
+  cursor: pointer;
+  padding-left: 10px;
+}
+
+.m-node .collapse {
+  position: absolute;
+  left: 0;
+  cursor: pointer;
+  display: inherit;
+}
+
+.m-node .node {
+  display: inline-block;
+  width: 100%;
+  padding: 4px 5px;
+}
+
+.m-node .node.is-active {
+  background-color: #31363F;
+}
+
+.m-node .node:hover:not(.is-active) {
+  background-color: rgba(255, 141, 158, 0.43);
+}
+
+.m-node .caret-right:before {
+  content: '\25B8';
+}
+
+.m-node .caret-down:before  {
+  content: '\25BE';
+}
+
+.handle {
+  position: absolute;
+  right: -8;
+  top: 4px;
+  width: 7px;
+  height: 30px;
+  background-color: #fff;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.handle span {
+  position: absolute;
+  top: 5px;
+  left: 3px;
+  width: 2px;
+  height: 20px;
+  border-radius: 2px;
+  background-color: #111;
+}

@@ -1,0 +1,49 @@
+.browser {
+  list-style-type: none;
+  background-color: #aaa;
+
+  li {
+    font-size: 15px;
+    line-height: 40px;
+
+    .filename:hover {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+}
+
+.browser-side {
+  position: relative;
+  border-right: 1px solid #666;
+
+  .filter-view {
+    background-color: blue;
+    height: 100%;
+  }
+
+  .upload-view {
+    background-color: #888;
+    bottom: 0;
+    position: fixed;
+    width: 25%;
+    height: 250px;
+    border-right: 1px solid #666;
+
+    .upload-insert {
+      margin: 6px;
+      border-radius: 10px;
+      border: 2px dashed #fff;
+      height: 238px;
+      position: relative;
+
+      p {
+        font-size: 1.5em;
+        font-weight: 100;
+        text-align: center;
+        margin-top: 75px;
+        color: #fff;
+      }
+    }
+  }
+}
