@@ -27,16 +27,22 @@ export default class CADViewer extends React.Component {
         super(props);
         this.state = {
             modelTree: {},
-            selected: []
+            selected: [],
+            change: true
         };
-        this.change = false;
         this.handleResize   = this.handleResize.bind(this);
+        this.onShellLoad    = this.onShellLoad.bind(this);
         this.onModelAdd     = this.onModelAdd.bind(this);
         this.onModelRemove  = this.onModelRemove.bind(this);
         this.invalidate     = this.invalidate.bind(this);
         this.onKeypress     = this.onKeypress.bind(this);
         this.onMouseUp      = this.onMouseUp.bind(this);
         this.onMouseMove    = this.onMouseMove.bind(this);
+    }
+
+    onShellLoad(event) {
+        this.state.change = false;
+        this.invalidate(event);
     }
 
     onModelAdd(event) {
@@ -105,6 +111,7 @@ export default class CADViewer extends React.Component {
     }
 
     componentWillMount() {
+        var self = this;
         this.renderTargetParametersRGBA = {
             minFilter: THREE.LinearFilter,
             magFilter: THREE.LinearFilter,
@@ -115,7 +122,7 @@ export default class CADViewer extends React.Component {
         this.sceneRadius = 10000;
         this.props.manager.addEventListener("model:add", this.onModelAdd);
         this.props.manager.addEventListener("model:remove", this.onModelRemove);
-        this.props.manager.addEventListener("shellLoad", this.invalidate);
+        this.props.manager.addEventListener("shellLoad", this.onShellLoad);
         this.props.manager.addEventListener("invalidate", this.invalidate);
         // Keybased events
         window.addEventListener("keypress", this.onKeypress, true);
@@ -174,7 +181,8 @@ export default class CADViewer extends React.Component {
 
         // CONTROL EVENT HANDLERS
         this.controls.addEventListener('change', function() {
-            self.change = true;
+            console.log('Controls.change: ' + self.state.change);
+            self.state.change = true;
             var x0 = self.sceneCenter,
                 x1 = self.camera.position,
                 x2 = self.controls.target,
@@ -188,15 +196,16 @@ export default class CADViewer extends React.Component {
             self.invalidate();
         });
         this.controls.addEventListener("start", function() {
+            console.log('Controls.start: ' + self.state.change);
             self.continuousRendering = true;
-            self.change = false;
+            self.state.change = false;
         });
         this.controls.addEventListener("end", function() {
+            console.log('Controls.end: ' + self.state.change);
             self.invalidate();
             self.continuousRendering = false;
         });
 
-        this.forceUpdate();
         // SCREEN RESIZE
         window.addEventListener("resize", this.handleResize);
         this.animate(true);
@@ -208,7 +217,8 @@ export default class CADViewer extends React.Component {
         window.removeEventListener("keypress", this.onKeypress);
         this.props.manager.removeEventListener("model:add", this.onModelAdd);
         this.props.manager.removeEventListener("model:remove", this.onModelRemove);
-        this.props.manager.removeEventListener("shellLoad", this.invalidate);
+        this.props.manager.removeEventListener("shellLoad", this.onShellLoad);
+        this.props.manager.removeEventListener("invalidate", this.invalidate);
     }
 
     handleResize() {
@@ -329,38 +339,36 @@ export default class CADViewer extends React.Component {
     }
 
     onMouseUp(event) {
-        if (!this.change) {
+        console.log('MouseUp: ' + this.state.change);
+        if (!this.state.change) {
             this.onClick(event);
         }
-        this.change = false;
-    }
-
-    onMove(event) {
-        var obj, self = this;
-        if (_.size(this.props.manager._models) > 0) {
-            _.each(this.props.manager._models, function(model) {
-                model.clearHighlights();
-            });
-            obj = _.reduce(this.props.manager._models, function(memo, model) {
-                var val = model.select(self.camera, event.clientX, event.clientY);
-                return memo || val;
-            }, undefined);
-            // Did we find an object
-            if (obj) {
-                obj = obj.getNamedParent();
-                // Yes, go highlight it in the tree
-                obj.highlight(0xffff60);
-            }
-        }
-        if (obj != this._lastHovered) {
-            this.invalidate();
-        }
-        this._lastHovered = obj;
+        this.state.change = false;
     }
 
     onMouseMove(event) {
-        if (!this.change) {
-            this.onMove(event);
+        console.log('MouseMove: ' + this.state.change);
+        if (!this.state.change) {
+            var obj, self = this;
+            if (_.size(this.props.manager._models) > 0) {
+                _.each(this.props.manager._models, function(model) {
+                    model.clearHighlights();
+                });
+                obj = _.reduce(this.props.manager._models, function(memo, model) {
+                    var val = model.select(self.camera, event.clientX, event.clientY);
+                    return memo || val;
+                }, undefined);
+                // Did we find an object
+                if (obj) {
+                    obj = obj.getNamedParent();
+                    // Yes, go highlight it in the tree
+                    obj.highlight(0xffff60);
+                }
+            }
+            if (obj != this._lastHovered) {
+                this.invalidate();
+            }
+            this._lastHovered = obj;
         }
     }
 
