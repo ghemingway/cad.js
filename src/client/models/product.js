@@ -17,19 +17,11 @@ export default class Product extends THREE.EventDispatcher {
         this._name = name;
         this._isRoot = isRoot;
         this._shapes = [];
-        this._selected = false;
+        //this._selected = false;
         this._children = [];
         this._object3D = new THREE.Object3D();
         this._overlay3D = new THREE.Object3D();
         this._annotation3D = new THREE.Object3D();
-        // Handle broadcast events
-        var self = this;
-        this._assembly.addEventListener('opacity', function() {
-            if (self._selected) self.toggleTransparency()
-        });
-        this._assembly.addEventListener('visibility', function() {
-            if (self._selected) self.toggleVisibility();
-        });
         return this;
     }
 

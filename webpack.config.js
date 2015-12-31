@@ -6,7 +6,7 @@ var path                =      require("path"),
 module.exports = {
     cache: true,
     debug: true,
-    devtool: 'source-map',
+    devtool: 'inline-source-map',
     sourceMapFileName: "[file].map",
     context: path.join(__dirname, "/src/client"),
     entry: {
@@ -26,12 +26,8 @@ module.exports = {
             // required to write "require('./style.scss')"
             {
                 test: /\.scss$/,
-                loader: ExtractTextPlugin.extract("style-loader", "css-loader!sass-loader")
+                loader: ExtractTextPlugin.extract("css?sourceMap!sass?sourceMap")
             },
-            //{
-            //    test: /\.css$/,
-            //    loaders: ["style?sourceMap", "css?sourceMap"]
-            //},
             { test: /\.png$/,           loader: "url-loader?mimetype=image/png" },
             { test: /\.gif$/,           loader: "url-loader?mimetype=image/gif" },
             // required for bootstrap icons
@@ -66,7 +62,7 @@ module.exports = {
             "jQuery":   "jquery",
             "Backbone": "backbone",
             "THREE":    "three"
-        }),
-        new ExtractTextPlugin("[name].css")
+        })
+        ,new ExtractTextPlugin("[name].css")
     ]
 };

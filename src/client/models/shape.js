@@ -17,7 +17,14 @@ export default class Shape extends THREE.EventDispatcher {
         this._parent = parent;
         this._unit = unit;
         this._instances = [];
-        this._selected = false;
+        this.state = {
+            selected: false,
+            highlighted: false,
+            visible: true,
+            opacity: 1.0,
+            explodeDistance: 0
+        };
+        this.processModelEvent = this.processModelEvent.bind(this);
         if (!ret) {
             // If we are here, this is the first one
             this._instanceID = 0;
@@ -46,13 +53,13 @@ export default class Shape extends THREE.EventDispatcher {
         // Handle broadcast events
         var self = this;
         this._assembly.addEventListener('opacity', function() {
-            if (self._selected) self.toggleTransparency()
+            if (self.state.selected) self.toggleTransparency()
         });
         this._assembly.addEventListener('visibility', function() {
-            if (self._selected) self.toggleVisibility();
+            if (self.state.selected) self.toggleVisibility();
         });
         this._assembly.addEventListener('explode', function(event) {
-            if (self._selected) self.explode(event.step);
+            if (self.state.selected) self.explode(event.step);
         });
     }
 
@@ -163,10 +170,6 @@ export default class Shape extends THREE.EventDispatcher {
         return this._annotation3D;
     }
 
-    getName() {
-        return "Shape";
-    }
-
     getID() {
         return this._id + "_" + this._instanceID;
     }
@@ -231,7 +234,7 @@ export default class Shape extends THREE.EventDispatcher {
                 collapsed   : this._instanceID === 0,
                 state: {
                     disabled: false,
-                    selected: this._selected
+                    selected: this.state.selected
                 },
                 children: children
             };
@@ -258,6 +261,21 @@ export default class Shape extends THREE.EventDispatcher {
             bounds.applyMatrix4(this._transform);
         }
         return bounds;
+    }
+
+    processModelEvent(event) {
+        var [type, method] = event.type.split(':');
+        if (method === "selected" && this.state.selected) {
+            this.unselect();
+        // Clear highlight via event
+        } else if (method === "highlights" && this.state.highlighted) {
+            this._object3D.traverse(function (object) {
+                if (object.material && object.material.uniforms.tint) {
+                    object.material.uniforms.tint.value.setW(0);
+                }
+            });
+            this._assembly.removeEventListener("clear:highlights", this.processModelEvent);
+        }
     }
 
     toggleVisibility() {
@@ -309,15 +327,14 @@ export default class Shape extends THREE.EventDispatcher {
     highlight(colorHex) {
         var self = this;
         this._object3D.traverse(function (object) {
-            var color;
             if (object.material && object.material.uniforms.tint) {
-                color = new THREE.Color(colorHex);
+                self.state.highlighted = true;
+                var color = new THREE.Color(colorHex);
                 object.material.uniforms.tint.value.set(color.r, color.g, color.b, 0.3);
-                self._assembly.addEventListener("_clearHighlights", function () {
-                    object.material.uniforms.tint.value.setW(0);
-                });
             }
         });
+        // Start listening for a clear message
+        this._assembly.addEventListener("clear:highlights", this.processModelEvent);
     }
 
     showAnnotations() {
@@ -342,28 +359,32 @@ export default class Shape extends THREE.EventDispatcher {
         });
     }
 
-    showBoundingBox() {
-        this._selected = true;
-        var bounds = this.getBoundingBox(false);
-        if (!this.bbox && !bounds.empty()) {
-            this.bbox = Assembly.buildBoundingBox(bounds);
+    toggleSelection() {
+        // On deselection
+        if(this.state.selected) {
+            this.unselect();
+        // On selection
+        } else {
+            var bounds = this.getBoundingBox(false);
+            if (!this.bbox && !bounds.empty()) {
+                this.bbox = Assembly.buildBoundingBox(bounds);
+            }
+            if (this.bbox) {
+                // Start listening for assembly clear events
+                this._assembly.addEventListener("clear:selected", this.processModelEvent);
+                // Add the BBox to our overlay object
+                this._overlay3D.add(this.bbox);
+                this.showAnnotations();
+                // Flip state
+                this.state.selected = true;
+            }
         }
-        if (this.bbox) {
-            var self = this;
-            this._eventFunc = function () {
-                self.hideBoundingBox();
-            };
-            // Start listening for assembly _hideBounding events
-            this._assembly.addEventListener("_hideBounding", this._eventFunc);
-            this._overlay3D.add(this.bbox);
-        }
-        this.showAnnotations();
     }
 
-    hideBoundingBox() {
-        this._selected = false;
-        // Stop listening for assembly _hideBounding events
-        this._assembly.removeEventListener("_hideBounding", this._eventFunc);
+    unselect() {
+        this.state.selected = false;
+        // Stop listening for assembly clear events
+        this._assembly.removeEventListener("clear:selected", this.processModelEvent);
         this._overlay3D.remove(this.bbox);
         this.hideAnnotations();
     }
@@ -401,10 +422,6 @@ export default class Shape extends THREE.EventDispatcher {
                 this._explodeStates[child.getID()] = childDirection;
 //                this._object3D.add( new THREE.ArrowHelper(childDirection, childCenter, 1000.0, 0xff0000, 20, 10) );
             }
-            // After all children are loaded - start listening for assembly events
-//        this._assembly.addEventListener("_updateAnimation", function() {
-//            self._updateAnimation();
-//        });
         }
         // Make sure explosion distance does not go negative
         if (this._explodeDistance + distance < 0) {
@@ -421,15 +438,6 @@ export default class Shape extends THREE.EventDispatcher {
         // Clean up after myself
         if (this._explodeDistance === 0) {
             this.resetExplode();
-        }
-    }
-
-    _explodeStep(distance, step) {
-
-    }
-
-    _updateAnimation() {
-        if (this._explodeStepRemain > 0) {
         }
     }
 

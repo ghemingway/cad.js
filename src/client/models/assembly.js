@@ -160,18 +160,6 @@ export default class Assembly extends THREE.EventDispatcher {
         }
     }
 
-    hideAllBoundingBoxes() {
-        this.dispatchEvent({ type: "_hideBounding" });
-    }
-
-    clearHighlights() {
-        this.dispatchEvent({ type: "_clearHighlights" });
-    }
-
-    clearOpacity() {
-        this.dispatchEvent({ type: "_clearOpacity" });
-    }
-
     getTree(root) {
         var node = {
             id          : root,
@@ -187,18 +175,6 @@ export default class Assembly extends THREE.EventDispatcher {
             node.children.push(this._product.getTree(root));
         }
         return node;
-    }
-
-    centerGeometry() {
-        if (this._product) {
-            var bbox = this._product.getBoundingBox();
-            if (!bbox.empty()) {
-                var x = (bbox.max.x + bbox.min.x) / -2.0;
-                var y = (bbox.max.y + bbox.min.y) / -2.0;
-                var z = (bbox.max.z + bbox.min.z) / -2.0;
-                this._product.applyMatrix(new THREE.Matrix4().makeTranslation(x, y, z));
-            }
-        }
     }
 
     select(camera, mouseX, mouseY) {
@@ -226,7 +202,7 @@ export default class Assembly extends THREE.EventDispatcher {
         return object;
     }
 
-    explode(distance, timeS) {
+    explode(step) {
     }
 
     static buildBoundingBox(box) {

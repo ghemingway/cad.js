@@ -320,7 +320,7 @@ THREE.TrackballControls = function ( object, domElement ) {
         _this.object.lookAt( _this.target );
 
         if ( lastPosition.distanceToSquared( _this.object.position ) > EPS ) {
-            console.log('update');
+
             _this.dispatchEvent( changeEvent );
 
             lastPosition.copy( _this.object.position );
@@ -341,7 +341,7 @@ THREE.TrackballControls = function ( object, domElement ) {
         _eye.subVectors( _this.object.position, _this.target );
 
         _this.object.lookAt( _this.target );
-        console.log('reset');
+
         _this.dispatchEvent( changeEvent );
 
         lastPosition.copy( _this.object.position );

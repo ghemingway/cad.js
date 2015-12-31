@@ -5,6 +5,7 @@
 "use strict";
 
 
+var _                   = require('lodash');
 import React            from 'react';
 import ViewerControls   from './viewer_controls';
 import CompassView      from '../compass/compass';
@@ -27,8 +28,7 @@ export default class CADViewer extends React.Component {
         super(props);
         this.state = {
             modelTree: {},
-            selected: [],
-            change: true
+            isViewChanging: false
         };
         this.handleResize   = this.handleResize.bind(this);
         this.onShellLoad    = this.onShellLoad.bind(this);
@@ -41,16 +41,17 @@ export default class CADViewer extends React.Component {
     }
 
     onShellLoad(event) {
-        this.state.change = false;
+        // Get around the fact that viewerControls calls change a bunch at startup
+        this.state.isViewChanging = false;
         this.invalidate(event);
     }
 
     onModelAdd(event) {
         var model = this.props.manager._models[event.path];
         // Add the model to the scene
-        this.add3DObject(model.getObject3D(), 'geometry');
-        this.add3DObject(model.getOverlay3D(), 'overlay');
-        this.add3DObject(model.getAnnotation3D(), 'annotation');
+        this.annotationScene.add(   model.getAnnotation3D());
+        this.geometryScene.add(     model.getObject3D());
+        this.overlayScene.add(      model.getOverlay3D());
         // calculate the scene's radius for draw distance calculations
         this.updateSceneBoundingBox(model.getBoundingBox());
         // center the view
@@ -62,6 +63,7 @@ export default class CADViewer extends React.Component {
 
     onModelRemove(event) {
         console.log('ModelRemove: ' + event.path);
+        // TODO: Need to do anything here?
         // Update the model tree
         var tree = this.props.manager.getTree();
         this.setState({ modelTree: tree });
@@ -72,52 +74,34 @@ export default class CADViewer extends React.Component {
         switch(event.keyCode || event.charCode || event.which) {
             // Explode on 'x' key pressed
             case 120:
-                //this.explode(this.manager.getExplodeDistance());
-                this.props.manager.dispatchEvent({ type: 'explode', step: 10 });
-                this.invalidate();
+                this.props.manager.explode(10);
                 break;
             // Unexplode on 's' key pressed
             case 115:
-                //this.explode(-this.manager.getExplodeDistance());
-                this.props.manager.dispatchEvent({ type: 'explode', step: -10 });
-                this.invalidate();
+                this.props.manager.explode(-10);
                 break;
             // 'q' unselects all tree elements
             case 113:
-                //this._parts[0].hideAllBoundingBoxes();
-                //this.tree.deselect_all();
-                //this.invalidate();
+                this.props.manager.clearSelected();
                 break;
             // 'o' to toggle transparency
             case 111:
-                this.props.manager.dispatchEvent({ type: 'opacity' });
-                this.invalidate();
+                this.props.manager.toggleOpacity();
                 break;
             // 'z' to zoomToFit
             case 122:
-                //node = this.tree.get_selected(false);
-                //obj = this._parts[0].getByID(node[0]);
-                //if (!obj) {
-                //    obj = this._parts[0];
-                //}
-                //this.zoomToFit(obj);
+                var objs = this.props.manager.getSelected();
+                this.zoomToFit(objs);
                 break;
             // 'j' hide/show element
             case 106:
-                this.props.manager.dispatchEvent({ type: 'visibility' });
-                this.invalidate();
+                this.props.manager.toggleVisibility();
                 break;
         }
+        this.invalidate();
     }
 
     componentWillMount() {
-        var self = this;
-        this.renderTargetParametersRGBA = {
-            minFilter: THREE.LinearFilter,
-            magFilter: THREE.LinearFilter,
-            format: THREE.RGBAFormat
-        };
-
         this.sceneCenter = new THREE.Vector3(0,0,0);
         this.sceneRadius = 10000;
         this.props.manager.addEventListener("model:add", this.onModelAdd);
@@ -181,8 +165,7 @@ export default class CADViewer extends React.Component {
 
         // CONTROL EVENT HANDLERS
         this.controls.addEventListener('change', function() {
-            console.log('Controls.change: ' + self.state.change);
-            self.state.change = true;
+            self.state.isViewChanging = true;
             var x0 = self.sceneCenter,
                 x1 = self.camera.position,
                 x2 = self.controls.target,
@@ -196,14 +179,12 @@ export default class CADViewer extends React.Component {
             self.invalidate();
         });
         this.controls.addEventListener("start", function() {
-            console.log('Controls.start: ' + self.state.change);
             self.continuousRendering = true;
-            self.state.change = false;
         });
         this.controls.addEventListener("end", function() {
-            console.log('Controls.end: ' + self.state.change);
             self.invalidate();
             self.continuousRendering = false;
+            self.state.isViewChanging = false;
         });
 
         // SCREEN RESIZE
@@ -217,7 +198,7 @@ export default class CADViewer extends React.Component {
         window.removeEventListener("keypress", this.onKeypress);
         this.props.manager.removeEventListener("model:add", this.onModelAdd);
         this.props.manager.removeEventListener("model:remove", this.onModelRemove);
-        this.props.manager.removeEventListener("shellLoad", this.onShellLoad);
+        this.props.manager.removeEventListener("shellLoad", this.invalidate);
         this.props.manager.removeEventListener("invalidate", this.invalidate);
     }
 
@@ -231,10 +212,16 @@ export default class CADViewer extends React.Component {
         this.drawScene();
     }
 
-    zoomToFit(object) {
-        var object3d = object.getObject3D(),
-            boundingBox = object.getBoundingBox(),
-            radius = boundingBox.size().length() * 0.5,
+    zoomToFit(objects) {
+        var boundingBox, object3d, size = _.size(objects);
+        if (size === 0) return;
+        else if (size === 1) {
+            object3d = objects.getObject3D();
+            boundingBox = objects.getBoundingBox();
+        } else if (size > 1) {
+
+        }
+        var radius = boundingBox.size().length() * 0.5,
             horizontalFOV = 2 * Math.atan(THREE.Math.degToRad(this.camera.fov * 0.5) * this.camera.aspect),
             fov = Math.min(THREE.Math.degToRad(this.camera.fov), horizontalFOV),
             dist = radius / Math.sin(fov * 0.5),
@@ -287,85 +274,57 @@ export default class CADViewer extends React.Component {
         this.shouldRender = true;
     }
 
-    add3DObject(a3DObject, sceneName) {
-        switch(sceneName) {
-            case 'overlay':
-                this.overlayScene.add(a3DObject);
-                break;
-            case 'annotation':
-                this.annotationScene.add(a3DObject);
-                break;
-            case 'geometry':
-            default:
-                this.geometryScene.add(a3DObject);
-                break;
-        }
-        this.invalidate();
-    }
-
     updateSceneBoundingBox(newBoundingBox) {
         this.sceneCenter.copy(newBoundingBox.center());
         this.sceneRadius = newBoundingBox.size().length() / 2;
     };
 
-    onClick(event) {
-        var self = this, tree;
-        if (_.size(this.props.manager._models) === 0) {
-            return;
-        }
-        // Clear selections if meta key not pressed
-        if (!event.metaKey) {
-            _.each(this.props.manager._models, function(model) {
-                model.hideAllBoundingBoxes();
-            });
-            // Update the model tree
-            tree = this.props.manager.getTree();
-            this.setState({ modelTree: tree });
-        }
-        var obj = _.reduce(this.props.manager._models, function(memo, model) {
-            var val = model.select(self.camera, event.clientX, event.clientY);
-            return memo || val;
-        }, undefined);
-        // Did we find an object
-        if (obj) {
-            obj = obj.getNamedParent();
-            // Show the bounding box
-            obj.showBoundingBox();
-            // Update the model tree
-            tree = this.props.manager.getTree();
-            this.setState({ modelTree: tree });
-        }
-        this.invalidate();
-    }
-
     onMouseUp(event) {
-        console.log('MouseUp: ' + this.state.change);
-        if (!this.state.change) {
-            this.onClick(event);
+        if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
+            var change = false;
+            // Clear selections if meta key not pressed
+            if (!event.metaKey) {
+                // Clear all currently selected objects
+                this.props.manager.clearSelected();
+                change = true;
+            }
+            var obj = this.props.manager.hitTest(this.camera, event);
+            // Did we find an object
+            if (obj) {
+                obj = obj.getNamedParent();
+                // Toggle the bounding box
+                obj.toggleSelection();
+                change = true;
+            }
+            if (change) {
+                // Update the model tree
+                var tree = this.props.manager.getTree();
+                this.setState({ modelTree: tree });
+                this.invalidate();
+            }
         }
-        this.state.change = false;
     }
 
     onMouseMove(event) {
-        console.log('MouseMove: ' + this.state.change);
-        if (!this.state.change) {
-            var obj, self = this;
-            if (_.size(this.props.manager._models) > 0) {
-                _.each(this.props.manager._models, function(model) {
-                    model.clearHighlights();
-                });
-                obj = _.reduce(this.props.manager._models, function(memo, model) {
-                    var val = model.select(self.camera, event.clientX, event.clientY);
-                    return memo || val;
-                }, undefined);
-                // Did we find an object
-                if (obj) {
-                    obj = obj.getNamedParent();
-                    // Yes, go highlight it in the tree
-                    obj.highlight(0xffff60);
-                }
-            }
+        if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
+            var obj = this.props.manager.hitTest(this.camera, event);
+            var change = false;
             if (obj != this._lastHovered) {
+                // Clear existing highlight
+                this.props.manager.clearHighlights();
+                change = true;
+            }
+            // Did we find an object
+            if (obj) {
+                obj = obj.getNamedParent();
+                // Yes, go highlight it in the tree
+                obj.highlight(0xffff60);
+                change = true;
+            }
+            // Update the model tree and redraw if things have changed
+            if (change) {
+                var tree = this.props.manager.getTree();
+                this.setState({ modelTree: tree });
                 this.invalidate();
             }
             this._lastHovered = obj;
