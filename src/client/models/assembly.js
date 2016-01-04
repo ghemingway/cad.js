@@ -9,17 +9,24 @@
 export default class Assembly extends THREE.EventDispatcher {
     constructor(rootID, defaultColor, loader) {
         super();
-        this._rootID = rootID;
-        this._defaultColor = defaultColor;
+        //this._rootID = rootID;
+        //this._defaultColor = defaultColor;
         this._loader = loader;
         this._objects = [];
         this._product = undefined;
         this.type = 'assembly';
         this.raycaster = new THREE.Raycaster();
-    }
-
-    getCADjs() {
-        return this._loader._parent;
+        // Setup object state
+        this.state = {
+            selected:       false,
+            highlighted:    false,
+            visible:        true,
+            opacity:        1.0,
+            explodeDistance:0,
+            collapsed:      false
+        };
+        // Good to go
+        return this;
     }
 
     getID() {
@@ -76,23 +83,15 @@ export default class Assembly extends THREE.EventDispatcher {
         }
     }
 
+    getNamedParent() {
+        return this;
+    }
+
     getBoundingBox() {
         if (this._product) {
             return this._product.getBoundingBox();
         }
         return new THREE.Box3();
-    }
-
-    showBoundingBox() {
-        if (this._product) {
-            this._product.showBoundingBox();
-        }
-    }
-
-    hideBoundingBox() {
-        if (this._product) {
-            this._product.hideBoundingBox();
-        }
     }
 
     getByID(id) {
@@ -111,65 +110,81 @@ export default class Assembly extends THREE.EventDispatcher {
         return obj;
     }
 
-    toggleTransparency() {
-        if (this._product) {
-            this._product.toggleTransparency();
-        }
-    }
-
-    setOpacity(opacity) {
-        if (this._product) {
-            this._product.setOpacity(opacity);
-        }
-    }
-
-    showAll() {
-        if (this._product) {
-            this._product.getObject3D().traverse(function(object) {
-                object.visible = true;
-            });
-        }
-    }
-
-    hideAll() {
-        if (this._product) {
-            this._product.getObject3D().traverse(function(object) {
-                object.visible = false;
-            });
-        }
-    }
-
-    toggleVisibility() {
-        if (this._product._object3D.visible) {
-            this.hide();
-        } else {
-            this.show();
-        }
-        return this._product._object3D.visible;
-    }
-
-    hide() {
-        if (this._product) {
-            this._product.hide();
-        }
-    }
-
-    show() {
-        if (this._product) {
-            this._product.show();
-        }
-    }
+    //showBoundingBox() {
+    //    if (this._product) {
+    //        this._product.showBoundingBox();
+    //    }
+    //}
+    //
+    //hideBoundingBox() {
+    //    if (this._product) {
+    //        this._product.hideBoundingBox();
+    //    }
+    //}
+    //
+    //toggleTransparency() {
+    //    if (this._product) {
+    //        this._product.toggleTransparency();
+    //    }
+    //}
+    //
+    //setOpacity(opacity) {
+    //    if (this._product) {
+    //        this._product.setOpacity(opacity);
+    //    }
+    //}
+    //
+    //showAll() {
+    //    if (this._product) {
+    //        this._product.getObject3D().traverse(function(object) {
+    //            object.visible = true;
+    //        });
+    //    }
+    //}
+    //
+    //hideAll() {
+    //    if (this._product) {
+    //        this._product.getObject3D().traverse(function(object) {
+    //            object.visible = false;
+    //        });
+    //    }
+    //}
+    //
+    //toggleVisibility() {
+    //    if (this._product._object3D.visible) {
+    //        this.hide();
+    //    } else {
+    //        this.show();
+    //    }
+    //    return this._product._object3D.visible;
+    //}
+    //
+    //hide() {
+    //    if (this._product) {
+    //        this._product.hide();
+    //    }
+    //}
+    //
+    //show() {
+    //    if (this._product) {
+    //        this._product.show();
+    //    }
+    //}
 
     getTree(root) {
         var node = {
-            id          : root,
-            text        : this.name(),
-            collapsed   : false,
-            state       : {
-                disabled  : false,
-                selected  : false
+            id:                 root,
+            text:               this.name(),
+            obj:                this,
+            collapsed:          this.state.collapsed,
+            state: {
+                selected:       this.state.selected,
+                highlighted:    this.state.highlighted,
+                visible:        this.state.visible,
+                opacity:        this.state.opacity,
+                explodeDistance:this.state.explodeDistance
             },
-            children    : []  // array of strings or objects
+            children:           []
         };
         if (this._product) {
             node.children.push(this._product.getTree(root));
@@ -202,7 +217,15 @@ export default class Assembly extends THREE.EventDispatcher {
         return object;
     }
 
+    getSelected() {
+        if (this._product) {
+            return this._product.getSelected();
+        } else return [];
+    }
+
+
     explode(step) {
+        if (this._product) this._product.explode(step);
     }
 
     static buildBoundingBox(box) {

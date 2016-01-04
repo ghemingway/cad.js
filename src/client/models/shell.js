@@ -27,6 +27,7 @@ export default class Shell extends THREE.EventDispatcher {
     }
 
     static unloadData() {
+        // TODO: Need to implement this
         console.log("Shell.unloadData - Not Implemented");
     }
 
@@ -70,10 +71,6 @@ export default class Shell extends THREE.EventDispatcher {
 
     getBoundingBox() {
         return this._boundingBox;
-    }
-
-    getSize() {
-        return this._size;
     }
 
     getGeometry() {

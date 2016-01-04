@@ -30,9 +30,10 @@ export default class CADManager extends THREE.EventDispatcher {
     // Load a new assembly request
     load(req) {
         var self = this;
+        // Default the model type to assembly
         req.type = req.modelType ? req.modelType : 'assembly';
         delete req.modelType;
-        // Initialize the assembly
+        // Load the model
         this._loader.load(req, function(err, model) {
             if (err) {
                 console.log('CADManager.load error: ' + err);
@@ -83,8 +84,8 @@ export default class CADManager extends THREE.EventDispatcher {
         this._loader.addEventListener("workerFinish",   loaderEventHandler);
         this._loader.addEventListener("loadProgress",   loaderEventHandler);
         // Listen for someone asking for stuff
-        this.addEventListener("clear:selected",         modelsEventHandler);
-        this.addEventListener("clear:highlights",       modelsEventHandler);
+        this.addEventListener("model",                  modelsEventHandler);
+        this.addEventListener("selected",               modelsEventHandler);
 
         // Setup socket callbacks
         this.onDelta = this.onDelta.bind(this);
@@ -93,21 +94,51 @@ export default class CADManager extends THREE.EventDispatcher {
         }
     }
 
-    clearSelected() {
-        this.dispatchEvent({ type: 'clear:selected' });
+    clear() {
+        console.log('Clear everything');
+        this.dispatchEvent({
+            type:   'model',
+            action: 'reset'
+        });
     }
 
-    clearHighlights() {
-        this.dispatchEvent({ type: 'clear:highlights' });
+    clearSelected(preselected) {
+        // Toggle selected state of all selected objects
+        var selected = preselected ? preselected : this.getSelected();
+        _.each(selected, function(selection) {
+            selection.toggleSelection();
+        });
     }
 
-    toggleOpacity() {}
+    toggleOpacity(preselected) {
+        var selected = preselected ? preselected : this.getSelected();
+        _.each(selected, function(selection) {
+            selection.toggleOpacity();
+        });
+    }
 
-    toggleVisibility() {}
+    toggleVisibility(preselected) {
+        var selected = preselected ? preselected : this.getSelected();
+        _.each(selected, function(selection) {
+            selection.toggleVisibility();
+        });
+    }
 
-    explode(step) {}
+    explode(step) {
+        var selected = this.getSelected();
+        _.each(selected, function(selection) {
+            selection.explode(step);
+        });
+    }
 
-    getSelected() { return []; }
+    getSelected() {
+        var self = this;
+        var keys = _.keys(this._models);
+        var selected = _.map(keys, function(key) {
+            return self._models[key].getSelected()
+        });
+        return _.flatten(selected);
+    }
 
     getTree() {
         // TODO: Needs to handle multiple models at once

@@ -1,7 +1,8 @@
 .model-tree {
   position: fixed;
   top: 10px;
-  left: -244px;
+  //left: -244px;
+  left: 0;
   min-width: 250px;
   max-width: 250px;
   min-height: 40px;
@@ -9,7 +10,8 @@
   border: 1px solid #aaa;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
-  opacity: .4;
+  //opacity: .4;
+  opacity: .9;
   padding: 5px;
   white-space: nowrap;
   transition: left .2s, opacity .2s;
@@ -78,11 +80,19 @@
 }
 
 .m-node .node.is-active {
-  background-color: #31363F;
+  background-color: #0000ff;
+}
+
+.m-node .node.is-hidden {
+  color: #1b6d85;
+}
+
+.m-node .node.is-highlighted:not(.is-active) {
+  background-color: rgba(49, 54, 63, 0.43);
 }
 
 .m-node .node:hover:not(.is-active) {
-  background-color: rgba(255, 141, 158, 0.43);
+  background-color: rgba(49, 54, 63, 0.43);
 }
 
 .m-node .caret-right:before {

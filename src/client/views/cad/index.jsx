@@ -28,7 +28,8 @@ export default class CADViewer extends React.Component {
         super(props);
         this.state = {
             modelTree: {},
-            isViewChanging: false
+            isViewChanging: false,
+            lastHovered: undefined
         };
         this.handleResize   = this.handleResize.bind(this);
         this.onShellLoad    = this.onShellLoad.bind(this);
@@ -38,6 +39,9 @@ export default class CADViewer extends React.Component {
         this.onKeypress     = this.onKeypress.bind(this);
         this.onMouseUp      = this.onMouseUp.bind(this);
         this.onMouseMove    = this.onMouseMove.bind(this);
+        this.onTreeClick    = this.onTreeClick.bind(this);
+        this.onTreeChange   = this.onTreeChange.bind(this);
+        this.onTreeNodeEnterExit = this.onTreeNodeEnterExit.bind(this);
     }
 
     onShellLoad(event) {
@@ -70,7 +74,6 @@ export default class CADViewer extends React.Component {
     }
 
     onKeypress(event) {
-        var obj;
         switch(event.keyCode || event.charCode || event.which) {
             // Explode on 'x' key pressed
             case 120:
@@ -80,9 +83,9 @@ export default class CADViewer extends React.Component {
             case 115:
                 this.props.manager.explode(-10);
                 break;
-            // 'q' unselects all tree elements
+            // 'q' reset all elements
             case 113:
-                this.props.manager.clearSelected();
+                this.props.manager.clear();
                 break;
             // 'o' to toggle transparency
             case 111:
@@ -98,7 +101,7 @@ export default class CADViewer extends React.Component {
                 this.props.manager.toggleVisibility();
                 break;
         }
-        this.invalidate();
+        this.invalidate({ tree: true });
     }
 
     componentWillMount() {
@@ -281,56 +284,92 @@ export default class CADViewer extends React.Component {
         this.sceneRadius = newBoundingBox.size().length() / 2;
     };
 
-    onMouseUp(event) {
-        if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
-            var change = false;
-            // Clear selections if meta key not pressed
-            if (!event.metaKey) {
-                // Clear all currently selected objects
-                this.props.manager.clearSelected();
-                change = true;
-            }
-            var obj = this.props.manager.hitTest(this.camera, event);
-            // Did we find an object
-            if (obj) {
-                obj = obj.getNamedParent();
-                // Toggle the bounding box
-                obj.toggleSelection();
-                change = true;
-            }
-            if (change) {
-                // Update the model tree
-                var tree = this.props.manager.getTree();
-                this.setState({ modelTree: tree });
-                this.invalidate();
-            }
+    // Handle all object selection needs
+    handleSelection(obj, event) {
+        var change = false, flip = false;
+        var selected = this.props.manager.getSelected();
+        // Toggle selection if already selected
+        if (obj && selected.length === 1 && selected[0].getID() === obj.getID()) {
+            flip = true;
+        }
+        // Allow meta for multi-selection
+        if (!event.metaKey && !flip) {
+            // Clear all currently selected objects
+            this.props.manager.clearSelected(selected);
+            change = true;
+        }
+        // Did we find an object
+        if (obj) {
+            obj = obj.getNamedParent();
+            // Toggle the bounding box
+            obj.toggleSelection();
+            change = true;
+        }
+        if (change) {
+            // Update the model tree
+            var tree = this.props.manager.getTree();
+            this.setState({ modelTree: tree });
+            this.invalidate();
         }
     }
 
+    // Handle clicking in the model view for selection
+    onMouseUp(event) {
+        if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
+            var obj = this.props.manager.hitTest(this.camera, event);
+            this.handleSelection(obj, event);
+        }
+    }
+
+    // Handle clicking in the model tree for selection
+    onTreeClick(node, event) {
+        this.handleSelection(node.obj, event);
+    }
+
+    // Handle synchronization of collapse/expand in the tree
+    onTreeChange(tree, parent, node) {
+        if (!parent && node) {
+            node.obj.toggleCollapsed();
+            tree = this.props.manager.getTree();
+            this.setState({ modelTree: tree });
+        }
+    }
+
+    // Handle all object highlighting needs
+    handleHighlighting(obj) {
+        var change = false;
+        if (this.state.lastHovered && (!obj || obj.getID() != this.state.lastHovered.getID())) {
+            // Clear existing highlight
+            this.state.lastHovered.toggleHighlight();
+            change = true;
+        }
+        // Did we find a new object
+        if (obj && (!this.state.lastHovered || obj.getID() != this.state.lastHovered.getID())) {
+            obj = obj.getNamedParent();
+            // Yes, go highlight it in the tree
+            obj.toggleHighlight(0xffff60);
+            change = true;
+        }
+        // Update the model tree and redraw if things have changed
+        if (change) {
+            var tree = this.props.manager.getTree();
+            this.setState({ modelTree: tree });
+            this.invalidate();
+        }
+        this.state.lastHovered = obj;
+    }
+
+    // Handle mouse movements in the model view for highlighting
     onMouseMove(event) {
         if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
             var obj = this.props.manager.hitTest(this.camera, event);
-            var change = false;
-            if (obj != this._lastHovered) {
-                // Clear existing highlight
-                this.props.manager.clearHighlights();
-                change = true;
-            }
-            // Did we find an object
-            if (obj) {
-                obj = obj.getNamedParent();
-                // Yes, go highlight it in the tree
-                obj.highlight(0xffff60);
-                change = true;
-            }
-            // Update the model tree and redraw if things have changed
-            if (change) {
-                var tree = this.props.manager.getTree();
-                this.setState({ modelTree: tree });
-                this.invalidate();
-            }
-            this._lastHovered = obj;
+            this.handleHighlighting(obj);
         }
+    }
+
+    // Handle mouse movements in the model tree for highlighting
+    onTreeNodeEnterExit(node) {
+        this.handleHighlighting(node.obj);
     }
 
     render() {
@@ -344,7 +383,12 @@ export default class CADViewer extends React.Component {
             <canvas id="cadjs-canvas" onMouseUp={this.onMouseUp} onMouseMove={this.onMouseMove} />
             {compass}
             <LoadQueueView dispatcher={this.props.manager} />
-            <ModelTreeView dispatcher={this.props.manager} tree={this.state.modelTree} />
+            <ModelTreeView
+                onChange={this.onTreeChange}
+                onClick={this.onTreeClick}
+                onNodeEnter={this.onTreeNodeEnterExit}
+                onNodeLeave={this.onTreeNodeEnterExit}
+                tree={this.state.modelTree} />
         </div>;
     }
 };
