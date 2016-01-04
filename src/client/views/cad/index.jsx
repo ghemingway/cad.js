@@ -212,16 +212,18 @@ export default class CADViewer extends React.Component {
         this.drawScene();
     }
 
-    zoomToFit(objects) {
-        var boundingBox, object3d, size = _.size(objects);
-        if (size === 0) return;
-        else if (size === 1) {
-            object3d = objects.getObject3D();
-            boundingBox = objects.getBoundingBox();
-        } else if (size > 1) {
-
-        }
-        var radius = boundingBox.size().length() * 0.5,
+    zoomToFit(object) {
+        //var boundingBox, object3d, size = _.size(objects);
+        //if (size === 0) return;
+        //else if (size === 1) {
+        //    object3d = objects.getObject3D();
+        //    boundingBox = objects.getBoundingBox();
+        //} else if (size > 1) {
+        //
+        //}
+        var object3d = object.getObject3D(),
+            boundingBox = object.getBoundingBox(),
+            radius = boundingBox.size().length() * 0.5,
             horizontalFOV = 2 * Math.atan(THREE.Math.degToRad(this.camera.fov * 0.5) * this.camera.aspect),
             fov = Math.min(THREE.Math.degToRad(this.camera.fov), horizontalFOV),
             dist = radius / Math.sin(fov * 0.5),
