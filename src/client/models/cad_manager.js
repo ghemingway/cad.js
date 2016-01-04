@@ -30,7 +30,7 @@ export default class CADManager extends THREE.EventDispatcher {
     // Load a new assembly request
     load(req) {
         var self = this;
-        req.type = req.modelType;
+        req.type = req.modelType ? req.modelType : 'assembly';
         delete req.modelType;
         // Initialize the assembly
         this._loader.load(req, function(err, model) {
