@@ -76,12 +76,6 @@ export default class Product extends THREE.EventDispatcher {
         return this._annotation3D;
     }
 
-    //applyMatrix(matrix) {
-    //    this._object3D.applyMatrix(matrix);
-    //    this._overlay3D.applyMatrix(matrix);
-    //    this._annotation3D.applyMatrix(matrix);
-    //}
-
     getTree(root) {
         // Check if only geometry-aligned Products get added to tree
         var children = [], tmpChild;
@@ -213,101 +207,7 @@ export default class Product extends THREE.EventDispatcher {
         this.state.collapsed = !this.state.collapsed;
     }
 
-    //showAnnotations() {
-    //    this._annotation3D.traverse(function(object) {
-    //        object.visible = true;
-    //    });
-    //}
-    //
-    //hideAnnotations() {
-    //    this._annotation3D.traverse(function(object) {
-    //        object.visible = false;
-    //    });
-    //}
-    //
-    //showBoundingBox() {
-    //    this.state.selected = true;
-    //    var bounds = this.getBoundingBox();
-    //    if (!this.bbox && !bounds.empty()) {
-    //        this.bbox = Assembly.buildBoundingBox(bounds);
-    //    }
-    //    if (this.bbox) {
-    //        var self = this;
-    //        this._eventFunc = function() {
-    //            self.hideBoundingBox();
-    //        };
-    //        // Start listening for assembly _hideBounding events
-    //        this._assembly.addEventListener("_hideBounding", this._eventFunc);
-    //        this._overlay3D.add(this.bbox);
-    //    }
-    //    this.showAnnotations();
-    //}
-    //
-    //hideBoundingBox() {
-    //    this.state.selected = false;
-    //    // Stop listening for assembly _hideBounding events
-    //    this._assembly.removeEventListener("_hideBounding", this._eventFunc);
-    //    this._overlay3D.remove(this.bbox);
-    //    this.hideAnnotations();
-    //}
-    //
-    //setOpacity(opacity) {
-    //    this._object3D.traverse(function(object) {
-    //        if (object.material && object.material.uniforms.opacity) {
-    //            object.material.transparent = opacity < 1;
-    //            object.material.depthWrite = opacity === 1;
-    //            object.material.uniforms['opacity'].value = opacity;
-    //        }
-    //    });
-    //}
-    //
-    //toggleVisibility() {
-    //    if (this._object3D.visible) {
-    //        this.hide();
-    //    } else {
-    //        this.show();
-    //    }
-    //    return this._object3D.visible;
-    //}
-    //
-    //toggleTransparency() {
-    //    if (this.isTransparent()) {
-    //        this.setOpacity(1);
-    //    } else {
-    //        this.setOpacity(0.5);
-    //    }
-    //}
-    //
-    //isTransparent() {
-    //    // returns true if object or any children are transparent
-    //    var transparent = false,
-    //        testObject = function(object) {
-    //            if (!transparent && object.material && object.material.uniforms.opacity) {
-    //                transparent = object.material.uniforms.opacity.value < 1;
-    //            }
-    //        };
-    //    testObject(this._object3D);
-    //    if (!transparent) {
-    //        this._object3D.traverse(testObject);
-    //    }
-    //    return transparent;
-    //}
-    //
-    //hide() {
-    //    this._object3D.traverse(function(object) {
-    //        object.visible = false;
-    //    });
-    //    this.hideAnnotations();
-    //}
-    //
-    //show() {
-    //    this._object3D.traverse(function(object) {
-    //        object.visible = true;
-    //    });
-    //    this.showAnnotations();
-    //}
-
-    explode(distance) {
-        console.log('Product explode');
+    explode(step) {
+        // Noop
     }
 };

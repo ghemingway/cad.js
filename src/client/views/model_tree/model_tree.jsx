@@ -35,6 +35,11 @@ export default class ModelTreeView extends React.Component {
         cName += (node.state && node.state.selected) ? ' is-active' : '';
         cName += (node.state && node.state.highlighted) ? ' is-highlighted' : '';
         cName += (node.state && !node.state.visible) ? ' is-hidden' : '';
+        var exp = undefined;
+        if (node.state && node.state.explodeDistance > 0) {
+            var text = ' (' + node.state.explodeDistance + ')';
+            exp = <span className="exp-distance">{text}</span>;
+        }
         return <span
             id={node.id}
             className={cName}
@@ -43,7 +48,7 @@ export default class ModelTreeView extends React.Component {
             onMouseLeave={this.onMouseLeave.bind(this, node)}
             onMouseDown={function(e){ e.stopPropagation(); }}
         >
-            {node.text}
+            {node.text}{exp}
         </span>;
     }
 

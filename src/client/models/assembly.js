@@ -58,7 +58,7 @@ export default class Assembly extends THREE.EventDispatcher {
     }
 
     makeChild(id, fallback) {
-//        console.log("Assembly.makeChild: " + id);
+        //console.log("Assembly.makeChild: " + id);
         if (!id) {
             throw new Error("null id");
         }
@@ -110,86 +110,8 @@ export default class Assembly extends THREE.EventDispatcher {
         return obj;
     }
 
-    //showBoundingBox() {
-    //    if (this._product) {
-    //        this._product.showBoundingBox();
-    //    }
-    //}
-    //
-    //hideBoundingBox() {
-    //    if (this._product) {
-    //        this._product.hideBoundingBox();
-    //    }
-    //}
-    //
-    //toggleTransparency() {
-    //    if (this._product) {
-    //        this._product.toggleTransparency();
-    //    }
-    //}
-    //
-    //setOpacity(opacity) {
-    //    if (this._product) {
-    //        this._product.setOpacity(opacity);
-    //    }
-    //}
-    //
-    //showAll() {
-    //    if (this._product) {
-    //        this._product.getObject3D().traverse(function(object) {
-    //            object.visible = true;
-    //        });
-    //    }
-    //}
-    //
-    //hideAll() {
-    //    if (this._product) {
-    //        this._product.getObject3D().traverse(function(object) {
-    //            object.visible = false;
-    //        });
-    //    }
-    //}
-    //
-    //toggleVisibility() {
-    //    if (this._product._object3D.visible) {
-    //        this.hide();
-    //    } else {
-    //        this.show();
-    //    }
-    //    return this._product._object3D.visible;
-    //}
-    //
-    //hide() {
-    //    if (this._product) {
-    //        this._product.hide();
-    //    }
-    //}
-    //
-    //show() {
-    //    if (this._product) {
-    //        this._product.show();
-    //    }
-    //}
-
     getTree(root) {
-        var node = {
-            id:                 root,
-            text:               this.name(),
-            obj:                this,
-            collapsed:          this.state.collapsed,
-            state: {
-                selected:       this.state.selected,
-                highlighted:    this.state.highlighted,
-                visible:        this.state.visible,
-                opacity:        this.state.opacity,
-                explodeDistance:this.state.explodeDistance
-            },
-            children:           []
-        };
-        if (this._product) {
-            node.children.push(this._product.getTree(root));
-        }
-        return node;
+        return this._product.getTree(root);
     }
 
     select(camera, mouseX, mouseY) {
@@ -221,11 +143,6 @@ export default class Assembly extends THREE.EventDispatcher {
         if (this._product) {
             return this._product.getSelected();
         } else return [];
-    }
-
-
-    explode(step) {
-        if (this._product) this._product.explode(step);
     }
 
     static buildBoundingBox(box) {
