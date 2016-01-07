@@ -5,7 +5,7 @@
 // Necessary modules
 require('./stylesheets/base.scss');
 require('bootstrap-webpack');
-var io              = require('socket.io-client'),
+let io              = require('socket.io-client'),
     jwtDecode       = require('jwt-decode'),
     Router          = require('./routes');
 import CADManager from './models/cad_manager';
@@ -15,7 +15,7 @@ import CADManager from './models/cad_manager';
 class CADApp extends THREE.EventDispatcher {
     constructor() {
         super();
-        var $body = $('body');
+        let $body = $('body');
         this.services = $body.data('services');
         this.config = $body.data('config');
         // Establish the global URL router
@@ -38,7 +38,7 @@ class CADApp extends THREE.EventDispatcher {
         this.socket = undefined;
         if (this.config.socket) {
             // Establish socket connection
-            var socketURL = this.services.api_endpoint + this.services.socket;
+            let socketURL = this.services.api_endpoint + this.services.socket;
             this.socket = io(socketURL, {});
             // Connect to the socket server
             this.socket.on('connect', function () {

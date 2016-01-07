@@ -30,14 +30,14 @@ export default class ModelTreeView extends React.Component {
     }
 
     renderNode(node) {
-        var self = this;
-        var cName = 'node';
+        let self = this;
+        let cName = 'node';
         cName += (node.state && node.state.selected) ? ' is-active' : '';
         cName += (node.state && node.state.highlighted) ? ' is-highlighted' : '';
         cName += (node.state && !node.state.visible) ? ' is-hidden' : '';
-        var exp = undefined;
+        let exp = undefined;
         if (node.state && node.state.explodeDistance > 0) {
-            var text = ' (' + node.state.explodeDistance + ')';
+            let text = ' (' + node.state.explodeDistance + ')';
             exp = <span className="exp-distance">{text}</span>;
         }
         return <span

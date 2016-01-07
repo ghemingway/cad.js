@@ -36,7 +36,7 @@ export default class BrowserView extends React.Component {
     }
 
     componentDidMount() {
-        var self = this;
+        let self = this;
         $.ajax({
             method: 'GET',
             url: '/v1/models',
@@ -55,13 +55,13 @@ export default class BrowserView extends React.Component {
     }
 
     handleClick(event) {
-        var file = _.findWhere(this.state.files, { name: event.target.id });
+        let file = _.findWhere(this.state.files, { name: event.target.id });
         this.props.router.navigate(file.name + '?type=' + file.types[0], { trigger: true });
     }
 
     render() {
-        var self = this;
-        var files = this.state.files.map(function(file) {
+        let self = this;
+        let files = this.state.files.map(function(file) {
             return <FileItem onClick={self.handleClick} key={file.name} file={file} />
         });
         return <div className="container-fluid">

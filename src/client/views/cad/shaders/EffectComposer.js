@@ -8,9 +8,9 @@ THREE.EffectComposer = function ( renderer, renderTarget ) {
 
 	if ( renderTarget === undefined ) {
 
-		var width = window.innerWidth || 1;
-		var height = window.innerHeight || 1;
-		var parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+		let width = window.innerWidth || 1;
+		let height = window.innerHeight || 1;
+		let parameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
 
 		renderTarget = new THREE.WebGLRenderTarget( width, height, parameters );
 
@@ -35,7 +35,7 @@ THREE.EffectComposer.prototype = {
 
 	swapBuffers: function() {
 
-		var tmp = this.readBuffer;
+		let tmp = this.readBuffer;
 		this.readBuffer = this.writeBuffer;
 		this.writeBuffer = tmp;
 
@@ -58,9 +58,9 @@ THREE.EffectComposer.prototype = {
 		this.writeBuffer = this.renderTarget1;
 		this.readBuffer = this.renderTarget2;
 
-		var maskActive = false;
+		let maskActive = false;
 
-		var pass, i, il = this.passes.length;
+		let pass, i, il = this.passes.length;
 
 		for ( i = 0; i < il; i ++ ) {
 
@@ -74,7 +74,7 @@ THREE.EffectComposer.prototype = {
 
 				if ( maskActive ) {
 
-					var context = this.renderer.context;
+					let context = this.renderer.context;
 
 					context.stencilFunc( context.NOTEQUAL, 1, 0xffffffff );
 
@@ -123,7 +123,7 @@ THREE.EffectComposer.prototype = {
 
 	setSize: function ( width, height ) {
 
-		var renderTarget = this.renderTarget1.clone();
+		let renderTarget = this.renderTarget1.clone();
 
 		renderTarget.width = width;
 		renderTarget.height = height;

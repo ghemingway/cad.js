@@ -22,11 +22,11 @@ export default class NC extends THREE.EventDispatcher {
     }
 
     addModel(model, type, id, transform, bbox) {
-        var asisOpacity = 0.15;
+        let asisOpacity = 0.15;
         console.log('Add Model(' + type + '): ' + id);
-        var self = this;
+        let self = this;
         // Setup 3D object holder
-        var obj = {
+        let obj = {
             model: model,
             type: type,
             id: id,
@@ -44,8 +44,8 @@ export default class NC extends THREE.EventDispatcher {
         this._annotation3D.add(obj.annotation3D);
         if (type === 'tobe' || type == 'asis' || type === 'cutter') {
             model.addEventListener("shellEndLoad", function (event) {
-                var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
-                var mesh = new THREE.SkinnedMesh(event.shell.getGeometry(), material, false);
+                let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
+                let mesh = new THREE.SkinnedMesh(event.shell.getGeometry(), material, false);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 mesh.userData = self;
@@ -63,13 +63,13 @@ export default class NC extends THREE.EventDispatcher {
             });
         } else if (type === 'toolpath') {
             model.addEventListener("annotationEndLoad", function(event) {
-                var lineGeometries = event.annotation.getGeometry();
-                var material = new THREE.LineBasicMaterial({
+                let lineGeometries = event.annotation.getGeometry();
+                let material = new THREE.LineBasicMaterial({
                     color: 0xffffff,
                     linewidth: 1
                 });
-                for (var i = 0; i < lineGeometries.length; i++) {
-                    var lines = new THREE.Line(lineGeometries[i], material);
+                for (let i = 0; i < lineGeometries.length; i++) {
+                    let lines = new THREE.Line(lineGeometries[i], material);
                     lines.visible = true;
                     obj.annotation3D.add(lines);
                 }
@@ -82,7 +82,7 @@ export default class NC extends THREE.EventDispatcher {
         //if (!id) {
         //    throw new Error("null id");
         //}
-        //var ret = this._objects[id];
+        //let ret = this._objects[id];
         //if (ret) {
         //    return ret;
         //}
@@ -103,12 +103,12 @@ export default class NC extends THREE.EventDispatcher {
     };
 
     getBoundingBox() {
-        var self = this;
+        let self = this;
         if (!this.boundingBox) {
             this.boundingBox = new THREE.Box3();
-            var keys = _.keys(this._objects);
+            let keys = _.keys(this._objects);
             _.each(keys, function(key) {
-                var object = self._objects[key];
+                let object = self._objects[key];
                 if (object.type !== 'toolpath') {
                     self.boundingBox.union(object.bbox);
                 }
@@ -118,7 +118,7 @@ export default class NC extends THREE.EventDispatcher {
     }
 
     getTree(root) {
-        var node = {
+        let node = {
             id          : root,
             text        : this.project,
             collapsed   : false,
@@ -129,9 +129,9 @@ export default class NC extends THREE.EventDispatcher {
             children    : []
         };
         // Gen tree for all children
-        var keys = _.keys(this._objects);
+        let keys = _.keys(this._objects);
         _.each(keys, function(key) {
-            var tmpNode = {
+            let tmpNode = {
                 id          : key,
                 text        : key,
                 collapsed   : false,
@@ -159,7 +159,7 @@ export default class NC extends THREE.EventDispatcher {
         //if (includeSelf && this._product) {
         //    return this;
         //} else {
-        //    //var obj = this._parent;
+        //    //let obj = this._parent;
         //    //while (!obj.product && obj.parent) {
         //    //    obj = obj.parent;
         //    //}
@@ -168,16 +168,16 @@ export default class NC extends THREE.EventDispatcher {
     }
 
     select(camera, mouseX, mouseY) {
-        var mouse = new THREE.Vector2();
+        let mouse = new THREE.Vector2();
         mouse.x = (mouseX / window.innerWidth) * 2 - 1;
         mouse.y = -(mouseY / window.innerHeight) * 2 + 1;
         this.raycaster.setFromCamera(mouse, camera);
-        var intersections = this.raycaster.intersectObjects(this._object3D.children, true);
+        let intersections = this.raycaster.intersectObjects(this._object3D.children, true);
         // Did we hit anything?
-        var object = undefined;
+        let object = undefined;
         if (intersections.length > 0) {
-            var hit = undefined;
-            for (var i = 0; i < intersections.length; i++) {
+            let hit = undefined;
+            for (let i = 0; i < intersections.length; i++) {
                 if (intersections[i].object.visible) {
                     if (!hit || intersections[i].distance < hit.distance) {
                         hit = intersections[i];
@@ -192,14 +192,14 @@ export default class NC extends THREE.EventDispatcher {
     }
 
     applyDelta(delta) {
-        var self = this;
-        var alter = false;
+        let self = this;
+        let alter = false;
         // Handle each geom update in the delta
         _.each(delta.geom, function(geom) {
-            var obj = self._objects[geom.id];
-            var transform = new THREE.Matrix4();
+            let obj = self._objects[geom.id];
+            let transform = new THREE.Matrix4();
             transform.fromArray(geom.xform);
-            //var inverse = obj.transform.getInverse();
+            //let inverse = obj.transform.getInverse();
             obj.transform.copy(transform);
             //console.log(obj.transform);
             obj.object3D.position.set(geom.xform[12], geom.xform[13], geom.xform[14]);

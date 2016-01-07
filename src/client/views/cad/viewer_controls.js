@@ -5,12 +5,12 @@
 "use strict";
 
 
-var TrackballControls = require('./trackball_controls');
+let TrackballControls = require('./trackball_controls');
 
 /********************************* Helper Functions ********************************/
 
 module.exports = function ViewerControls( options ) {
-    var trackballControl = null,
+    let trackballControl = null,
         camera = options.camera,
         canvas = options.canvas,
         viewDistance = options.viewDistance || 13000,
@@ -32,7 +32,7 @@ module.exports = function ViewerControls( options ) {
         trackballControl.position0.multiplyScalar( -viewDistance );
         trackballControl.reset();
         trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
-            var distance = camera.position.distanceTo(this.target);
+            let distance = camera.position.distanceTo(this.target);
             this.target0.copy(this.target);
             this.position0.copy(referenceOrientation).
             applyEuler(euler).
@@ -72,7 +72,7 @@ export default class ViewerControls extends THREE.EventDispatcher {
 
 
     init() {
-        var self = this;
+        let self = this;
         this.trackballControl = new THREE.TrackballControls(this.camera, this.canvas);
         this.trackballControl.rotateSpeed = 1.0;
         this.trackballControl.zoomSpeed = 1.2;
@@ -87,7 +87,7 @@ export default class ViewerControls extends THREE.EventDispatcher {
         this.trackballControl.position0.multiplyScalar(-this.viewDistance);
         this.trackballControl.reset();
         this.trackballControl.setRotationFromEuler = function (euler, opt_upVector) {
-            var distance = self.camera.position.distanceTo(this.target);
+            let distance = self.camera.position.distanceTo(this.target);
             this.target0.copy(this.target);
             this.position0.copy(self.referenceOrientation)
                 .applyEuler(euler)

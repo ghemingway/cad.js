@@ -11,7 +11,7 @@ import Assembly from './assembly';
 export default class Shape extends THREE.EventDispatcher {
     constructor(id, assembly, parent, transform, unit) {
         super();
-        var ret = assembly.makeChild(id, this);
+        let ret = assembly.makeChild(id, this);
         this._id = id;
         this._assembly = assembly;
         this._parent = parent;
@@ -66,11 +66,11 @@ export default class Shape extends THREE.EventDispatcher {
         this._annotations = source._annotations;
         // Need to clone all child shapes
         this._children = [];
-        var self = this;
-        for (var i = 0; i < source._children.length; i++) {
+        let self = this;
+        for (let i = 0; i < source._children.length; i++) {
             // Clone the child shape
-            var shapeID = source._children[i]._id;
-            var shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit);
+            let shapeID = source._children[i]._id;
+            let shape = new Shape(shapeID, this._assembly, this, source._children[i]._transform, this._unit);
             // Bubble the shapeLoaded event
             shape.addEventListener("shapeLoaded", function (event) {
                 self.dispatchEvent({type: "shapeLoaded", shell: event.shell});
@@ -84,7 +84,7 @@ export default class Shape extends THREE.EventDispatcher {
     }
 
     addChild(childShape) {
-        var self = this;
+        let self = this;
         this._children.push(childShape);
         // Bubble the shapeLoaded event
         childShape.addEventListener("shapeLoaded", function (event) {
@@ -97,19 +97,19 @@ export default class Shape extends THREE.EventDispatcher {
     }
 
     addAnnotation(annotation) {
-        var self = this;
+        let self = this;
         this._annotations.push(annotation);
         annotation.addEventListener("annotationEndLoad", function (event) {
-            var anno = event.annotation;
+            let anno = event.annotation;
             self.addAnnotationGeometry(anno.getGeometry());
         });
     }
 
     addShell(shell) {
-        var self = this;
+        let self = this;
         this._shells.push(shell);
         shell.addEventListener("shellEndLoad", function (event) {
-            var shell = event.shell;
+            let shell = event.shell;
             self.addShellGeometry(shell.getGeometry());
         });
     }
@@ -117,14 +117,14 @@ export default class Shape extends THREE.EventDispatcher {
     setProduct(product) {
         this._product = product;
         // Set the product for all instances
-        for (var i = 0; i < this._instances.length; i++) {
+        for (let i = 0; i < this._instances.length; i++) {
             this._instances[i].setProduct(product);
         }
     }
 
     addShellGeometry(geometry) {
-        var material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
-        var mesh = new THREE.SkinnedMesh(geometry, material, false);
+        let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
+        let mesh = new THREE.SkinnedMesh(geometry, material, false);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         mesh.userData = this;
@@ -133,12 +133,12 @@ export default class Shape extends THREE.EventDispatcher {
     }
 
     addAnnotationGeometry(lineGeometries) {
-        var material = new THREE.LineBasicMaterial({
+        let material = new THREE.LineBasicMaterial({
             color: 0xffffff,
             linewidth: 1
         });
-        for (var i = 0; i < lineGeometries.length; i++) {
-            var lines = new THREE.Line(lineGeometries[i], material);
+        for (let i = 0; i < lineGeometries.length; i++) {
+            let lines = new THREE.Line(lineGeometries[i], material);
             lines.visible = false;
             this._annotation3D.add(lines);
         }
@@ -166,7 +166,7 @@ export default class Shape extends THREE.EventDispatcher {
         if (includeSelf && this._product) {
             return this;
         } else {
-            var obj = this._parent;
+            let obj = this._parent;
             while (!obj.product && obj.parent) {
                 console.log(obj.getID());
                 obj = obj.parent;
@@ -177,8 +177,8 @@ export default class Shape extends THREE.EventDispatcher {
 
     getTree(root) {
         // Check if only geometry-aligned Shapes get added to tree
-        var children = [], tmpChild;
-        for (var i = 0; i < this._children.length; i++) {
+        let children = [], tmpChild;
+        for (let i = 0; i < this._children.length; i++) {
             tmpChild = this._children[i].getTree(root);
             if (tmpChild) {
                 children.push(tmpChild);
@@ -188,7 +188,7 @@ export default class Shape extends THREE.EventDispatcher {
         if (!this._product || this.boundingBox.empty()) {
             return undefined;
         } else {
-            var id = this.getID();
+            let id = this.getID();
             this.name = "Shape " + id;
             if (this._product) {
                 this.name = this._product.getProductName();
@@ -213,20 +213,20 @@ export default class Shape extends THREE.EventDispatcher {
 
     getBoundingBox(transform) {
         if (!this.boundingBox) {
-            var i;
+            let i;
             this.boundingBox = new THREE.Box3();
             for (i = 0; i < this._shells.length; i++) {
-                var shellBounds = this._shells[i].getBoundingBox(true);
+                let shellBounds = this._shells[i].getBoundingBox(true);
                 if (!shellBounds.empty()) this.boundingBox.union(shellBounds);
             }
             for (i = 0; i < this._children.length; i++) {
-                var childBounds = this._children[i].getBoundingBox(true);
+                let childBounds = this._children[i].getBoundingBox(true);
                 if (!childBounds.empty()) {
                     this.boundingBox.union(childBounds);
                 }
             }
         }
-        var bounds = this.boundingBox.clone();
+        let bounds = this.boundingBox.clone();
         if (transform && !bounds.empty()) {
             bounds.applyMatrix4(this._transform);
         }
@@ -250,7 +250,7 @@ export default class Shape extends THREE.EventDispatcher {
 
     // Good
     toggleOpacity() {
-        var self = this;
+        let self = this;
         function setOpacity(opacity) {
             self.state.opacity = opacity;
             self._object3D.traverse(function (object) {
@@ -280,7 +280,7 @@ export default class Shape extends THREE.EventDispatcher {
         } else {
             this._object3D.traverse(function (object) {
                 if (object.material && object.material.uniforms.tint) {
-                    var color = new THREE.Color(colorHex);
+                    let color = new THREE.Color(colorHex);
                     object.material.uniforms.tint.value.set(color.r, color.g, color.b, 0.3);
                 }
             });
@@ -290,9 +290,9 @@ export default class Shape extends THREE.EventDispatcher {
 
     // Good
     getSelected() {
-        var selected = this.state.selected ? [this] : [];
+        let selected = this.state.selected ? [this] : [];
         // Process child shapes
-        var children = this._children.map(function(child) {
+        let children = this._children.map(function(child) {
             return child.getSelected();
         });
         return _.flatten(selected.concat(children));
@@ -310,7 +310,7 @@ export default class Shape extends THREE.EventDispatcher {
             });
         // On selection
         } else {
-            var bounds = this.getBoundingBox(false);
+            let bounds = this.getBoundingBox(false);
             if (!this.bbox && !bounds.empty()) {
                 this.bbox = Assembly.buildBoundingBox(bounds);
             }
@@ -334,7 +334,7 @@ export default class Shape extends THREE.EventDispatcher {
     // Find the geometric center of this shape
     getCentroid(world) {
         if (world === undefined) world = true;
-        var bbox = this.getBoundingBox(false);
+        let bbox = this.getBoundingBox(false);
         if (world) {
             bbox.min.applyMatrix4(this._object3D.matrixWorld);
             bbox.max.applyMatrix4(this._object3D.matrixWorld);
@@ -344,22 +344,22 @@ export default class Shape extends THREE.EventDispatcher {
 
     // Good
     explode(distance) {
-        var i, child;
+        let i, child;
         // Do we need to determine explosion direction
         if (this.state.explodeDistance === 0) {
             this._explodeStates = {};
-            var explosionCenter = this.getCentroid(true);
+            let explosionCenter = this.getCentroid(true);
             for (i = 0; i < this._children.length; i++) {
                 child = this._children[i];
                 // Convert the objectCenter
-                var localExplosionCenter = explosionCenter.clone();
+                let localExplosionCenter = explosionCenter.clone();
                 child.getObject3D().worldToLocal(localExplosionCenter);
                 // Get the child's centroid in local frame
-                var childCenter = child.getCentroid(false);
-                var childDirection = new THREE.Vector3().copy(childCenter);
+                let childCenter = child.getCentroid(false);
+                let childDirection = new THREE.Vector3().copy(childCenter);
                 // Calculate explosion direction vector in local frame and save it
                 childDirection.sub(localExplosionCenter);
-                var normChildDirection;
+                let normChildDirection;
                 // Don't explode things that are centrally located
                 if (childDirection.length() < 5.0) {
                     normChildDirection = new THREE.Vector3();
@@ -376,7 +376,7 @@ export default class Shape extends THREE.EventDispatcher {
         this.state.explodeDistance += distance;
         for (i = 0; i < this._children.length; i++) {
             child = this._children[i];
-            var explosionDirection = this._explodeStates[child.getID()];
+            let explosionDirection = this._explodeStates[child.getID()];
             child.translateOnAxis(explosionDirection, distance);
         }
     }

@@ -3,15 +3,13 @@
  */
 "use strict";
 
-//var THREE = require('three');
-
 
 /********************************* Helper Functions ********************************/
 
 export default class Shell extends THREE.EventDispatcher {
     constructor(id, assembly, parent, size, defaultColor, boundingBox) {
         super();
-        var ret = assembly.makeChild(id, this);
+        let ret = assembly.makeChild(id, this);
         if (!ret) {
             this._id = id;
             this._assembly = assembly;
@@ -44,12 +42,12 @@ export default class Shell extends THREE.EventDispatcher {
         this._geometry.addAttribute('color',    new THREE.BufferAttribute(this._size * 3, 3));
 
         // Setup the offsets
-        var chunkSize = 21845;
-        var i;
+        let chunkSize = 21845;
+        let i;
         this._geometry.groups = [];
-        var offsets = this._size / chunkSize;
+        let offsets = this._size / chunkSize;
         for (i = 0; i < offsets; i++) {
-            var offset = {
+            let offset = {
                 start: i * chunkSize * 3,
                 index: i * chunkSize * 3,
                 count: Math.min(this._size - ( i * chunkSize ), chunkSize) * 3

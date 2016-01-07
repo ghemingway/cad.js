@@ -31,7 +31,7 @@ export default class LoadQueueView extends React.Component {
     }
 
     onQueueEvent(ev) {
-        var queue;
+        let queue;
         if(ev.type === 'addRequest') {
             this.setState({ queue: this.state.queue.concat({
                 name: ev.path,
@@ -72,10 +72,10 @@ export default class LoadQueueView extends React.Component {
     }
 
     render() {
-        var items = this.state.queue.map(function(item) {
+        let items = this.state.queue.map(function(item) {
             return <QueueItem key={item.name} name={item.name} loaded={item.loaded} />;
         });
-        var style = items.length > 0 ? 'load-queue' : 'load-queue out';
+        let style = items.length > 0 ? 'load-queue' : 'load-queue out';
         return <div className={style}>
                 <div className="header">
                     <span>Downloads&nbsp;</span>

@@ -23,10 +23,10 @@ export default class DataLoader extends THREE.EventDispatcher {
         this._shells = [];
         this._annotations = [];
 
-        var self = this;
+        let self = this;
         this._workers = [];     // List of workers
         while (this._workers.length < this._maxWorkers) {
-            var worker = new Worker(config.workerPath);
+            let worker = new Worker(config.workerPath);
             worker.addEventListener('message', function (event) {
                 self.workerMessage(event);
             });
@@ -37,14 +37,14 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     static parseBoundingBox(str) {
         if (!str) return undefined;
-        var vals = str;
+        let vals = str;
         if (typeof str === "string") vals = DataLoader.parseFloatVec(str, 6);
         return new THREE.Box3(new THREE.Vector3(vals[0], vals[1], vals[2]), new THREE.Vector3(vals[3], vals[4], vals[5]));
     }
 
     static parseXform(str, colOriented) {
         if (str == null) return null;
-        var arr = str;
+        let arr = str;
         if (typeof str === "string") {
             // Identity transform compression
             if (str === "I") {
@@ -74,7 +74,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     static parseColor(hex) {
-        var cval = parseInt(hex, 16);
+        let cval = parseInt(hex, 16);
         return (new THREE.Color()).setRGB(
             ((cval >> 16) & 0xff) / 255,
             ((cval >> 8) & 0xff) / 255,
@@ -83,8 +83,8 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     static parseUnit(str) {
-        var unit = str.split(" ")[0];
-        var factor = parseFloat(str.split(" ")[1]);
+        let unit = str.split(" ")[0];
+        let factor = parseFloat(str.split(" ")[1]);
         if (unit !== "mm") {
             console.log("Found non-MM unit: " + unit);
         }
@@ -92,16 +92,16 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     static parseFloatVec(str, count) {
-        var vals = str.split(" ");
+        let vals = str.split(" ");
         if (count != null && vals.length != count) {
             throw new Error(
                 "parse_float_vec: unexpected number of elements expecting " + count
                 + " have " + vals.length);
         }
         count = vals.length;
-        var ret = new Array(count);
-        for (var i = 0; i < count; i++) {
-            var v = parseFloat(vals[i]);
+        let ret = new Array(count);
+        for (let i = 0; i < count; i++) {
+            let v = parseFloat(vals[i]);
             if (!isFinite(v)) throw new Error("number is not finite");
             ret[i] = v;
         }
@@ -141,7 +141,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     queueLength(onlyLoad) {
-        var numWorking = this._maxWorkers - this._freeWorkers.length;
+        let numWorking = this._maxWorkers - this._freeWorkers.length;
         if (onlyLoad) {
             return numWorking;
         } else {
@@ -152,8 +152,8 @@ export default class DataLoader extends THREE.EventDispatcher {
     runLoadQueue() {
         // Keep issuing loads until no workers left
         while (this._queue.length > 0 && this._freeWorkers.length > 0) {
-            var workerID = this._freeWorkers.shift();
-            var req = this.sortQueue();
+            let workerID = this._freeWorkers.shift();
+            let req = this.sortQueue();
             req.workerID = workerID;
             this._loading[workerID] = req;
             this.initRequest(req);
@@ -161,7 +161,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     workerMessage(event) {
-        var req, shell, anno;
+        let req, shell, anno;
         //console.log("Worker Message: " + event.data.type);
         // Find the request this message corresponds to
         if (_.indexOf(["rootLoad", "shellLoad", "annotationLoad", "loadError"], event.data.type) != -1) {
@@ -173,7 +173,7 @@ export default class DataLoader extends THREE.EventDispatcher {
             this._freeWorkers.push(event.data.workerID);
             this.runLoadQueue();
         }
-        var data;
+        let data;
         switch (event.data.type) {
             case "rootLoad":
                 if (req.type === 'assembly') {
@@ -226,9 +226,9 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     initRequest(req) {
         // Fetch the worker to use
-        var worker = this._workers[req.workerID];
+        let worker = this._workers[req.workerID];
         // Send the request to the worker
-        var data = {
+        let data = {
             url: req.baseURL + '/' + req.type + '/' + req.path,
             workerID: req.workerID,
             type: req.type,
@@ -239,18 +239,18 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     buildAssemblyJSON(jsonText, req) {
-        var doc = JSON.parse(jsonText);
-        var rootID = doc.root;
-        var defaultColor = DataLoader.parseColor("7d7d7d");
-        var assembly = new Assembly(rootID, defaultColor, this);
+        let doc = JSON.parse(jsonText);
+        let rootID = doc.root;
+        let defaultColor = DataLoader.parseColor("7d7d7d");
+        let assembly = new Assembly(rootID, defaultColor, this);
         // Process the rest of the index JSON - get the product with the root ID
-        var rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
+        let rootProduct = this.buildProductJSON(req, doc, assembly, rootID, true);
         assembly.setRootProduct(rootProduct);
         // Handle batches
-        var batchExtension = doc.useTyson ? 'tyson' : 'json';
+        let batchExtension = doc.useTyson ? 'tyson' : 'json';
         // Do we have batches???
         if (doc.batches && doc.batches > 0) {
-            for (var i = 0; i < doc.batches; i++) {
+            for (let i = 0; i < doc.batches; i++) {
                 this.addRequest({
                     path: i,
                     baseURL: req.base,
@@ -263,16 +263,16 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     buildNCStateJSON(jsonText, req) {
-        var self = this;
-        var doc = JSON.parse(jsonText);
+        let self = this;
+        let doc = JSON.parse(jsonText);
         //console.log('Process NC: ' + doc.workingstep);
-        var nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
+        let nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
         _.each(doc.geom, function(geomData) {
-            var color = DataLoader.parseColor("7d7d7d");
-            var transform = DataLoader.parseXform(geomData.xform, true);
+            let color = DataLoader.parseColor("7d7d7d");
+            let transform = DataLoader.parseXform(geomData.xform, true);
             if (geomData.usage === 'asis' || geomData.usage === 'tobe' || geomData.usage === 'cutter') {
-                var boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
-                var shell = new Shell(geomData.id, nc, nc, geomData.size, color, boundingBox);
+                let boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
+                let shell = new Shell(geomData.id, nc, nc, geomData.size, color, boundingBox);
                 nc.addModel(shell, geomData.usage, geomData.id, transform, boundingBox);
                 // Push the shell for later completion
                 self._shells[geomData.shell] = shell;
@@ -282,10 +282,10 @@ export default class DataLoader extends THREE.EventDispatcher {
                     type: "shell"
                 });
             } else if (geomData.usage === 'toolpath') {
-                var annotation = new Annotation(geomData.id, nc, nc);
+                let annotation = new Annotation(geomData.id, nc, nc);
                 nc.addModel(annotation, geomData.usage, geomData.id, transform, undefined);
                 // Push the annotation for later completion
-                var name = geomData.polyline.split('.')[0];
+                let name = geomData.polyline.split('.')[0];
                 self._annotations[name] = annotation;
                 self.addRequest({
                     path: name,
@@ -299,20 +299,20 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     buildProductJSON(req, doc, assembly, id, isRoot) {
         // Create the product
-        var self = this;
-        var productJSON = _.findWhere(doc.products, { id: id });
+        let self = this;
+        let productJSON = _.findWhere(doc.products, { id: id });
         // Have we already seen this product
         if (!assembly.isChild(id)) {
-            var product = new Product(id, assembly, productJSON.name, productJSON.step, isRoot);
+            let product = new Product(id, assembly, productJSON.name, productJSON.step, isRoot);
             // Load child shapes first - MUST BE BEFORE CHILD PRODUCTS
-            var identityTransform = (new THREE.Matrix4()).identity();
+            let identityTransform = (new THREE.Matrix4()).identity();
             _.each(productJSON.shapes, function (shapeID) {
-                var shape = self.buildShapeJSON(req, doc, assembly, shapeID, undefined, identityTransform, isRoot);
+                let shape = self.buildShapeJSON(req, doc, assembly, shapeID, undefined, identityTransform, isRoot);
                 product.addShape(shape);
             });
             // Load child products
             _.each(productJSON.children, function (childID) {
-                var child = self.buildProductJSON(req, doc, assembly, childID, false);
+                let child = self.buildProductJSON(req, doc, assembly, childID, false);
                 product.addChild(child);
             });
             return product;
@@ -325,37 +325,37 @@ export default class DataLoader extends THREE.EventDispatcher {
         // We are really only looking up stuff when non-root
         if (!isRoot) return assembly.getChild(id);
         // Ok, now let's really build some stuff
-        var self = this;
-        var shapeJSON = _.findWhere(doc.shapes, {id: id});
-        var unit = shapeJSON.unit ? shapeJSON.unit : "unit 0.01";
-        var shape = new Shape(id, assembly, parent, transform, unit, isRoot);
+        let self = this;
+        let shapeJSON = _.findWhere(doc.shapes, {id: id});
+        let unit = shapeJSON.unit ? shapeJSON.unit : "unit 0.01";
+        let shape = new Shape(id, assembly, parent, transform, unit, isRoot);
         // Load child shells
         _.each(shapeJSON.shells, function (shellID) {
-            var shell = self.buildShellJSON(req, doc, shellID, assembly, shape);
+            let shell = self.buildShellJSON(req, doc, shellID, assembly, shape);
             shape.addShell(shell);
         });
         // Load Child annotations
         _.each(shapeJSON.annotations, function (annotationID) {
-            var annotation = self.buildAnnotationJSON(req, doc, annotationID, assembly, shape);
+            let annotation = self.buildAnnotationJSON(req, doc, annotationID, assembly, shape);
             shape.addAnnotation(annotation);
         });
         // Load child shapes
         _.each(shapeJSON.children, function (childJSON) {
             // Setup the child's transform
-            var localTransform = DataLoader.parseXform(childJSON.xform, true);
+            let localTransform = DataLoader.parseXform(childJSON.xform, true);
             // Build the child
-            var child = self.buildShapeJSON(req, doc, assembly, childJSON.ref, shape, localTransform, isRoot);
+            let child = self.buildShapeJSON(req, doc, assembly, childJSON.ref, shape, localTransform, isRoot);
             shape.addChild(child);
         });
         return shape;
     }
 
     buildAnnotationJSON(req, doc, id, assembly, parent) {
-        var alreadyLoaded = assembly.isChild(id);
-        var annoJSON = _.findWhere(doc.annotations, {id: id});
+        let alreadyLoaded = assembly.isChild(id);
+        let annoJSON = _.findWhere(doc.annotations, {id: id});
         // Do we have to load the shell
         if (annoJSON.href) {
-            var anno = new Annotation(id, assembly, parent);
+            let anno = new Annotation(id, assembly, parent);
             // Have we already loaded this annotation - if not, request the shell be loaded?
             if (!alreadyLoaded) {
                 this._annotations[id] = anno;
@@ -373,13 +373,13 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     buildShellJSON(req, doc, id, assembly, parent) {
-        var alreadyLoaded = assembly.isChild(id);
-        var shellJSON = _.findWhere(doc.shells, {id: id});
+        let alreadyLoaded = assembly.isChild(id);
+        let shellJSON = _.findWhere(doc.shells, {id: id});
         // Do we have to load the shell
         if (shellJSON.href) {
-            var color = DataLoader.parseColor("7d7d7d");
-            var boundingBox = DataLoader.parseBoundingBox(shellJSON.bbox);
-            var shell = new Shell(id, assembly, parent, shellJSON.size, color, boundingBox);
+            let color = DataLoader.parseColor("7d7d7d");
+            let boundingBox = DataLoader.parseBoundingBox(shellJSON.bbox);
+            let shell = new Shell(id, assembly, parent, shellJSON.size, color, boundingBox);
             // Have we already loaded this Shell - if not, request the shell be loaded?
             if (!alreadyLoaded) {
                 // Push the shell for later completion

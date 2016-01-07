@@ -16,9 +16,9 @@ export default class LoginView extends React.Component {
     }
 
     handleClick(ev) {
-        var self = this;
+        let self = this;
         ev.preventDefault();
-        var data = {
+        let data = {
             username: this.refs.username.value,
             password: this.refs.password.value,
             two_factor: this.refs.two_factor.value
@@ -58,7 +58,7 @@ export default class LoginView extends React.Component {
     }
 
     render() {
-        var twoFactor;
+        let twoFactor;
         if (this.props.twoFactor) {
             twoFactor = <div className="form-group">
                 <label htmlFor="two_factor" className="control-label">Two-Factor Code:</label>

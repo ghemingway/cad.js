@@ -75,7 +75,7 @@ module.exports = Backbone.Router.extend({
             this.navigate('login', { trigger: true });
         } else {
             query = queryString.parse(query);
-            var self = this;
+            let self = this;
             // Render the root CAD view
             ReactDOM.render(<CADView
                 manager={this.app.cadManager}

@@ -18,9 +18,9 @@ export default class RegisterView extends React.Component {
     }
 
     handleClick(ev) {
-        var self = this;
+        let self = this;
         ev.preventDefault();
-        var data = {
+        let data = {
             username: this.refs.username.value,
             address: this.refs.address.value,
             password: this.refs.password.value
@@ -39,7 +39,7 @@ export default class RegisterView extends React.Component {
                 method: 'POST',
                 data: data,
                 success: function (data) {
-                    var update = { 'registered': true };
+                    let update = { 'registered': true };
                     if (data.two_factor) {
                         update.twoFactor = data.two_factor;
                     }
@@ -62,9 +62,9 @@ export default class RegisterView extends React.Component {
     }
 
     render() {
-        var page;
+        let page;
         if (this.state.registered) {
-            var twoFactor = this.state.twoFactor ? <img src={this.state.twoFactor} /> : undefined;
+            let twoFactor = this.state.twoFactor ? <img src={this.state.twoFactor} /> : undefined;
             page = <div className="col-xs-6 panel panel-default">
                 <h4>Welcome to CAD.js!</h4>
                 <ul>Here are a couple of place you may want to visit:

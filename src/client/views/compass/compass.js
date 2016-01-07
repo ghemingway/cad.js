@@ -8,7 +8,7 @@ require('./compass.scss');
 /*************************************************************************/
 
 function setStyleTransform (element, value) {
-    var style = element.style,
+    let style = element.style,
         styleNames = setStyleTransform._transformPropertyNames,
         i;
     for (i=0;i<styleNames.length;++i) {
@@ -35,7 +35,7 @@ export default class CompassView extends React.Component {
     }
 
     bindEvents() {
-        var self = this,
+        let self = this,
             defaultUpVector = new THREE.Vector3(0,1,0);
 
         this.$cubeButtons.on('mouseenter', function () {
@@ -46,7 +46,7 @@ export default class CompassView extends React.Component {
         }).on('mouseleave', function () {
             self.$cubeButtons.removeClass('hover');
         }).on('click', function () {
-            var upVector, upValues, eulerOrder;
+            let upVector, upValues, eulerOrder;
             if (typeof(this.dataset.up) !== 'undefined') {
                 upValues = this.dataset.up.split(',').map(parseFloat);
                 upVector = new THREE.Vector3(upValues[0],upValues[1],upValues[2]);
@@ -55,8 +55,8 @@ export default class CompassView extends React.Component {
             }
             eulerOrder = typeof(this.dataset.order) === 'undefined' ? 'XYZ' : this.dataset.order;
 
-            var conversionFactor = Math.PI / 180.0;
-            var viewAngles = new THREE.Euler(parseFloat(this.dataset.x)*conversionFactor,
+            let conversionFactor = Math.PI / 180.0;
+            let viewAngles = new THREE.Euler(parseFloat(this.dataset.x)*conversionFactor,
                 parseFloat(this.dataset.y)*conversionFactor,
                 parseFloat(this.dataset.z)*conversionFactor,
                 eulerOrder);
@@ -78,7 +78,7 @@ export default class CompassView extends React.Component {
     }
 
     update() {
-        var up = this.camera.up,
+        let up = this.camera.up,
             lookFrom = this.camera.position,
             lookTarget = this.controls.target,
             matrix = new THREE.Matrix4(),

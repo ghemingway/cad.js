@@ -62,7 +62,7 @@ export default class Assembly extends THREE.EventDispatcher {
         if (!id) {
             throw new Error("null id");
         }
-        var ret = this._objects[id];
+        let ret = this._objects[id];
         if (ret) {
             return ret;
         }
@@ -76,8 +76,7 @@ export default class Assembly extends THREE.EventDispatcher {
 
     name() {
         if (this._product) {
-            if (this._product._stepFile) return this._product._stepFile;
-            else return this._product._name;
+            return this._product._name;
         } else {
             return "Empty assembly";
         }
@@ -95,12 +94,12 @@ export default class Assembly extends THREE.EventDispatcher {
     }
 
     getByID(id) {
-        var obj = undefined;
+        let obj = undefined;
         // Special case for the root element
         if (id === "id0") {
             obj = this;
         } else if (typeof(id) !== 'undefined') {
-            var parts = id.split("_");
+            let parts = id.split("_");
             obj = this._objects[parts[0]];
             // Looks like an instance was selected
             if (parts.length > 1 && parts[1] !== "0") {
@@ -116,16 +115,16 @@ export default class Assembly extends THREE.EventDispatcher {
 
     select(camera, mouseX, mouseY) {
         if (!this._product) return undefined;
-        var mouse = new THREE.Vector2();
+        let mouse = new THREE.Vector2();
         mouse.x = (mouseX / window.innerWidth) * 2 - 1;
         mouse.y = -(mouseY / window.innerHeight) * 2 + 1;
         this.raycaster.setFromCamera(mouse, camera);
-        var intersections = this.raycaster.intersectObjects(this._product.getObject3D().children, true);
+        let intersections = this.raycaster.intersectObjects(this._product.getObject3D().children, true);
         // Did we hit anything?
-        var object = undefined;
+        let object = undefined;
         if (intersections.length > 0) {
-            var hit = undefined;
-            for (var i = 0; i < intersections.length; i++) {
+            let hit = undefined;
+            for (let i = 0; i < intersections.length; i++) {
                 if (intersections[i].object.visible) {
                     if (!hit || intersections[i].distance < hit.distance) {
                         hit = intersections[i];
@@ -150,8 +149,8 @@ export default class Assembly extends THREE.EventDispatcher {
             return undefined;
         }
         // Create the new box buffer
-        var geometry = new THREE.BufferGeometry();
-        var positions = new Float32Array(72);
+        let geometry = new THREE.BufferGeometry();
+        let positions = new Float32Array(72);
         //Front face bottom
         positions[0]  = box.min.x;
         positions[1]  = box.min.y;
@@ -238,7 +237,7 @@ export default class Assembly extends THREE.EventDispatcher {
         positions[71] = box.max.z;
         geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
         // Return the new Bounding Box Geometry
-        var material = new THREE.LineBasicMaterial({
+        let material = new THREE.LineBasicMaterial({
             linewidth: 2,
             color: 0x0000ff
         });

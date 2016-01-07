@@ -7,7 +7,7 @@
  * A THREE.js Shader
  */
 
-var vertexShaderCode        = require('./VelvetyShader-vertex.glsl'),
+let vertexShaderCode        = require('./VelvetyShader-vertex.glsl'),
     fragmentShaderCode      = require('./VelvetyShader-fragment.glsl');
 
 

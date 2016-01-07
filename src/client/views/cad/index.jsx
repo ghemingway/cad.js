@@ -5,7 +5,7 @@
 "use strict";
 
 
-var _                   = require('lodash');
+let _                   = require('lodash');
 import React            from 'react';
 import ViewerControls   from './viewer_controls';
 import CompassView      from '../compass/compass';
@@ -51,7 +51,7 @@ export default class CADViewer extends React.Component {
     }
 
     onModelAdd(event) {
-        var model = this.props.manager._models[event.path];
+        let model = this.props.manager._models[event.path];
         // Add the model to the scene
         this.annotationScene.add(   model.getAnnotation3D());
         this.geometryScene.add(     model.getObject3D());
@@ -61,7 +61,7 @@ export default class CADViewer extends React.Component {
         // center the view
         this.zoomToFit(model);
         // Update the model tree
-        var tree = this.props.manager.getTree();
+        let tree = this.props.manager.getTree();
         this.setState({ modelTree:tree });
     }
 
@@ -69,7 +69,7 @@ export default class CADViewer extends React.Component {
         console.log('ModelRemove: ' + event.path);
         // TODO: Need to do anything here?
         // Update the model tree
-        var tree = this.props.manager.getTree();
+        let tree = this.props.manager.getTree();
         this.setState({ modelTree: tree });
     }
 
@@ -93,7 +93,7 @@ export default class CADViewer extends React.Component {
                 break;
             // 'z' to zoomToFit
             case 122:
-                var objs = this.props.manager.getSelected();
+                let objs = this.props.manager.getSelected();
                 this.zoomToFit(objs);
                 break;
             // 'j' hide/show element
@@ -116,7 +116,7 @@ export default class CADViewer extends React.Component {
     }
 
     componentDidMount() {
-        var self = this;
+        let self = this;
         // RENDERER
         this.canvasParent = document.getElementById(this.props.viewContainerId);
         this.renderer = new THREE.WebGLRenderer({
@@ -150,7 +150,7 @@ export default class CADViewer extends React.Component {
         this.renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
         this.renderPassFXAA.uniforms['resolution'].value.set(1/this.canvasParent.offsetWidth, 1/this.canvasParent.offsetHeight);
         this.renderPassFXAA.renderToScreen = true;
-        var renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
+        let renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
         renderPassCopy.renderToScreen = true;
 
         // ADD RENDER PASSES
@@ -169,7 +169,7 @@ export default class CADViewer extends React.Component {
         // CONTROL EVENT HANDLERS
         this.controls.addEventListener('change', function() {
             self.state.isViewChanging = true;
-            var x0 = self.sceneCenter,
+            let x0 = self.sceneCenter,
                 x1 = self.camera.position,
                 x2 = self.controls.target,
                 x2subX1 = x2.clone().sub(x1),
@@ -216,7 +216,7 @@ export default class CADViewer extends React.Component {
     }
 
     zoomToFit(object) {
-        //var boundingBox, object3d, size = _.size(objects);
+        //let boundingBox, object3d, size = _.size(objects);
         //if (size === 0) return;
         //else if (size === 1) {
         //    object3d = objects.getObject3D();
@@ -224,7 +224,7 @@ export default class CADViewer extends React.Component {
         //} else if (size > 1) {
         //
         //}
-        var object3d = object.getObject3D(),
+        let object3d = object.getObject3D(),
             boundingBox = object.getBoundingBox(),
             radius = boundingBox.size().length() * 0.5,
             horizontalFOV = 2 * Math.atan(THREE.Math.degToRad(this.camera.fov * 0.5) * this.camera.aspect),
@@ -257,7 +257,7 @@ export default class CADViewer extends React.Component {
     }
 
     animate(forceRendering) {
-        var self = this;
+        let self = this;
         window.requestAnimationFrame(function() {
             self.animate(false);
         });
@@ -273,7 +273,7 @@ export default class CADViewer extends React.Component {
     invalidate(options) {
         if (options && options.tree) {
             // Update the model tree
-            var tree = this.props.manager.getTree();
+            let tree = this.props.manager.getTree();
             this.setState({ modelTree: tree });
         }
         this.shouldRender = true;
@@ -286,8 +286,8 @@ export default class CADViewer extends React.Component {
 
     // Handle all object selection needs
     handleSelection(obj, event) {
-        var change = false, flip = false;
-        var selected = this.props.manager.getSelected();
+        let change = false, flip = false;
+        let selected = this.props.manager.getSelected();
         // Toggle selection if already selected
         if (obj && selected.length === 1 && selected[0].getID() === obj.getID()) {
             flip = true;
@@ -307,7 +307,7 @@ export default class CADViewer extends React.Component {
         }
         if (change) {
             // Update the model tree
-            var tree = this.props.manager.getTree();
+            let tree = this.props.manager.getTree();
             this.setState({ modelTree: tree });
             this.invalidate();
         }
@@ -316,7 +316,7 @@ export default class CADViewer extends React.Component {
     // Handle clicking in the model view for selection
     onMouseUp(event) {
         if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
-            var obj = this.props.manager.hitTest(this.camera, event);
+            let obj = this.props.manager.hitTest(this.camera, event);
             this.handleSelection(obj, event);
         }
     }
@@ -337,7 +337,7 @@ export default class CADViewer extends React.Component {
 
     // Handle all object highlighting needs
     handleHighlighting(obj) {
-        var change = false;
+        let change = false;
         if (this.state.lastHovered && (!obj || obj.getID() != this.state.lastHovered.getID())) {
             // Clear existing highlight
             this.state.lastHovered.toggleHighlight();
@@ -352,7 +352,7 @@ export default class CADViewer extends React.Component {
         }
         // Update the model tree and redraw if things have changed
         if (change) {
-            var tree = this.props.manager.getTree();
+            let tree = this.props.manager.getTree();
             this.setState({ modelTree: tree });
             this.invalidate();
         }
@@ -362,7 +362,7 @@ export default class CADViewer extends React.Component {
     // Handle mouse movements in the model view for highlighting
     onMouseMove(event) {
         if (!this.state.isViewChanging && this.props.manager.modelCount() > 0) {
-            var obj = this.props.manager.hitTest(this.camera, event);
+            let obj = this.props.manager.hitTest(this.camera, event);
             this.handleHighlighting(obj);
         }
     }
@@ -373,7 +373,7 @@ export default class CADViewer extends React.Component {
     }
 
     render() {
-        var compass = this.camera ? <CompassView
+        let compass = this.camera ? <CompassView
             compassParentId="cadjs-canvas"
             camera={this.camera}
             controls={this.controls}

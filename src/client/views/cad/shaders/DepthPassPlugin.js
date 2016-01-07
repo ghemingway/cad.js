@@ -7,7 +7,7 @@ THREE.DepthPassPlugin = function () {
     this.enabled = false;
     this.renderTarget = null;
 
-    var _gl,
+    let _gl,
         _renderer,
         _lights, _webglObjects, _webglObjectsImmediate,
         _depthMaterial, _depthMaterialMorph, _depthMaterialSkin, _depthMaterialMorphSkin,
@@ -25,8 +25,8 @@ THREE.DepthPassPlugin = function () {
         _webglObjects = webglObjects;
         _webglObjectsImmediate = webglObjectsImmediate;
 
-        var depthShader = THREE.ShaderLib[ "depthRGBA" ];
-        var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
+        let depthShader = THREE.ShaderLib[ "depthRGBA" ];
+        let depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
 
         _depthMaterial = new THREE.ShaderMaterial( {
             fragmentShader: depthShader.fragmentShader,
@@ -73,7 +73,7 @@ THREE.DepthPassPlugin = function () {
 
     this.update = function ( scene, camera ) {
 
-        var i, il, j, jl, n,
+        let i, il, j, jl, n,
 
             program, buffer, material,
             webglObject, object, light,
@@ -111,7 +111,7 @@ THREE.DepthPassPlugin = function () {
 
         // render regular objects
 
-        var objectMaterial, useMorphing, useSkinning;
+        let objectMaterial, useMorphing, useSkinning;
 
         for ( j = 0, jl = _renderList.length; j < jl; j ++ ) {
 
@@ -181,7 +181,7 @@ THREE.DepthPassPlugin = function () {
 
         // restore GL state
 
-        var clearColor = _renderer.getClearColor(),
+        let clearColor = _renderer.getClearColor(),
             clearAlpha = _renderer.getClearAlpha();
 
         _gl.clearColor( clearColor.r, clearColor.g, clearColor.b, clearAlpha );
@@ -193,14 +193,14 @@ THREE.DepthPassPlugin = function () {
 
         if ( object.visible ) {
 
-            var webglObjects = _webglObjects[object.id];
+            let webglObjects = _webglObjects[object.id];
 
             if (webglObjects && (object.frustumCulled === false || _frustum.intersectsObject( object ) === true) ) {
 
 
-                for (var i = 0, l = webglObjects.length; i < l; i ++) {
+                for (let i = 0, l = webglObjects.length; i < l; i ++) {
 
-                    var webglObject = webglObjects[i];
+                    let webglObject = webglObjects[i];
 
                     object._modelViewMatrix.multiplyMatrices( camera.matrixWorldInverse, object.matrixWorld );
                     _renderList.push(webglObject);
@@ -208,7 +208,7 @@ THREE.DepthPassPlugin = function () {
                 }
             }
 
-            for (var i = 0, l = object.children.length; i < l; i ++) {
+            for (let i = 0, l = object.children.length; i < l; i ++) {
 
                 projectObject(scene, object.children[i], camera);
             }

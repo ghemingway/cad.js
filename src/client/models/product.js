@@ -42,7 +42,7 @@ export default class Product extends THREE.EventDispatcher {
         shape.setProduct(this);
         this._shapes.push(shape);
         if (this._isRoot) {
-            var self = this;
+            let self = this;
             this._object3D.add(shape.getObject3D());
             this._overlay3D.add(shape.getOverlay3D());
             this._annotation3D.add(shape.getAnnotation3D());
@@ -78,8 +78,8 @@ export default class Product extends THREE.EventDispatcher {
 
     getTree(root) {
         // Check if only geometry-aligned Products get added to tree
-        var children = [], tmpChild;
-        for (var i = 0; i < this._shapes.length; i++) {
+        let children = [], tmpChild;
+        for (let i = 0; i < this._shapes.length; i++) {
             tmpChild = this._shapes[i].getTree(root);
             if (tmpChild) {
                 children.push(tmpChild);
@@ -108,7 +108,7 @@ export default class Product extends THREE.EventDispatcher {
     getBoundingBox() {
         if (!this.boundingBox) {
             this.boundingBox = new THREE.Box3();
-            for (var i = 0; i < this._shapes.length; i++) {
+            for (let i = 0; i < this._shapes.length; i++) {
                 this.boundingBox.union(this._shapes[i].getBoundingBox(true));
             }
         }
@@ -116,9 +116,9 @@ export default class Product extends THREE.EventDispatcher {
     }
 
     getSelected() {
-        var selected = this.state.selected ? [this] : [];
+        let selected = this.state.selected ? [this] : [];
         // Process child shapes
-        var shapes = this._shapes.map(function(child) {
+        let shapes = this._shapes.map(function(child) {
             return child.getSelected();
         });
         return _.flatten(selected.concat(shapes));
@@ -139,7 +139,7 @@ export default class Product extends THREE.EventDispatcher {
     }
 
     toggleOpacity() {
-        var self = this;
+        let self = this;
         function setOpacity(opacity) {
             self.state.opacity = opacity;
             self._object3D.traverse(function (object) {
@@ -168,7 +168,7 @@ export default class Product extends THREE.EventDispatcher {
         } else {
             this._object3D.traverse(function (object) {
                 if (object.material && object.material.uniforms.tint) {
-                    var color = new THREE.Color(colorHex);
+                    let color = new THREE.Color(colorHex);
                     object.material.uniforms.tint.value.set(color.r, color.g, color.b, 0.3);
                 }
             });
@@ -187,7 +187,7 @@ export default class Product extends THREE.EventDispatcher {
             });
             // On selection
         } else {
-            var bounds = this.getBoundingBox(false);
+            let bounds = this.getBoundingBox(false);
             if (!this.bbox && !bounds.empty()) {
                 this.bbox = Assembly.buildBoundingBox(bounds);
             }

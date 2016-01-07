@@ -19,7 +19,7 @@ THREE.MaskPass.prototype = {
 
 	render: function ( renderer, writeBuffer, readBuffer, delta ) {
 
-		var context = renderer.context;
+		let context = renderer.context;
 
 		// don't update color or depth
 
@@ -28,7 +28,7 @@ THREE.MaskPass.prototype = {
 
 		// set up stencil
 
-		var writeValue, clearValue;
+		let writeValue, clearValue;
 
 		if ( this.inverse ) {
 
@@ -77,7 +77,7 @@ THREE.ClearMaskPass.prototype = {
 
 	render: function ( renderer, writeBuffer, readBuffer, delta ) {
 
-		var context = renderer.context;
+		let context = renderer.context;
 
 		context.disable( context.STENCIL_TEST );
 
