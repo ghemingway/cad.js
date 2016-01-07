@@ -30,7 +30,7 @@
     "lodash": "latest",
     "method-override": "latest",
     "morgan": "latest",
-    "qs": "^6.0.1",
+    "query-string": "^3.0.0",
     "react": "latest",
     "react-dom": "latest",
     "react-ui-tree": "^2.4.1",

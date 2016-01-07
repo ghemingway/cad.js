@@ -155,16 +155,16 @@ export default class NC extends THREE.EventDispatcher {
 
     getNamedParent(includeSelf) {
         return undefined;
-        if (includeSelf === undefined) includeSelf = true;
-        if (includeSelf && this._product) {
-            return this;
-        } else {
-            //var obj = this._parent;
-            //while (!obj.product && obj.parent) {
-            //    obj = obj.parent;
-            //}
-            //return obj;
-        }
+        //if (includeSelf === undefined) includeSelf = true;
+        //if (includeSelf && this._product) {
+        //    return this;
+        //} else {
+        //    //var obj = this._parent;
+        //    //while (!obj.product && obj.parent) {
+        //    //    obj = obj.parent;
+        //    //}
+        //    //return obj;
+        //}
     }
 
     select(camera, mouseX, mouseY) {

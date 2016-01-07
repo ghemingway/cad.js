@@ -8,7 +8,7 @@ import BrowserView          from './views/browser';
 import LoginView            from './views/user/login';
 import RegisterView         from './views/user/register';
 import CADView              from './views/cad';
-var qs                      = require('qs');
+const queryString =         require('query-string');
 
 /*************************************************************************/
 
@@ -74,7 +74,7 @@ module.exports = Backbone.Router.extend({
             // Redirect to Login if auth required and not done
             this.navigate('login', { trigger: true });
         } else {
-            query = qs.parse(query);
+            query = queryString.parse(query);
             var self = this;
             // Render the root CAD view
             ReactDOM.render(<CADView

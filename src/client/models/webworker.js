@@ -55,30 +55,23 @@
 
  */
 
-var DEBUG = true;
+var DEBUG = false;
 
 var assert = !DEBUG
-    ? function () {
-}
+    ? function () {}
     : function (val, str) {
-    if (str === void 0) {
-        str = "failed!";
-    }
-    if (!val) {
-        throw("assert: " + str);
-    }
-};
-
-var global = this;
+        if (str === void 0) {
+            str = "failed!";
+        }
+        if (!val) {
+            throw("assert: " + str);
+        }
+    };
 
 var TYSON = (function () {
 
-    var Core = function Core (stdlib, imports, heap) {
-
-        "use asm";
-
+    var Core = function Core (imports, heap) {
         // BEGIN SNIP
-
         var pos = 0;
         var bytesU8 = new Uint8Array(heap);
         var bytesD32 = new Float32Array(heap);
@@ -586,7 +579,7 @@ var TYSON = (function () {
             }
 
         };
-        var core = Core(global, imports, buffer);
+        var core = Core(imports, buffer);
 
         function decode () {
             core.decode();
