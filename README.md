@@ -3,32 +3,59 @@ cad.js
 
 Web-based CAD file viewer
 
-clone
-// In root directory
+Setting up a development environment
+====================================
 
-mkdir data
+*Assumes Mac OS X or Linux*
 
-// -> Move models into data directory
+Get the code
+------------
 
-npm install
+    git clone https://github.com/ghemingway/cad.js
+    cd cad.js
 
-node app.js
+Make a place to put cad data
+----------------------------
 
-// To build using Gulp
+    mkdir data
 
-gulp
+Move models into `data` directory ([find some samples](docs/readme)).
 
-// Edit public/viewer.html and set
-```javascript
-<script data-main="javascript/main" src="javascript/libs/require.min.js"></script>
-```
-// to
-```javascript
-<script data-main="javascript/build" src="javascript/libs/require.min.js"></script>
-```
+Install nodejs packages
+-----------------------
+
+    npm install
+
+Setup Redis
+-----------
+
+Run a [redis](http://redis.io/) server and update [your config file](config/config.json#L6) to use this redis hostname/ip address and port.
+
+Create a key
+------------
+
+    ssh-keygen -t rsa -f config/id_rsa
+
+run development server
+----------------------
+
+    npm run start-dev
+
+Building
+========
+
+Build/compile using webpack:
+
+    # if you installed webpack globally (`npm install webpack -g`)
+    webpack
+
+    # if you installed webpack via package dependencies (`npm install`)
+    ./node_modules/.bin/webpack
 
 Snazzy Demos
-==============
+============
+
+*From an older version*
 
 http://ghemingway.github.io/cad.js/?resource_url=/cad.js/data/cutter/index.json
 
