@@ -13,13 +13,7 @@ import LoadQueueView    from '../load_queue';
 import ModelTreeView    from '../model_tree/model_tree';
 
 // Import shaders
-require('./shaders/CopyShader');
-require('./shaders/MaskPass');
-require('./shaders/EffectComposer');
-require('./shaders/FXAAShader');
 require('./shaders/VelvetyShader');
-require('./shaders/SSAOShader');
-require('./shaders/ShaderPass');
 
 /*************************************************************************/
 
@@ -122,9 +116,8 @@ export default class CADViewer extends React.Component {
         this.renderer = new THREE.WebGLRenderer({
             canvas: document.getElementById('cadjs-canvas'),
             antialias: true,
-            alpha: true
+            alpha: false
         });
-        this.autoAntialiasing = !!this.renderer.context.getContextAttributes().antialias;
         this.renderer.setClearColor(new THREE.Color(0x000000), 1);
         this.renderer.sortObjects = true;
         this.renderer.autoClear = false;
@@ -146,24 +139,11 @@ export default class CADViewer extends React.Component {
         this.camera.position.z = 0;
         this.camera.lookAt(this.geometryScene.position);
 
-        // EFFECT FXAA
-        this.renderPassFXAA = new THREE.ShaderPass(THREE.FXAAShader);
-        this.renderPassFXAA.uniforms['resolution'].value.set(1/this.canvasParent.offsetWidth, 1/this.canvasParent.offsetHeight);
-        this.renderPassFXAA.renderToScreen = true;
-        let renderPassCopy = new THREE.ShaderPass(THREE.CopyShader);
-        renderPassCopy.renderToScreen = true;
-
-        // ADD RENDER PASSES
-        this.composer = new THREE.EffectComposer(this.renderer);
-        this.composer.addPass(this.renderPassFXAA);
-        this.composer.addPass(renderPassCopy);
-
         // VIEW CONTROLS
         this.controls =  new ViewerControls({
             viewer: this,
             camera: this.camera,
             canvas: this.renderer.domElement,
-            renderPassFXAA: this.renderPassFXAA
         });
 
         // CONTROL EVENT HANDLERS
@@ -206,10 +186,8 @@ export default class CADViewer extends React.Component {
     }
 
     handleResize() {
-        this.renderPassFXAA.uniforms['resolution'].value.set(1 / this.canvasParent.offsetWidth, 1 / this.canvasParent.offsetHeight);
         this.renderer.setSize(this.canvasParent.offsetWidth, this.canvasParent.offsetHeight);
         this.camera.aspect = this.canvasParent.offsetWidth / this.canvasParent.offsetHeight;
-        this.composer.reset();
         this.controls.handleResize();
         this.controls.dispatchEvent({ type: 'change' });
         this.drawScene();
@@ -242,16 +220,8 @@ export default class CADViewer extends React.Component {
     }
 
     drawScene() {
-        if (this.autoAntialiasing) {
-            this.renderer.clear();
-            this.renderer.render(this.geometryScene, this.camera);
-        } else {
-            //depthPassPlugin.enabled = true;
-            this.renderer.render(this.geometryScene, this.camera, this.composer.renderTarget2, true);
-            //depthPassPlugin.enabled = false;
-            this.composer.render(0.5);
-        }
-        //this.renderer.clear(false, true, false);
+        this.renderer.clear();
+        this.renderer.render(this.geometryScene, this.camera);
         this.renderer.render(this.overlayScene, this.camera);
         this.renderer.render(this.annotationScene, this.camera);
     }
