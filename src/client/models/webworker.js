@@ -763,8 +763,21 @@ self.addEventListener("message", function(e) {
                 processAnnotation(url, workerID, xhr.responseText);
                 break;
             case "shell":
-                // Parse the JSON file
-                var dataJSON = JSON.parse(xhr.responseText);
+                // Try to parse the JSON file
+                let dataJSON;
+                try {
+                     dataJSON = JSON.parse(xhr.responseText);
+                } catch(ex) {
+                    console.log(ex);
+                    console.log(xhr.responseText);
+                    dataJSON = {
+                        precision:      2,
+                        pointsIndex:    [],
+                        normalsIndex:   [],
+                        colorsData:     [],
+                        values:         []
+                    };
+                }
                 self.postMessage({
                     type: "parseComplete",
                     file: parts[parts.length - 1]

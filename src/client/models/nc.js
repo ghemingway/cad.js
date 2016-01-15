@@ -21,13 +21,14 @@ export default class NC extends THREE.EventDispatcher {
         this._annotation3D = new THREE.Object3D();
     }
 
-    addModel(model, type, id, transform, bbox) {
+    addModel(model, usage, type, id, transform, bbox) {
         let asisOpacity = 0.15;
-        console.log('Add Model(' + type + '): ' + id);
+        console.log('Add Model(' + usage + '): ' + id);
         let self = this;
         // Setup 3D object holder
         let obj = {
             model: model,
+            usage: usage,
             type: type,
             id: id,
             object3D: new THREE.Object3D(),
@@ -42,7 +43,7 @@ export default class NC extends THREE.EventDispatcher {
         this._object3D.add(obj.object3D);
         this._overlay3D.add(obj.overlay3D);
         this._annotation3D.add(obj.annotation3D);
-        if (type === 'tobe' || type == 'asis' || type === 'cutter') {
+        if (type === 'shell') {
             model.addEventListener("shellEndLoad", function (event) {
                 let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
                 let mesh = new THREE.SkinnedMesh(event.shell.getGeometry(), material, false);
@@ -51,7 +52,7 @@ export default class NC extends THREE.EventDispatcher {
                 mesh.userData = self;
                 obj.object3D.add(mesh);
                 // Dim the asis
-                if (type === 'asis' && asisOpacity !== 1.0) {
+                if (usage === 'asis' && asisOpacity !== 1.0) {
                     obj.object3D.traverse(function (object) {
                         if (object.material && object.material.uniforms.opacity) {
                             object.material.transparent = true;
@@ -61,7 +62,7 @@ export default class NC extends THREE.EventDispatcher {
                     });
                 }
             });
-        } else if (type === 'toolpath') {
+        } else if (type === 'polyline') {
             model.addEventListener("annotationEndLoad", function(event) {
                 let lineGeometries = event.annotation.getGeometry();
                 let material = new THREE.LineBasicMaterial({
@@ -109,7 +110,8 @@ export default class NC extends THREE.EventDispatcher {
             let keys = _.keys(this._objects);
             _.each(keys, function(key) {
                 let object = self._objects[key];
-                if (object.type !== 'toolpath') {
+                if (object.type !== 'polyline') {
+                    console.log(object);
                     self.boundingBox.union(object.bbox);
                 }
             });

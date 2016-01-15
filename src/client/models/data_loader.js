@@ -36,7 +36,9 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     static parseBoundingBox(str) {
-        if (!str) return undefined;
+        if (!str) {
+            return new THREE.Box3();
+        }
         let vals = str;
         if (typeof str === "string") vals = DataLoader.parseFloatVec(str, 6);
         return new THREE.Box3(new THREE.Vector3(vals[0], vals[1], vals[2]), new THREE.Vector3(vals[3], vals[4], vals[5]));
@@ -191,7 +193,7 @@ export default class DataLoader extends THREE.EventDispatcher {
                     console.log('DataLoader.AnnotationlLoad: invalid annotation ID' + event.data.file);
                 } else {
                     anno.addGeometry(data);
-                    this.dispatchEvent({type: "annotationLoad", file: event.data.file});
+                    this.dispatchEvent({ type: "annotationLoad", file: event.data.file });
                 }
                 break;
             case "shellLoad":
@@ -203,7 +205,7 @@ export default class DataLoader extends THREE.EventDispatcher {
                     // Remove the reference to the shell
                     delete this._shells[event.data.id];
                     shell.addGeometry(data.position, data.normals, data.colors);
-                    this.dispatchEvent({type: "shellLoad", file: event.data.file});
+                    this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 }
                 break;
             case "workerFinish":
@@ -270,10 +272,11 @@ export default class DataLoader extends THREE.EventDispatcher {
         _.each(doc.geom, function(geomData) {
             let color = DataLoader.parseColor("7d7d7d");
             let transform = DataLoader.parseXform(geomData.xform, true);
-            if (geomData.usage === 'asis' || geomData.usage === 'tobe' || geomData.usage === 'cutter') {
+            // Is this a shell
+            if (_.has(geomData, 'shell')) {
                 let boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
                 let shell = new Shell(geomData.id, nc, nc, geomData.size, color, boundingBox);
-                nc.addModel(shell, geomData.usage, geomData.id, transform, boundingBox);
+                nc.addModel(shell, geomData.usage, 'shell', geomData.id, transform, boundingBox);
                 // Push the shell for later completion
                 self._shells[geomData.shell] = shell;
                 self.addRequest({
@@ -281,9 +284,10 @@ export default class DataLoader extends THREE.EventDispatcher {
                     baseURL: req.base,
                     type: "shell"
                 });
-            } else if (geomData.usage === 'toolpath') {
+            // Is this a polyline
+            } else if (_.has(geomData, 'polyline')) {
                 let annotation = new Annotation(geomData.id, nc, nc);
-                nc.addModel(annotation, geomData.usage, geomData.id, transform, undefined);
+                nc.addModel(annotation, geomData.usage, 'polyline', geomData.id, transform, undefined);
                 // Push the annotation for later completion
                 let name = geomData.polyline.split('.')[0];
                 self._annotations[name] = annotation;
@@ -292,6 +296,8 @@ export default class DataLoader extends THREE.EventDispatcher {
                     baseURL: req.base,
                     type: "annotation"
                 });
+            } else {
+                console.log('No idea what we found: ' + geomData);
             }
         });
         req.callback(undefined, nc);
@@ -300,7 +306,7 @@ export default class DataLoader extends THREE.EventDispatcher {
     buildProductJSON(req, doc, assembly, id, isRoot) {
         // Create the product
         let self = this;
-        let productJSON = _.findWhere(doc.products, { id: id });
+        let productJSON = _.find(doc.products, { id: id });
         // Have we already seen this product
         if (!assembly.isChild(id)) {
             let product = new Product(id, assembly, productJSON.name, productJSON.step, isRoot);
@@ -326,7 +332,7 @@ export default class DataLoader extends THREE.EventDispatcher {
         if (!isRoot) return assembly.getChild(id);
         // Ok, now let's really build some stuff
         let self = this;
-        let shapeJSON = _.findWhere(doc.shapes, {id: id});
+        let shapeJSON = _.find(doc.shapes, {id: id});
         let unit = shapeJSON.unit ? shapeJSON.unit : "unit 0.01";
         let shape = new Shape(id, assembly, parent, transform, unit, isRoot);
         // Load child shells
@@ -352,7 +358,7 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     buildAnnotationJSON(req, doc, id, assembly, parent) {
         let alreadyLoaded = assembly.isChild(id);
-        let annoJSON = _.findWhere(doc.annotations, {id: id});
+        let annoJSON = _.find(doc.annotations, {id: id});
         // Do we have to load the shell
         if (annoJSON.href) {
             let anno = new Annotation(id, assembly, parent);
@@ -374,7 +380,7 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     buildShellJSON(req, doc, id, assembly, parent) {
         let alreadyLoaded = assembly.isChild(id);
-        let shellJSON = _.findWhere(doc.shells, {id: id});
+        let shellJSON = _.find(doc.shells, {id: id});
         // Do we have to load the shell
         if (shellJSON.href) {
             let color = DataLoader.parseColor("7d7d7d");

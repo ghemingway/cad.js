@@ -55,7 +55,7 @@ export default class BrowserView extends React.Component {
     }
 
     handleClick(event) {
-        let file = _.findWhere(this.state.files, { name: event.target.id });
+        let file = _.find(this.state.files, { name: event.target.id });
         this.props.router.navigate(file.name + '?type=' + file.types[0], { trigger: true });
     }
 

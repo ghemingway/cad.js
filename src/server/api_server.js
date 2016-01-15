@@ -85,6 +85,7 @@ APIServer.prototype._setSocket = function() {
 
     // Wait on the redis pubSub and relay to clients
     redisPubSubClient.on('message',  function (channel, message) {
+        console.log('nc:delta: ' + message);
         var msg = JSON.parse(message);
         self.ioServer.emit('nc:delta', msg);
     });
@@ -134,9 +135,6 @@ APIServer.prototype._setSite = function() {
  */
 APIServer.prototype.run = function() {
     var self = this;
-    //this.express.listen(this.config.port, function() {
-    //    self.logger.info('\tCAD.js API Server listening on: ' + self.config.port);
-    //});
     this.server.listen(this.config.port, function () {
         self.logger.info('CAD.js API Server listening on: ' + self.config.port);
     });
