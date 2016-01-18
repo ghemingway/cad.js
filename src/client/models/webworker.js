@@ -649,8 +649,6 @@ function unindexValues(data, buffers) {
         buffers.position[i] = data.values[data.pointsIndex[i]];
         buffers.normals[i] = data.values[data.normalsIndex[i]];
     }
-    //delete data.pointsIndex;
-    //delete data.normalsIndex;
 }
 
 function uncompressColors(data, colorsBuffer) {
@@ -664,7 +662,6 @@ function uncompressColors(data, colorsBuffer) {
             colorsBuffer[index++] = block.data[2];
         }
     }
-    //delete data.colorsData;
 }
 
 function processShellJSON(url, workerID, dataJSON, signalFinish) {

@@ -81,6 +81,7 @@ export default class CADManager extends THREE.EventDispatcher {
         this._loader.addEventListener("loadComplete",   loaderEventHandler);
         this._loader.addEventListener("parseComplete",  loaderEventHandler);
         this._loader.addEventListener("shellLoad",      loaderEventHandler);
+        this._loader.addEventListener("annotationLoad", loaderEventHandler);
         this._loader.addEventListener("workerFinish",   loaderEventHandler);
         this._loader.addEventListener("loadProgress",   loaderEventHandler);
         // Listen for someone asking for stuff

@@ -21,12 +21,44 @@ export default class Annotation extends THREE.EventDispatcher {
     }
 
     addGeometry(data) {
-        this._lines =_.map(data.lines, function(line) {
+        let decompressColors = function(lData, cData, defaultColor=[1.0, 0.0, 0.0]) {
+            return _.map(lData, function(lineStrip, stripIndex) {
+                let numVertices = lineStrip.length / 3;
+                let colors = new Float32Array(lineStrip.length);
+                let color = defaultColor;
+                // If there is color data, process it
+                if (cData) {
+                    let index = 0;
+                    for (let i = 0; i < cData.length; i++) {
+                        index += cData[i].duration;
+                        if (stripIndex <= index) {
+                            color = cData[i].data;
+                        }
+                    }
+                }
+                // Build colors array
+                for (let i=0; i < numVertices; i++) {
+                    colors[i * 3] = color[0];
+                    colors[i * 3 + 1] = color[1];
+                    colors[i * 3 + 2] = color[2];
+                }
+                return colors;
+            });
+        };
+        // Decompress the colors data
+        let colorArrays = decompressColors(data.lines, data.colorsData);
+
+        // Create geometry for each linestrip
+        this._lines =_.map(data.lines, function(lineStrip, index) {
             let geometry = new THREE.BufferGeometry();
-            let vertices = new Float32Array(line.length);
-            for (let i=0; i<line.length; i++) vertices[i]=line[i];
-            geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            //geometry.addAttribute('position', new THREE.BufferAttribute(line, 3));
+
+            let vertices = new Float32Array(lineStrip.length);
+            for (let i=0; i<lineStrip.length; i++) vertices[i]=lineStrip[i];
+            let position = new THREE.BufferAttribute(vertices, 3);
+            geometry.addAttribute('position', position );
+
+            let colors = new THREE.BufferAttribute(colorArrays[index], 3);
+            geometry.addAttribute('color', colors);
             return geometry;
         });
         // All done - signal completion

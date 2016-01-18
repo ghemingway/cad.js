@@ -104,6 +104,7 @@ export default class CADViewer extends React.Component {
         this.props.manager.addEventListener("model:add", this.onModelAdd);
         this.props.manager.addEventListener("model:remove", this.onModelRemove);
         this.props.manager.addEventListener("shellLoad", this.onShellLoad);
+        this.props.manager.addEventListener("annotationLoad", this.invalidate);
         this.props.manager.addEventListener("invalidate", this.invalidate);
         // Keybased events
         window.addEventListener("keypress", this.onKeypress, true);
@@ -138,12 +139,14 @@ export default class CADViewer extends React.Component {
         this.camera.position.y = -5000;
         this.camera.position.z = 0;
         this.camera.lookAt(this.geometryScene.position);
+        console.log(this.camera.position);
+        console.log(this.camera.up);
 
         // VIEW CONTROLS
         this.controls =  new ViewerControls({
             viewer: this,
             camera: this.camera,
-            canvas: this.renderer.domElement,
+            canvas: this.renderer.domElement
         });
 
         // CONTROL EVENT HANDLERS
@@ -182,6 +185,7 @@ export default class CADViewer extends React.Component {
         this.props.manager.removeEventListener("model:add", this.onModelAdd);
         this.props.manager.removeEventListener("model:remove", this.onModelRemove);
         this.props.manager.removeEventListener("shellLoad", this.invalidate);
+        this.props.manager.removeEventListener("annotationLoad", this.invalidate);
         this.props.manager.removeEventListener("invalidate", this.invalidate);
     }
 
