@@ -31,9 +31,11 @@ export default class Annotation extends THREE.EventDispatcher {
                     let index = 0;
                     for (let i = 0; i < cData.length; i++) {
                         index += cData[i].duration;
-                        if (stripIndex <= index) {
-                            color = cData[i].data;
-                        }
+                        //if (stripIndex <= index) {
+                        //    color = cData[i].data;
+                        //}
+                        color = cData[i].data;
+                        if (index > stripIndex) break;
                     }
                 }
                 // Build colors array
