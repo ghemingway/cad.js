@@ -220,7 +220,6 @@ export default class NC extends THREE.EventDispatcher {
                 let quaternion = new THREE.Quaternion();
                 let scale = new THREE.Vector3();
                 transform.decompose(position, quaternion, scale);
-                console.log(quaternion);
                 obj.object3D.position.copy(position);
                 obj.object3D.quaternion.copy(quaternion);
                 alter = true;
