@@ -212,17 +212,19 @@ export default class NC extends THREE.EventDispatcher {
         // Handle each geom update in the delta
         _.each(delta.geom, function(geom) {
             let obj = self._objects[geom.id];
-            let transform = new THREE.Matrix4();
-            transform.fromArray(geom.xform);
-            //let inverse = obj.transform.getInverse();
-            obj.transform.copy(transform);
-            //console.log(obj.transform);
-            obj.object3D.position.set(geom.xform[12], geom.xform[13], geom.xform[14]);
-            //obj.object3D.applyMatrix(transform);
-            //console.log(obj.object3D.matrix);
-            //obj.object3D.updateMatrix();
-            //console.log('tick');
-            alter = true;
+            //console.log(obj);
+            if (obj.usage === 'cutter') {
+                let transform = new THREE.Matrix4();
+                transform.fromArray(geom.xform);
+                let position = new THREE.Vector3();
+                let quaternion = new THREE.Quaternion();
+                let scale = new THREE.Vector3();
+                transform.decompose(position, quaternion, scale);
+                console.log(quaternion);
+                obj.object3D.position.copy(position);
+                obj.object3D.quaternion.copy(quaternion);
+                alter = true;
+            }
         });
         return alter;
     }
