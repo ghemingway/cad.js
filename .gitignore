@@ -1,3 +1,5 @@
+/config/id_rsa
+/config/id_rsa.pub
 node_modules/*
 public/js/*
 .idea/*

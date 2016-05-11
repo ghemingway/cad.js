@@ -145,7 +145,7 @@ export default class Assembly extends THREE.EventDispatcher {
     }
 
     static buildBoundingBox(box) {
-        if (box.empty()) {
+        if (box.isEmpty()) {
             return undefined;
         }
         // Create the new box buffer

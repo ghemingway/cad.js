@@ -188,7 +188,7 @@ export default class Product extends THREE.EventDispatcher {
             // On selection
         } else {
             let bounds = this.getBoundingBox(false);
-            if (!this.bbox && !bounds.empty()) {
+            if (!this.bbox && !bounds.isEmpty()) {
                 this.bbox = Assembly.buildBoundingBox(bounds);
             }
             if (this.bbox) {

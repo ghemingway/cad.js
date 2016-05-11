@@ -4,17 +4,21 @@
 "use strict";
 
 
-import Assembly from './assembly';
+import Annotation   from './annotation';
+import Assembly     from './assembly';
+import DataLoader   from './data_loader';
+import Shell        from './shell';
 
 /*************************************************************************/
 
 export default class NC extends THREE.EventDispatcher {
-    constructor(project, workingstep, timeIn, loader) {
+    constructor(project, workingstep, timeIn, loader, baseURL, doc) {
         super();
         this.project = project;
         this._workingstep = workingstep;
         this._timeIn = timeIn;
         this._loader = loader;
+        this._baseURL = baseURL;
         this._objects = [];
         this.type = 'nc';
         this.raycaster = new THREE.Raycaster();
@@ -28,7 +32,42 @@ export default class NC extends THREE.EventDispatcher {
             opacity:        1.0,
             explodeDistance: 0,
             collapsed:      false
-        }
+        };
+        // Process a JSON document, if passed
+        if (doc) this.processJSON(doc);
+    }
+
+    processJSON(doc) {
+        let self = this;
+        _.each(doc.geom, function(geomData) {
+            let color = DataLoader.parseColor("7d7d7d");
+            let transform = DataLoader.parseXform(geomData.xform, true);
+            // Is this a shell
+            if (_.has(geomData, 'shell')) {
+                let boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
+                let shell = new Shell(geomData.id, self, self, geomData.size, color, boundingBox);
+                self.addModel(shell, geomData.usage, 'shell', geomData.id, transform, boundingBox);
+                // Push the shell for later completion
+                self._loader.addRequest({
+                    path: geomData.shell.split('.')[0],
+                    baseURL: self._baseURL,
+                    type: "shell"
+                }, geomData.id, shell);
+                // Is this a polyline
+            } else if (_.has(geomData, 'polyline')) {
+                let annotation = new Annotation(geomData.id, self, self);
+                self.addModel(annotation, geomData.usage, 'polyline', geomData.id, transform, undefined);
+                // Push the annotation for later completion
+                let name = geomData.polyline.split('.')[0];
+                self._loader.addRequest({
+                    path: name,
+                    baseURL: self._baseURL,
+                    type: "annotation"
+                }, name, annotation);
+            } else {
+                console.log('No idea what we found: ' + geomData);
+            }
+        });
     }
 
     addModel(model, usage, type, id, transform, bbox) {
@@ -65,7 +104,7 @@ export default class NC extends THREE.EventDispatcher {
         if (type === 'shell') {
             model.addEventListener('shellEndLoad', function (event) {
                 let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
-                let mesh = new THREE.SkinnedMesh(event.shell.getGeometry(), material, false);
+                let mesh = new THREE.Mesh(event.shell.getGeometry(), material);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 mesh.userData = obj;
@@ -242,7 +281,7 @@ export default class NC extends THREE.EventDispatcher {
             // On selection
         } else {
             let bounds = this.getBoundingBox(false);
-            if (!this.bbox && !bounds.empty()) {
+            if (!this.bbox && !bounds.isEmpty()) {
                 this.bbox = Assembly.buildBoundingBox(bounds);
             }
             if (this.bbox) {

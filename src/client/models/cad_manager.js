@@ -49,6 +49,12 @@ export default class CADManager extends THREE.EventDispatcher {
         this._loader.runLoadQueue();
     }
 
+    unloadAll() {
+        //console.log('Unload all model data now');
+        this._models = {};
+        this._root3DObject = new THREE.Object3D();
+    }
+
     centerModels() {
         // TODO: Do we need to implement this?
         // Reset all models to be centered on the origin

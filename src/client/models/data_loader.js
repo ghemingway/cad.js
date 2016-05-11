@@ -20,8 +20,7 @@ export default class DataLoader extends THREE.EventDispatcher {
         this._loading = [];     // List of active loading jobs
         this._maxWorkers = config.maxWorkers ? config.maxWorkers : 4;
         this._freeWorkers = [];
-        this._shells = [];
-        this._annotations = [];
+        this._deferred = {};
 
         let self = this;
         this._workers = [];     // List of workers
@@ -124,8 +123,13 @@ export default class DataLoader extends THREE.EventDispatcher {
      * baseURL: everything through v1
      * type: type of model (assembly, shell, etc.)
      */
-    addRequest(req, callback) {
-        req.callback = callback;
+    addRequest(req, second, obj) {
+        if (typeof(second) === 'function') {
+            req.callback = second;
+        } else if (second) {
+            //console.log('Add to deferred: ' + second);
+            this._deferred[second] = obj;
+        }
         // Push onto the queue and send out a message
         this._queue.push(req);
         this.dispatchEvent({ type: 'addRequest', path: req.path });
@@ -188,22 +192,26 @@ export default class DataLoader extends THREE.EventDispatcher {
                 break;
             case "annotationLoad":
                 data = JSON.parse(event.data.data);
-                anno = this._annotations[event.data.file];
+                //anno = this._annotations[event.data.file];
+                anno = this._deferred[event.data.file];
                 if (!anno) {
                     console.log('DataLoader.AnnotationlLoad: invalid annotation ID' + event.data.file);
                 } else {
+                    delete this._deferred[event.data.file];
                     anno.addGeometry(data);
                     this.dispatchEvent({ type: "annotationLoad", file: event.data.file });
                 }
                 break;
             case "shellLoad":
-                shell = this._shells[event.data.id];
+                shell = this._deferred[event.data.id];
+                //shell = this._shells[event.data.id];
                 if (!shell) {
-                    console.log('DataLoader.ShellLoad: invalid shell ID' + event.data.id);
+                    console.log('DataLoader.ShellLoad: invalid shell ID ' + event.data.id);
                 } else {
                     data = event.data.data;
                     // Remove the reference to the shell
-                    delete this._shells[event.data.id];
+                    //delete this._shells[event.data.id];
+                    delete this._deferred[event.data.id];
                     shell.addGeometry(data.position, data.normals, data.colors);
                     this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 }
@@ -265,41 +273,8 @@ export default class DataLoader extends THREE.EventDispatcher {
     }
 
     buildNCStateJSON(jsonText, req) {
-        let self = this;
         let doc = JSON.parse(jsonText);
-        //console.log('Process NC: ' + doc.workingstep);
-        let nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this);
-        _.each(doc.geom, function(geomData) {
-            let color = DataLoader.parseColor("7d7d7d");
-            let transform = DataLoader.parseXform(geomData.xform, true);
-            // Is this a shell
-            if (_.has(geomData, 'shell')) {
-                let boundingBox = DataLoader.parseBoundingBox(geomData.bbox);
-                let shell = new Shell(geomData.id, nc, nc, geomData.size, color, boundingBox);
-                nc.addModel(shell, geomData.usage, 'shell', geomData.id, transform, boundingBox);
-                // Push the shell for later completion
-                self._shells[geomData.shell] = shell;
-                self.addRequest({
-                    path: geomData.shell.split('.')[0],
-                    baseURL: req.base,
-                    type: "shell"
-                });
-            // Is this a polyline
-            } else if (_.has(geomData, 'polyline')) {
-                let annotation = new Annotation(geomData.id, nc, nc);
-                nc.addModel(annotation, geomData.usage, 'polyline', geomData.id, transform, undefined);
-                // Push the annotation for later completion
-                let name = geomData.polyline.split('.')[0];
-                self._annotations[name] = annotation;
-                self.addRequest({
-                    path: name,
-                    baseURL: req.base,
-                    type: "annotation"
-                });
-            } else {
-                console.log('No idea what we found: ' + geomData);
-            }
-        });
+        let nc = new NC(doc.project, doc.workingstep, doc.time_in_workingstep, this, req.base, doc);
         req.callback(undefined, nc);
     }
 
@@ -364,12 +339,11 @@ export default class DataLoader extends THREE.EventDispatcher {
             let anno = new Annotation(id, assembly, parent);
             // Have we already loaded this annotation - if not, request the shell be loaded?
             if (!alreadyLoaded) {
-                this._annotations[id] = anno;
                 this.addRequest({
                     path: annoJSON.id,
                     baseURL: req.base,
                     type: "annotation"
-                });
+                }, id, anno);
             }
             return anno;
         } else {
@@ -380,23 +354,25 @@ export default class DataLoader extends THREE.EventDispatcher {
 
     buildShellJSON(req, doc, id, assembly, parent) {
         let alreadyLoaded = assembly.isChild(id);
-        let shellJSON = _.find(doc.shells, {id: id});
+        let shellJSON = _.find(doc.shells, { id: id });
         // Do we have to load the shell
         if (shellJSON.href) {
+            //console.log('Adding new shell: ' + id);
+            //console.log('ShellJSON.id: ' + shellJSON.id);
             let color = DataLoader.parseColor("7d7d7d");
             let boundingBox = DataLoader.parseBoundingBox(shellJSON.bbox);
             let shell = new Shell(id, assembly, parent, shellJSON.size, color, boundingBox);
             // Have we already loaded this Shell - if not, request the shell be loaded?
             if (!alreadyLoaded) {
-                // Push the shell for later completion
-                this._shells[id] = shell;
-                //console.log(this._shells);
+                // Push the shell for later completion (either direct or in batch)
                 if (!doc.batches || doc.batches === 0) {
                     this.addRequest({
                         path: shellJSON.id,
                         baseURL: req.base,
                         type: "shell"
-                    });
+                    }, id, shell);
+                } else {
+                    this._deferred[id] = shell;
                 }
             }
             return shell;

@@ -124,7 +124,7 @@ export default class Shape extends THREE.EventDispatcher {
 
     addShellGeometry(geometry) {
         let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
-        let mesh = new THREE.SkinnedMesh(geometry, material, false);
+        let mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         mesh.userData = this;
@@ -185,7 +185,7 @@ export default class Shape extends THREE.EventDispatcher {
             }
         }
         // Only show things that are product-driven
-        if (!this._product || this.boundingBox.empty()) {
+        if (!this._product || this.boundingBox.isEmpty()) {
             return undefined;
         } else {
             let id = this.getID();
@@ -217,17 +217,17 @@ export default class Shape extends THREE.EventDispatcher {
             this.boundingBox = new THREE.Box3();
             for (i = 0; i < this._shells.length; i++) {
                 let shellBounds = this._shells[i].getBoundingBox(true);
-                if (!shellBounds.empty()) this.boundingBox.union(shellBounds);
+                if (!shellBounds.isEmpty()) this.boundingBox.union(shellBounds);
             }
             for (i = 0; i < this._children.length; i++) {
                 let childBounds = this._children[i].getBoundingBox(true);
-                if (!childBounds.empty()) {
+                if (!childBounds.isEmpty()) {
                     this.boundingBox.union(childBounds);
                 }
             }
         }
         let bounds = this.boundingBox.clone();
-        if (transform && !bounds.empty()) {
+        if (transform && !bounds.isEmpty()) {
             bounds.applyMatrix4(this._transform);
         }
         return bounds;
@@ -311,7 +311,7 @@ export default class Shape extends THREE.EventDispatcher {
         // On selection
         } else {
             let bounds = this.getBoundingBox(false);
-            if (!this.bbox && !bounds.empty()) {
+            if (!this.bbox && !bounds.isEmpty()) {
                 this.bbox = Assembly.buildBoundingBox(bounds);
             }
             if (this.bbox) {

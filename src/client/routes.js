@@ -76,6 +76,8 @@ module.exports = Backbone.Router.extend({
         } else {
             query = queryString.parse(query);
             let self = this;
+            // Clear the CAD manager of all data
+            this.app.cadManager.unloadAll();
             // Render the root CAD view
             ReactDOM.render(<CADView
                 manager={this.app.cadManager}

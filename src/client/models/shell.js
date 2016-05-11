@@ -17,7 +17,7 @@ export default class Shell extends THREE.EventDispatcher {
             this._size = size;
             this._color = defaultColor;
             this._boundingBox = boundingBox;
-            if (this._boundingBox.empty()) {
+            if (this._boundingBox.isEmpty()) {
                 console.log("Found empty bounding box: " + this._id);
             }
         }
