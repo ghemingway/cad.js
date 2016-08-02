@@ -37,9 +37,10 @@ export default class Shell extends THREE.EventDispatcher {
         this.dispatchEvent({type: "shellStartLoad", shell: this});
         // Create the geometry to hold the data
         this._geometry = new THREE.BufferGeometry();
-        this._geometry.addAttribute('position', new THREE.BufferAttribute(this._size * 3, 3));
-        this._geometry.addAttribute('normal',   new THREE.BufferAttribute(this._size * 3, 3));
-        this._geometry.addAttribute('color',    new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('position',  new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('normal',    new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('color',     new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('skinWeight' new THREE.BufferAttribute(this._size * 3, 3));
 
         // Setup the offsets
         let chunkSize = 21845;
