@@ -8,6 +8,7 @@ import Annotation   from './annotation';
 import Assembly     from './assembly';
 import DataLoader   from './data_loader';
 import Shell        from './shell';
+import {makeGeometry, processKeyframe, processDelta} from './nc_delta';
 
 /*************************************************************************/
 
@@ -73,6 +74,14 @@ export default class NC extends THREE.EventDispatcher {
     addModel(model, usage, type, id, transform, bbox) {
         let asisOpacity = 0.15;
         console.log('Add Model(' + usage + '): ' + id);
+        if (transform === null) {
+            transform = new THREE.Matrix4();
+            console.log('Default to identity transform');
+            //console.log(transform);
+        }
+        if (bbox.max.x === -Infinity || bbox.max.y === -Infinity || bbox.max.z === -Infinity) {
+            console.log('Default bounding box');
+        }
         let self = this;
         // Setup 3D object holder
         let obj = {
@@ -109,6 +118,7 @@ export default class NC extends THREE.EventDispatcher {
                 mesh.receiveShadow = true;
                 mesh.userData = obj;
                 obj.object3D.add(mesh);
+                obj.version = 0;
                 // Dim the asis
                 if (usage === 'asis' && asisOpacity !== 1.0) {
                     obj.object3D.traverse(function (object) {
@@ -161,6 +171,28 @@ export default class NC extends THREE.EventDispatcher {
     getAnnotation3D() {
         return this._annotation3D;
     };
+
+    calcBoundingBox() {
+        let self = this;
+        this._overlay3D.remove(this.bbox);
+        this.boundingBox = new THREE.Box3();
+        let keys = _.keys(self._objects);
+        _.each(keys, function(key) {
+            let object = self._objects[key];
+            if (object.rendered !== false && object.type !== 'polyline') {
+                let newBox = new THREE.Box3().setFromObject(object.object3D);
+                if (!newBox.isEmpty()) {
+                    object.bbox = newBox;
+                }
+                self.boundingBox.union(object.bbox);
+            }
+        });
+        let bounds = self.boundingBox;
+        this.bbox = Assembly.buildBoundingBox(bounds);
+        if (this.bbox && this.state.selected) {
+            this._overlay3D.add(this.bbox);
+        }
+    }
 
     getBoundingBox() {
         let self = this;
@@ -250,18 +282,65 @@ export default class NC extends THREE.EventDispatcher {
         let alter = false;
         // Handle each geom update in the delta
         _.each(delta.geom, function(geom) {
-            let obj = self._objects[geom.id];
-            //console.log(obj);
-            if (obj.usage === 'cutter') {
-                let transform = new THREE.Matrix4();
-                transform.fromArray(geom.xform);
-                let position = new THREE.Vector3();
-                let quaternion = new THREE.Quaternion();
-                let scale = new THREE.Vector3();
-                transform.decompose(position, quaternion, scale);
-                obj.object3D.position.copy(position);
-                obj.object3D.quaternion.copy(quaternion);
+            // Two types of changes: Keyframe and delta.
+            // Keyframe has version property and doesn't have prev_version
+            if (geom.hasOwnProperty('version') && !geom.hasOwnProperty('prev_version')) {
+                //console.log(geom.version + ' - Keyframe');
+                let obj = self._objects[geom.id];
+                if (obj !== undefined) {
+                    // Process new geometry
+                    let geometry = makeGeometry(processKeyframe(geom));
+                    // Remove all old geometry -- mesh's only
+                    obj.object3D.traverse(function(child) {
+                        if (child.type === "Mesh") {
+                            obj.object3D.remove(child);
+                        }
+                    });
+                    // Add in new geometry
+                    let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
+                    let mesh = new THREE.Mesh(geometry, material);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    mesh.userData = obj;
+                    obj.object3D.add(mesh);
+                    // Make sure to update the model geometry
+                    obj.model.setGeometry(geometry);
+                    obj.version = geom.version;
+                    obj.precision = geom.precision;
+                }
                 alter = true;
+            // Delta changes have prev_version and not version fields
+            } else if (geom.hasOwnProperty('prev_version') && geom.hasOwnProperty('base_version')) {
+                //console.log(geom.version + ' - Delta');
+                // Are we moving the geometry or modifying it
+                if (!geom.hasOwnProperty('remove')) {
+                    console.log('Delta: just moving things');
+                } else {
+                    let obj = self._objects[geom.id];
+                    if (obj !== undefined) {
+                        // Process new data
+                        let geometry = makeGeometry(processDelta(geom, obj));
+                        // Remove all old geometry -- mesh's only
+                        obj.object3D.traverse(function (child) {
+                            if (child.type === "Mesh") {
+                                obj.object3D.remove(child);
+                            }
+                        });
+                        // Create new modified geometry and add to obj
+                        let material = new THREE.ShaderMaterial(new THREE.VelvetyShader());
+                        let mesh = new THREE.Mesh(geometry, material);
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        mesh.userData = obj;
+                        obj.object3D.add(mesh);
+                        // Make sure to update the model geometry
+                        obj.model.setGeometry(geometry);
+                    }
+                }
+                alter = true;
+            // Don't know what kind of update this is
+            } else {
+                console.log(geom);
             }
         });
         return alter;

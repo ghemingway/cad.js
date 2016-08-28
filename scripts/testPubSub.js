@@ -1,5 +1,5 @@
 var redis = require('redis');
-var client = redis.createClient(6379, '127.0.0.1');
+var client = redis.createClient(32768, '192.168.99.100');
 var min = -2.0, max = 2.0, time = 0, timeStep = 500, x = 0.0, y = 0.0, z = 0.0;
 
 function serveDelta() {

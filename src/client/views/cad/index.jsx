@@ -53,10 +53,10 @@ export default class CADViewer extends React.Component {
         // calculate the scene's radius for draw distance calculations
         this.updateSceneBoundingBox(model.getBoundingBox());
         // Go to preset view for NC models
-        if(model.type === 'nc') {
-            this.camera.position.set(-6.997719433230415, 7.055664289079229, 10.589898666998387);
-            this.camera.up.set(0.31370902211057955, -0.32595607647788327, 0.891817966657745);
-        }
+        // if(model.type === 'nc') {
+        //     this.camera.position.set(-6.997719433230415, 7.055664289079229, 10.589898666998387);
+        //     this.camera.up.set(0.31370902211057955, -0.32595607647788327, 0.891817966657745);
+        // }
         // center the view
         this.zoomToFit([model]);
         // Update the model tree

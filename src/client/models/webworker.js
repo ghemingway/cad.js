@@ -675,14 +675,34 @@ function uncompressColors(data, colorsBuffer) {
     }
 }
 
-function processShellJSON(url, workerID, dataJSON, signalFinish) {
-    // Just copy the data into arrays
-    var buffers = {
-        position: new Float32Array(dataJSON.pointsIndex.length),
-        normals: new Float32Array(dataJSON.pointsIndex.length),
-        colors: new Float32Array(dataJSON.pointsIndex.length)
-    };
+/* Revised color compression method - requires a "faces" field in the JSON */
+function uncompressColors2(data, colorsBuffer) {
+    let index = 0;
+    let  numBlocks = data.faces.length;
+    for (let i = 0; i < numBlocks; i++) {
+        let block = data.faces[i];
+        let r, g, b;
+        // Be robust to crappy color data
+        try {
+            r = block.color[0];
+            g = block.color[1];
+            b = block.color[2];
+        } catch(ex) {
+            r = 1.0;
+            g = 1.0;
+            b = 1.0;
+        }
+        for (let j = 0; j < block.count; j++) {
+            colorsBuffer[index++] = r;
+            colorsBuffer[index++] = g;
+            colorsBuffer[index++] = b;
+        }
+    }
+}
 
+
+function processShellJSON(url, workerID, dataJSON, signalFinish) {
+    // Handle precision
     if (dataJSON.values) {
         if (dataJSON.precision) {
             var factor = Math.pow(10, dataJSON.precision);
@@ -691,19 +711,29 @@ function processShellJSON(url, workerID, dataJSON, signalFinish) {
                 dataJSON.values[i] /= factor;
             }
         }
-        unindexValues(dataJSON, buffers);
     }
+    // Just copy the data into arrays
+    var buffers = {
+        position: new Float32Array(dataJSON.pointsIndex.length),
+        normals: new Float32Array(dataJSON.pointsIndex.length),
+        colors: new Float32Array(dataJSON.pointsIndex.length),
+        values: new Float32Array(dataJSON.values)
+    };
+    unindexValues(dataJSON, buffers);
+
+    // Handle color data
     if (dataJSON.colorsData) {
         uncompressColors(dataJSON, buffers.colors);
+    } else if (dataJSON.faces) {
+        uncompressColors2(dataJSON, buffers.colors);
     }
-
     var parts = url.split("/");
     self.postMessage({
         type: "shellLoad",
         data: buffers,
         id: dataJSON.id,
         workerID: workerID
-    }, [buffers.position.buffer, buffers.normals.buffer, buffers.colors.buffer]);
+    }, [buffers.position.buffer, buffers.normals.buffer, buffers.colors.buffer, buffers.values.buffer]);
     // Do we signal that we are all done
     if (signalFinish) {
         self.postMessage({

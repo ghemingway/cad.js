@@ -211,6 +211,16 @@ export default class Shape extends THREE.EventDispatcher {
         }
     }
 
+    clearBoundingBox() {
+        this.boundingBox = undefined;
+        for (i = 0; i < this._shells.length; i++) {
+            this._shells[i].clearBoundingBox();
+        }
+        for (i = 0; i < this._children.length; i++) {
+            this._children[i].clearBoundingBox();
+        }
+    }
+
     getBoundingBox(transform) {
         if (!this.boundingBox) {
             let i;

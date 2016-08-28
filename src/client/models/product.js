@@ -105,6 +105,13 @@ export default class Product extends THREE.EventDispatcher {
         }
     }
 
+    clearBoundingBox() {
+        this.boundingBox = undefined;
+        for (let i = 0; i < this._shapes.length; i++) {
+            this._shapes[i].clearBoundingBox();
+        }
+    }
+
     getBoundingBox() {
         if (!this.boundingBox) {
             this.boundingBox = new THREE.Box3();

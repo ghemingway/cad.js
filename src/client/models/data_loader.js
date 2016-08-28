@@ -192,7 +192,6 @@ export default class DataLoader extends THREE.EventDispatcher {
                 break;
             case "annotationLoad":
                 data = JSON.parse(event.data.data);
-                //anno = this._annotations[event.data.file];
                 anno = this._deferred[event.data.file];
                 if (!anno) {
                     console.log('DataLoader.AnnotationlLoad: invalid annotation ID' + event.data.file);
@@ -204,15 +203,12 @@ export default class DataLoader extends THREE.EventDispatcher {
                 break;
             case "shellLoad":
                 shell = this._deferred[event.data.id];
-                //shell = this._shells[event.data.id];
                 if (!shell) {
                     console.log('DataLoader.ShellLoad: invalid shell ID ' + event.data.id);
                 } else {
                     data = event.data.data;
-                    // Remove the reference to the shell
-                    //delete this._shells[event.data.id];
                     delete this._deferred[event.data.id];
-                    shell.addGeometry(data.position, data.normals, data.colors);
+                    shell.addGeometry(data.position, data.normals, data.colors, data.values);
                     this.dispatchEvent({ type: "shellLoad", file: event.data.file });
                 }
                 break;

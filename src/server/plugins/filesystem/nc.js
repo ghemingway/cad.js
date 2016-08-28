@@ -27,7 +27,7 @@ var _fetch = function(req, res) {
     } else if (req.params.ncId) {
         dirPath = path.join(rootDir, req.params.ncId);
         filename = 'state.json';
-        app.logger.debug('NC: ' + filename);
+        app.logger.debug('NC: ' + dirPath + '/' + filename);
     }
     res.status(200).sendFile(filename, { root: dirPath });
 };

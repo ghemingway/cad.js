@@ -33,13 +33,14 @@ export default class Shell extends THREE.EventDispatcher {
         return this._id;
     }
 
-    addGeometry(position, normals, colors) {
+    addGeometry(position, normals, colors, values) {
         this.dispatchEvent({type: "shellStartLoad", shell: this});
         // Create the geometry to hold the data
         this._geometry = new THREE.BufferGeometry();
         this._geometry.addAttribute('position', new THREE.BufferAttribute(this._size * 3, 3));
         this._geometry.addAttribute('normal',   new THREE.BufferAttribute(this._size * 3, 3));
         this._geometry.addAttribute('color',    new THREE.BufferAttribute(this._size * 3, 3));
+        this._geometry.addAttribute('values',   new THREE.BufferAttribute(values, 1));
 
         // Setup the offsets
         let chunkSize = 21845;
@@ -63,8 +64,12 @@ export default class Shell extends THREE.EventDispatcher {
         this._geometry.computeBoundingBox();
         this._boundingBox = this._geometry.boundingBox.clone();
         // All done - signal completion
-        this._isLoaded = true;
+        //this._isLoaded = true;
         this.dispatchEvent({type: "shellEndLoad", shell: this});
+    }
+
+    clearBoundingBox() {
+        this._boundingBox = this._geometry.boundingBox.clone();
     }
 
     getBoundingBox() {
@@ -73,5 +78,9 @@ export default class Shell extends THREE.EventDispatcher {
 
     getGeometry() {
         return this._geometry;
+    }
+
+    setGeometry(geom) {
+        this._geometry = geom;
     }
 };
