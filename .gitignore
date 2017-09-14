@@ -3,3 +3,5 @@ public/js/*
 .idea/*
 .DS_Store
 data/*
+config/id_rsa
+config/id_rsa.pub

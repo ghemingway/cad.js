@@ -5,16 +5,15 @@ var path                =      require("path"),
 
 module.exports = {
     cache: true,
-    debug: true,
+    // debug: true,
     devtool: 'inline-source-map',
-    sourceMapFileName: "[file].map",
     context: path.join(__dirname, "/src/client"),
     entry: {
         main: "./main",
         webworker: "./models/webworker"
     },
     output: {
-        path: "./public/js/",
+        path: "/Users/zhonghuiwen/Documents/Web/cad.js/public/js/",
         filename: "[name].js",
         chunkFilename: "[id].js",
         sourceMapFilename: "[name].map",
@@ -22,11 +21,11 @@ module.exports = {
     },
     module: {
         loaders: [
-            { test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
+            { test: /bootstrap\/js\//, loader: 'imports-loader?jQuery=jquery' },
             // required to write "require('./style.scss')"
             {
                 test: /\.scss$/,
-                loader: ExtractTextPlugin.extract("css?sourceMap!sass?sourceMap")
+                loader: ExtractTextPlugin.extract("css-loader?sourceMap!sass-loader?sourceMap")
             },
             { test: /\.png$/,           loader: "url-loader?mimetype=image/png" },
             { test: /\.gif$/,           loader: "url-loader?mimetype=image/gif" },
@@ -46,11 +45,11 @@ module.exports = {
             },
 
             // required for GLSL support
-            { test: /\.glsl$/, loader: 'webpack-glsl' }
+            { test: /\.glsl$/, loader: 'webpack-glsl-loader' }
         ]
     },
     resolve: {
-        extensions: ['', '.js', '.jsx', '.scss'],
+        extensions: ['.js', '.jsx', '.scss'],
         alias: {
             underscore  : "lodash"
         }

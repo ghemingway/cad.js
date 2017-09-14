@@ -28,6 +28,7 @@
     "jsonwebtoken": "^5.4.1",
     "jstree": "^3.2.1",
     "jwt-decode": "^1.4.0",
+    "libxmljs": "^0.18.7",
     "lodash": "latest",
     "method-override": "latest",
     "morgan": "latest",
@@ -42,8 +43,9 @@
     "socket.io-client": "^1.3.7",
     "socket.io-express-session": "^0.1.3",
     "speakeasy": "^1.0.3",
-    "three": "latest",
-    "winston": "latest"
+    "three": "^0.74.0",
+    "winston": "latest",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "babel": "latest",
