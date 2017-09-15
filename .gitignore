@@ -5,3 +5,5 @@ public/js/*
 data/*
 config/id_rsa
 config/id_rsa.pub
+config/cert.crt
+config/csr.pem

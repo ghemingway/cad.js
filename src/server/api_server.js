@@ -2,6 +2,7 @@
 "use strict";
 
 var http                = require('http'),
+    https                = require('https'),
     path                = require('path'),
     _                   = require('lodash'),
     io                  = require('socket.io'),
@@ -14,7 +15,8 @@ var http                = require('http'),
     cookieParser        = require('cookie-parser'),
     jade                = require('jade'),
     CoreServer          = require('./core_server'),
-    util                = require('util');
+    util                = require('util'),
+    fs                  = require('fs');
 
 /************************* Support Site *********************************/
 
@@ -74,7 +76,13 @@ APIServer.prototype._setSocket = function() {
     var redisPubSubClient = this.redisClient = redis.createClient(this.config.redis.port, this.config.redis.host);
     redisPubSubClient.subscribe('nc:delta');
     // Socket server
-    this.server = http.Server(this.express);
+    if (this.config.protocol === "https") {
+        var options = {
+            key: fs.readFileSync(this.config.https.options.key),
+            cert: fs.readFileSync(this.config.https.options.cert)
+        }
+    }
+    this.server = this.config.protocol === "https" ? https.Server(options, this.express) : http.Server(this.express);
     this.ioServer = io(this.server, {});
     this.ioServer.use(ioSession(this.session));
     this.ioServer.on('connection', function (socket) {

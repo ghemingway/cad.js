@@ -1,7 +1,7 @@
 {
   "host": "",
   "port": 8080,
-  "protocol": "http",
+  "protocol": "https",
   "api_version": "v1",
   "redis": {
     "host": "127.0.0.1",
@@ -13,6 +13,12 @@
     "key_file": "/config/id_rsa",
     "token_expiration_s": 86400,
     "two_factor": true
+  },
+  "https": {
+    "options": {
+      "key": "./config/key.pem",
+      "cert": "./config/cert.crt"
+    }
   },
   "client": {
     "embedded": false,
