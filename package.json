@@ -7,7 +7,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server/api_server.js",
-    "start-dev": "node src/server/api_server.js -e development"
+    "start-ubuntu": "nodejs src/server/api_server.js",
+    "start-dev": "node src/server/api_server.js -e development",
+    "deploy": "rsync -azPL --delete ./ tstadmin@UNI-VMTST002:~/3dmodel"
   },
   "author": "G. Hemingway",
   "license": "MIT",
